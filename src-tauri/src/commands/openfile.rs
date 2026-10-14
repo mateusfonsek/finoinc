@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use tauri::State;
 
-/// Queue of `.ofx` paths opened via Finder ("Open with finan") that the
+/// Queue of `.ofx` paths opened via Finder ("Open with Finoinc") that the
 /// frontend has not consumed yet. Needed for cold start: the file arrives in
 /// `RunEvent::Opened` before the frontend mounts its listeners.
 #[derive(Default)]

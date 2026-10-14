@@ -583,7 +583,7 @@ async removeWatchedFolder(id: number) : Promise<Result<null, string>> {
 }
 },
 /**
- * Creates a folder if missing. Exists only for the "iCloud Drive › finan"
+ * Creates a folder if missing. Exists only for the "iCloud Drive › Finoinc"
  * preset, the feature's only disk write, and even then only after explicit
  * confirmation in the UI.
  * 
@@ -962,7 +962,7 @@ export type UpdateRule = { patterns: string[]; category_id: number; priority: nu
 pay_lead_months?: number; display_name?: string | null }
 export type WatchedFolder = { id: number; path: string; 
 /**
- * Short display name ("finan", "Downloads"), derived from the last path
+ * Short display name ("Finoinc", "Downloads"), derived from the last path
  * component when the folder was added.
  */
 label: string; 

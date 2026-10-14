@@ -17,7 +17,7 @@
   // Sync the UI language from the backend's persisted choice on boot.
   void locale.init();
 
-  const GITHUB_URL = "https://github.com/MateusFonseK/finan-app";
+  const GITHUB_URL = "https://github.com/MateusFonseK/finoinc";
 
   let aboutOpen = $state(false);
 
@@ -35,7 +35,7 @@
   });
 
   // Runs exactly once, the moment the gate first comes down (never again,
-  // since the flag is never unset) — draining a pending "Open with finan" and
+  // since the flag is never unset) — draining a pending "Open with Finoinc" and
   // running the watch scan only make sense once the DB is no longer pristine.
   $effect(() => {
     if (!localeChosen) return;
@@ -60,7 +60,7 @@
     scrolled = false;
   }
 
-  // "Open with finan": drains the .ofx opened via Finder, loads them and hands
+  // "Open with Finoinc": drains the .ofx opened via Finder, loads them and hands
   // them to the Import screen through the same stash it already reads.
   async function handleOpenedOfx() {
     const paths = await takePendingOfx();
@@ -130,7 +130,7 @@
 
   onMount(() => {
     const unlisten: Array<() => void> = [];
-    // The native menu and the "open with finan" flow reach the webview
+    // The native menu and the "open with Finoinc" flow reach the webview
     // regardless of what it renders, so each handler re-checks the gate
     // itself instead of trusting that registration implies it's down.
     listen("menu:about", () => localeChosen && (aboutOpen = true)).then((u) => unlisten.push(u));

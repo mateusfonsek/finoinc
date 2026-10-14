@@ -10,7 +10,7 @@ export async function readFileBytes(path: string): Promise<Uint8Array> {
   return new Uint8Array(unwrap(await commands.readFileBytes(path)));
 }
 
-/** Drains the .ofx paths opened via Finder ("Open with finan"). */
+/** Drains the .ofx paths opened via Finder ("Open with Finoinc"). */
 export async function takePendingOfx(): Promise<string[]> {
   return commands.takePendingOfx();
 }

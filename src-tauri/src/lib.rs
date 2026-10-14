@@ -130,8 +130,8 @@ pub fn run() {
             {
                 let handle = app.handle().clone();
                 let pack = locale_state.pack.lock().expect("locale mutex poisoned");
-                let app_menu = SubmenuBuilder::new(&handle, pack.menu_str("app_name", "finan app"))
-                    .text("about", pack.menu_str("about", "About finan app"))
+                let app_menu = SubmenuBuilder::new(&handle, pack.menu_str("app_name", "Finoinc"))
+                    .text("about", pack.menu_str("about", "About Finoinc"))
                     .separator()
                     .text("settings", pack.menu_str("settings", "Settings…"))
                     .separator()
@@ -161,7 +161,7 @@ pub fn run() {
                     .close_window()
                     .build()?;
                 let help_menu = SubmenuBuilder::new(&handle, pack.menu_str("help", "Help"))
-                    .text("github", pack.menu_str("github", "finan app on GitHub"))
+                    .text("github", pack.menu_str("github", "Finoinc on GitHub"))
                     .build()?;
                 let menu = MenuBuilder::new(&handle)
                     .items(&[&app_menu, &edit_menu, &window_menu, &help_menu])
@@ -170,7 +170,7 @@ pub fn run() {
             }
 
             let database = db::init(app.handle()).expect("failed to initialize database");
-            eprintln!("[finan] db at {}", database.path.display());
+            eprintln!("[finoinc] db at {}", database.path.display());
             // Only a brand-new DB is seeded from the active locale pack — never
             // an existing user's DB (would clobber their renamed categories).
             if database.fresh {

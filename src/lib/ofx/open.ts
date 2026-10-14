@@ -20,7 +20,7 @@ export function takeStashed(): PendingImport | undefined {
 }
 
 /** Loads an .ofx by path, stashes it and navigates to Import. Used by both
- *  "Open with finan" and the watched folder. */
+ *  "Open with Finoinc" and the watched folder. */
 export async function openOfxPath(path: string, watchHash?: string): Promise<void> {
   const loaded = await loadOfxFromPath(path);
   stashPending({ ...loaded, watchHash });

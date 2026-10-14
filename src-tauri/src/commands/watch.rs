@@ -24,7 +24,7 @@ use crate::error::{AppError, AppResult};
 pub struct WatchedFolder {
     pub id: i64,
     pub path: String,
-    /// Short display name ("finan", "Downloads"), derived from the last path
+    /// Short display name ("Finoinc", "Downloads"), derived from the last path
     /// component when the folder was added.
     pub label: String,
     /// `false` when the folder is gone or unmounted — the row shows an error
@@ -172,7 +172,7 @@ pub fn remove_watched_folder(db: State<'_, Db>, id: i64) -> AppResult<()> {
     remove_folder(&conn, id)
 }
 
-/// Creates a folder if missing. Exists only for the "iCloud Drive › finan"
+/// Creates a folder if missing. Exists only for the "iCloud Drive › Finoinc"
 /// preset, the feature's only disk write, and even then only after explicit
 /// confirmation in the UI.
 ///

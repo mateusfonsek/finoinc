@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capabilities for finan",
+  "description": "Default capabilities for Finoinc",
   "windows": ["main"],
   "permissions": [
     "core:default",

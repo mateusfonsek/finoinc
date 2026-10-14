@@ -58,7 +58,7 @@
       draggable="false"
     />
     <span class="flex flex-col min-w-0">
-      <span class="text-callout font-semibold tracking-[-0.012em] text-fg truncate">finan app</span>
+      <span class="text-callout font-semibold tracking-[-0.012em] text-fg truncate">Finoinc</span>
       <span class="text-cap2 text-fg-subtle truncate">{t("sidebar.tagline")}</span>
     </span>
   </button>

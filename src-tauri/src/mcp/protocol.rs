@@ -102,7 +102,7 @@ pub fn handle(
                 json!({
                     "protocolVersion": PROTOCOL_VERSION,
                     "capabilities": { "tools": { "listChanged": false } },
-                    "serverInfo": { "name": "finan", "version": env!("CARGO_PKG_VERSION") }
+                    "serverInfo": { "name": "finoinc", "version": env!("CARGO_PKG_VERSION") }
                 }),
             ),
             wrote: false,
@@ -273,7 +273,7 @@ mod tests {
 
         assert_eq!(out["result"]["protocolVersion"], PROTOCOL_VERSION);
         assert!(out["result"]["capabilities"]["tools"].is_object());
-        assert_eq!(out["result"]["serverInfo"]["name"], "finan");
+        assert_eq!(out["result"]["serverInfo"]["name"], "finoinc");
     }
 
     /// A notification has no id and gets no response — answering one is a

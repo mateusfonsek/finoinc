@@ -2,9 +2,9 @@
 
 <sub><a href="README.md">🇺🇸 Read in English</a></sub>
 
-<img src="src-tauri/icons/icon.png" width="116" alt="finan app" />
+<img src="src-tauri/icons/icon.png" width="116" alt="Finoinc" />
 
-# finan app
+# Finoinc
 
 ### O dinheiro é seu. Os dados também.
 
@@ -14,7 +14,7 @@ Sem nuvem. Sem conta. Sem telemetria. Um arquivo SQLite que é seu.
 <br>
 
 <div>
-<a href="https://github.com/MateusFonseK/finan-app/releases/latest"><img src="https://img.shields.io/badge/⬇%20Baixar-.dmg-3fa34d?logo=apple&logoColor=white" alt="Baixar para macOS" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest"><img src="https://img.shields.io/badge/⬇%20Baixar-.dmg-3fa34d?logo=apple&logoColor=white" alt="Baixar para macOS" /></a>
 <img src="https://img.shields.io/badge/macOS-12%2B%20·%20Apple%20Silicon%20%2B%20Intel-111111?logo=apple&logoColor=white" alt="macOS 12+" />
 <img src="https://img.shields.io/badge/tamanho-~20%20MB-3fa34d" alt="~20 MB" />
 <img src="https://img.shields.io/badge/chamadas%20de%20rede-0%20por%20padrão-3fa34d" alt="Zero chamadas de rede por padrão" />
@@ -35,7 +35,7 @@ Sem nuvem. Sem conta. Sem telemetria. Um arquivo SQLite que é seu.
 
 <br>
 
-Exporte o extrato `.ofx` que seu banco já oferece, solte no app, e o finan app faz o resto:
+Exporte o extrato `.ofx` que seu banco já oferece, solte no app, e o Finoinc faz o resto:
 descarta o que você já tem, identifica estornos, aplica suas regras e monta o mês num painel
 que responde *pra onde foi o dinheiro* sem você escrever uma fórmula de planilha.
 
@@ -50,12 +50,12 @@ onde quiser e abrir com qualquer cliente SQLite.
 
 ## 📥 Instalação
 
-1. Baixe o `.dmg` mais recente em **[Releases](https://github.com/MateusFonseK/finan-app/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 ou superior.
-2. Abra e arraste o **finan app** pra pasta **Aplicativos**.
-3. **Primeira abertura.** O app não é assinado com certificado pago da Apple, então o macOS bloqueia uma vez com *"não foi possível verificar se o 'finan app' está livre de malware…"*. Clique em **OK** — nunca em *Mover pro Lixo* — e rode no Terminal:
+1. Baixe o `.dmg` mais recente em **[Releases](https://github.com/MateusFonseK/finoinc/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 ou superior.
+2. Abra e arraste o **Finoinc** pra pasta **Aplicativos**.
+3. **Primeira abertura.** O app não é assinado com certificado pago da Apple, então o macOS bloqueia uma vez com *"não foi possível verificar se o 'Finoinc' está livre de malware…"*. Clique em **OK** — nunca em *Mover pro Lixo* — e rode no Terminal:
 
    ```sh
-   xattr -dr com.apple.quarantine "/Applications/finan app.app"
+   xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
    Depois disso é só abrir normalmente.
@@ -77,7 +77,7 @@ onde quiser e abrir com qualquer cliente SQLite.
 
 ### Importe o extrato e revise antes de salvar qualquer coisa
 
-Arraste o `.ofx`, abra com o finan app pelo Finder, ou aponte uma pasta e deixe o app achar
+Arraste o `.ofx`, abra com o Finoinc pelo Finder, ou aponte uma pasta e deixe o app achar
 os extratos novos sozinho. Nada é gravado até você mandar.
 
 Reimportar um extrato que se sobrepõe é seguro e esperado: toda linha que você já tem é
@@ -99,7 +99,7 @@ quase todo categorizado.
 
 ### Ele te mostra quais regras estão faltando
 
-O finan app encontra os gastos recorrentes que caíram sem categoria e deixa o trecho da
+O Finoinc encontra os gastos recorrentes que caíram sem categoria e deixa o trecho da
 descrição já preenchido, pronto pra virar regra. **A categoria quem escolhe é você** — o app
 aponta o padrão, não adivinha o significado. Um select, um clique, e a regra vale pras
 ocorrências passadas e pras próximas.

@@ -295,7 +295,7 @@ fn load_pack(root: Option<&Path>, code: &str) -> LocalePack {
             // long time, while in truth the on-disk pack never loaded because the
             // files were being bundled one level to the side.
             Err(e) => eprintln!(
-                "[finan] locale '{code}' failed to load from {}: {e}; using embedded pt-BR",
+                "[finoinc] locale '{code}' failed to load from {}: {e}; using embedded pt-BR",
                 dir.display()
             ),
         }

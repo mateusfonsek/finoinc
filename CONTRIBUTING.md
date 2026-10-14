@@ -38,7 +38,7 @@ There is no manual step. Merging into `main` is what ships:
 3. If the commits are only `docs`/`chore`/`test`/`ci`/`refactor`, no release is
    created — and that's the correct behavior, not a failure.
 
-The `.dmg` comes out at `https://github.com/MateusFonseK/finan-app/releases/latest`.
+The `.dmg` comes out at `https://github.com/MateusFonseK/finoinc/releases/latest`.
 
 ## Running locally
 

@@ -180,6 +180,6 @@ jobs:
             | .github/scripts/release-notes.sh > /tmp/notes.md
 
           gh release create "v${{ steps.version.outputs.next }}" \
-            --title "finan v${{ steps.version.outputs.next }}" \
+            --title "Finoinc v${{ steps.version.outputs.next }}" \
             --notes-file /tmp/notes.md \
             "$dmg"

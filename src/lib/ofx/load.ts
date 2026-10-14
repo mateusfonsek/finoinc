@@ -6,7 +6,7 @@ import type { ParsedOfx } from "./types";
 
 /**
  * Reads an .ofx from disk by path and returns `{ file, parsed }`, reusing the
- * same decode/parse as the file picker. Used by "Open with finan".
+ * same decode/parse as the file picker. Used by "Open with Finoinc".
  *
  * Fails at two very different stages, and the caller needs to know which: the
  * disk read (`OfxReadError` — transient, retry later) and the parse (a plain

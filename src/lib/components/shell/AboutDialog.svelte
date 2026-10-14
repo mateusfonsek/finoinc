@@ -11,7 +11,7 @@
   type Props = { open: boolean; onClose: () => void };
   let { open, onClose }: Props = $props();
 
-  const GITHUB_URL = "https://github.com/MateusFonseK/finan-app";
+  const GITHUB_URL = "https://github.com/MateusFonseK/finoinc";
 
   let closeEl: HTMLButtonElement | undefined = $state();
   let panelEl: HTMLElement | undefined = $state();
@@ -106,7 +106,7 @@
             style="box-shadow: 0 6px 18px -8px oklch(0% 0 0 / 0.5)"
           />
           <div class="flex flex-col items-center gap-1.5">
-            <h2 class="text-title1 font-semibold text-fg">finan app</h2>
+            <h2 class="text-title1 font-semibold text-fg">Finoinc</h2>
             <p class="text-callout text-fg-muted">{t("about.tagline")}</p>
           </div>
         </div>

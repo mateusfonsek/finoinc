@@ -40,11 +40,11 @@ cat <<'EOF'
 
 ## Instalação (macOS)
 
-1. Baixe o `.dmg` abaixo, abra e arraste o **finan app** para a pasta **Aplicativos**.
+1. Baixe o `.dmg` abaixo, abra e arraste o **Finoinc** para a pasta **Aplicativos**.
 2. O app **não é assinado** (projeto open-source individual), então o macOS bloqueia na primeira abertura. Remova a quarentena do Gatekeeper no Terminal:
 
    ```
-   xattr -dr com.apple.quarantine "/Applications/finan app.app"
+   xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
 3. Abra normalmente. Tudo **100% local** — seus dados ficam só no seu Mac, em `~/Library/Application Support/app.finan/finan.db`.

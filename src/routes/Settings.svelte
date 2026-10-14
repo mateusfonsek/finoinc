@@ -178,7 +178,7 @@
     menuOpen = false;
     error = null;
     const home = await homeDir();
-    const target = await join(home, "Library", "Mobile Documents", "com~apple~CloudDocs", "finan");
+    const target = await join(home, "Library", "Mobile Documents", "com~apple~CloudDocs", "Finoinc");
     // Creating the folder is the feature's ONLY disk write, so it asks — and
     // only when the folder really is missing.
     if (!(await dirExists(target))) {
@@ -290,7 +290,7 @@
     error = null;
     const target = await saveDialog({
       title: t("settings.save_title"),
-      defaultPath: `finan-backup-${new Date().toISOString().slice(0, 10)}.db`,
+      defaultPath: `finoinc-backup-${new Date().toISOString().slice(0, 10)}.db`,
       filters: [{ name: "SQLite DB", extensions: ["db"] }],
     });
     if (!target) return;
@@ -599,7 +599,7 @@
   <!-- ── Sobre + atalhos ────────────────────────────────────────────────── -->
   <Card title={t("settings.about")}>
     <div class="text-sub text-fg-muted">
-      <strong class="text-fg font-semibold">finan app</strong>
+      <strong class="text-fg font-semibold">Finoinc</strong>
       <span class="tabular">{version ? `v${version}` : ""}</span>
       — {t("settings.about_line")}
     </div>

@@ -2,9 +2,9 @@
 
 <sub><a href="README.pt-BR.md">🇧🇷 Leia em português</a></sub>
 
-<img src="src-tauri/icons/icon.png" width="116" alt="finan app" />
+<img src="src-tauri/icons/icon.png" width="116" alt="Finoinc" />
 
-# finan app
+# Finoinc
 
 ### Your money. Your data too.
 
@@ -14,7 +14,7 @@ No cloud. No account. No telemetry. One SQLite file you own.
 <br>
 
 <div>
-<a href="https://github.com/MateusFonseK/finan-app/releases/latest"><img src="https://img.shields.io/badge/⬇%20Download-.dmg-3fa34d?logo=apple&logoColor=white" alt="Download for macOS" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest"><img src="https://img.shields.io/badge/⬇%20Download-.dmg-3fa34d?logo=apple&logoColor=white" alt="Download for macOS" /></a>
 <img src="https://img.shields.io/badge/macOS-12%2B%20·%20Apple%20Silicon%20%2B%20Intel-111111?logo=apple&logoColor=white" alt="macOS 12+" />
 <img src="https://img.shields.io/badge/size-~20%20MB-3fa34d" alt="~20 MB" />
 <img src="https://img.shields.io/badge/network%20calls-0%20by%20default-3fa34d" alt="Zero network calls by default" />
@@ -35,7 +35,7 @@ No cloud. No account. No telemetry. One SQLite file you own.
 
 <br>
 
-Export the `.ofx` statement your bank already offers, drop it in, and finan app does the
+Export the `.ofx` statement your bank already offers, drop it in, and Finoinc does the
 rest: it deduplicates what you already have, spots reversals, applies your rules, and lays
 the month out on a dashboard that answers *where did the money go* without you building a
 single spreadsheet formula.
@@ -51,12 +51,12 @@ anywhere, and any SQLite client can open it.
 
 ## 📥 Install
 
-1. Download the latest `.dmg` from **[Releases](https://github.com/MateusFonseK/finan-app/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 or newer.
-2. Open it and drag **finan app** into **Applications**.
-3. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'finan app' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
+1. Download the latest `.dmg` from **[Releases](https://github.com/MateusFonseK/finoinc/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 or newer.
+2. Open it and drag **Finoinc** into **Applications**.
+3. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
 
    ```sh
-   xattr -dr com.apple.quarantine "/Applications/finan app.app"
+   xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
    Open it normally from then on.
@@ -78,7 +78,7 @@ anywhere, and any SQLite client can open it.
 
 ### Import a statement, review before anything is saved
 
-Drag the `.ofx` in, open it with finan app from Finder, or point the app at a folder and
+Drag the `.ofx` in, open it with Finoinc from Finder, or point the app at a folder and
 let it find new statements on its own. Nothing is written until you say so.
 
 Re-importing an overlapping statement is safe and expected: every row you already have is
@@ -100,7 +100,7 @@ lands mostly categorized.
 
 ### It shows you which rules you're missing
 
-finan app finds the recurring charges that landed with no category and pre-fills the
+Finoinc finds the recurring charges that landed with no category and pre-fills the
 description snippet, ready to become a rule. **You pick the category** — the app points at
 the pattern, it never guesses what it means. One dropdown, one click, and the rule applies
 to the past occurrences as well as the next ones.

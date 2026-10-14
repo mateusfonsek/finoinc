@@ -38,7 +38,7 @@ Não existe passo manual. Mergear na `main` é o que lança:
 3. Se os commits forem só `docs`/`chore`/`test`/`ci`/`refactor`, nenhuma release é
    criada — e isso é o comportamento correto, não uma falha.
 
-O `.dmg` sai em `https://github.com/MateusFonseK/finan-app/releases/latest`.
+O `.dmg` sai em `https://github.com/MateusFonseK/finoinc/releases/latest`.
 
 ## Rodando localmente
 

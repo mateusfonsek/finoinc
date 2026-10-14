@@ -92,7 +92,7 @@ function motion() {
 
   for (const el of document.querySelectorAll("[data-reveal]")) {
     SplitText.create(el, {
-      type: "lines", mask: "lines", autoSplit: true,
+      type: "lines", mask: "lines", autoSplit: true, aria: "none",
       onSplit: (self) => gsap.from(self.lines, {
         yPercent: 100, duration: 0.8, ease: "snap", stagger: 0.08,
         scrollTrigger: { trigger: el, start: "top 88%", once: true },

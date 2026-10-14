@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{meta.title}}</title>
+<meta name="description" content="{{meta.description}}">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121416">
+<link rel="icon" type="image/png" sizes="32x32" href="{{base}}assets/favicon-32.png">
+<link rel="apple-touch-icon" href="{{base}}assets/apple-touch-icon.png">
+<link rel="canonical" href="{{page_url}}">
+<link rel="alternate" hreflang="en" href="{{site_url}}">
+<link rel="alternate" hreflang="pt-BR" href="{{site_url}}pt/">
+<link rel="alternate" hreflang="x-default" href="{{site_url}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{page_url}}">
+<meta property="og:title" content="{{meta.title}}">
+<meta property="og:description" content="{{meta.description}}">
+<meta property="og:image" content="{{site_url}}assets/og-image.png">
+<meta property="og:locale" content="{{meta.og_locale}}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" as="image" href="{{base}}assets/video/mascot-wave-poster.webp" fetchpriority="high">
+<link rel="stylesheet" href="{{base}}style.css">
+<script src="{{base}}vendor/gsap.min.js" defer></script>
+<script src="{{base}}vendor/ScrollTrigger.min.js" defer></script>
+<script src="{{base}}vendor/SplitText.min.js" defer></script>
+<script src="{{base}}vendor/CustomEase.min.js" defer></script>
+<script src="{{base}}main.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">{{nav.skip}}</a>
+
+<header class="nav">
+  <a class="nav__brand" href="./" aria-label="{{nav.home}}"><img src="{{base}}assets/favicon-32.png" width="28" height="28" alt=""><span>Finoinc</span></a>
+  <nav class="nav__links" aria-label="Primary">
+    <a href="#product">{{nav.features}}</a>
+    <a href="#privacy">{{nav.privacy}}</a>
+    <a href="#ai">{{nav.ai}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc">{{nav.github}}</a>
+  </nav>
+  <div class="nav__end">
+    <a class="nav__lang" href="{{alt_href}}" hreflang="{{alt_hreflang}}" aria-label="{{nav.lang_switch}}">{{alt_label}}</a>
+    <a class="btn btn--small" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{nav.download}}</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="hero__copy">
+      <p class="eyebrow">{{hero.eyebrow}}</p>
+      <h1 class="display" data-reveal>{{hero.title}}</h1>
+      <p class="lead">{{hero.subtitle}}</p>
+      <div class="cta-row">
+        <a class="btn btn--large" href="https://github.com/MateusFonseK/finoinc/releases/latest"><svg class="btn__apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>{{hero.cta}}</a>
+        <a class="link" href="https://github.com/MateusFonseK/finoinc">{{hero.secondary}} →</a>
+      </div>
+      <p class="note">{{hero.cta_note}}</p>
+    </div>
+    <div class="hero__mascot">
+      <video data-autoplay muted playsinline loop preload="none" aria-hidden="true" poster="{{base}}assets/video/mascot-wave-poster.webp" width="600" height="600">
+        <source src="{{base}}assets/video/mascot-wave.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <section class="proof" aria-label="Facts">
+    <div><strong data-count="0">0</strong><span>{{proof.network}}</span></div>
+    <div><strong data-count="1">1</strong><span>{{proof.file}}</span></div>
+    <div><strong>{{proof.license_value}}</strong><span>{{proof.license}}</span></div>
+    <div><strong>{{proof.universal_value}}</strong><span>{{proof.universal}}</span></div>
+  </section>
+
+  <section class="product" id="product">
+    <header class="section-head">
+      <p class="kicker">{{product.kicker}}</p>
+      <h2 class="title" data-reveal>{{product.title}}</h2>
+    </header>
+    <div class="product__grid">
+      <div class="product__stage">
+        <div class="window">
+          <img class="product__screen is-active" data-step="0" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="{{product.steps.import.alt}}">
+          <img class="product__screen" data-step="1" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="{{product.steps.rules.alt}}" loading="lazy">
+          <img class="product__screen" data-step="2" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="{{product.steps.suggestions.alt}}" loading="lazy">
+          <img class="product__screen" data-step="3" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="{{product.steps.dashboard.alt}}" loading="lazy">
+          <img class="product__screen" data-step="4" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="{{product.steps.calendar.alt}}" loading="lazy">
+        </div>
+        <div class="product__dots">
+          <button type="button" data-step="0" aria-label="{{product.progress}} 1"></button>
+          <button type="button" data-step="1" aria-label="{{product.progress}} 2"></button>
+          <button type="button" data-step="2" aria-label="{{product.progress}} 3"></button>
+          <button type="button" data-step="3" aria-label="{{product.progress}} 4"></button>
+          <button type="button" data-step="4" aria-label="{{product.progress}} 5"></button>
+        </div>
+      </div>
+      <ol class="product__steps">
+        <li class="step" data-step="0"><h3>{{product.steps.import.title}}</h3><p>{{product.steps.import.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="{{product.steps.import.alt}}" loading="lazy"></li>
+        <li class="step" data-step="1"><h3>{{product.steps.rules.title}}</h3><p>{{product.steps.rules.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="{{product.steps.rules.alt}}" loading="lazy"></li>
+        <li class="step" data-step="2"><h3>{{product.steps.suggestions.title}}</h3><p>{{product.steps.suggestions.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="{{product.steps.suggestions.alt}}" loading="lazy"></li>
+        <li class="step" data-step="3"><h3>{{product.steps.dashboard.title}}</h3><p>{{product.steps.dashboard.body}}</p>
+          <div class="bars" aria-hidden="true">
+            <span style="--in:.78;--out:.58"></span><span style="--in:.80;--out:.64"></span><span style="--in:.74;--out:.66"></span>
+            <span style="--in:.82;--out:.55"></span><span style="--in:.83;--out:.62"></span><span style="--in:.75;--out:.73"></span>
+            <span style="--in:.77;--out:.63"></span><span style="--in:.95;--out:.72"></span><span style="--in:.77;--out:.68"></span>
+            <span style="--in:.75;--out:.60"></span><span style="--in:.84;--out:.48"></span>
+          </div>
+          <img class="step__shot" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="{{product.steps.dashboard.alt}}" loading="lazy"></li>
+        <li class="step" data-step="4"><h3>{{product.steps.calendar.title}}</h3><p>{{product.steps.calendar.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="{{product.steps.calendar.alt}}" loading="lazy"></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="flow">
+    <div class="flow__copy">
+      <p class="kicker">{{flow.kicker}}</p>
+      <h2 class="title" data-reveal>{{flow.title}}</h2>
+      <p class="body">{{flow.body}}</p>
+    </div>
+    <img class="mascot mascot--flow" src="{{base}}assets/mascot/statement.webp" width="360" height="360" alt="" loading="lazy">
+    <div class="pipeline">
+      <div class="pipeline__rail" aria-hidden="true"><span></span></div>
+      <ol class="pipeline__stages">
+        <li class="stage-card" data-stage="0">
+          <span class="stage-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
+          <div class="stage-card__text">
+            <span class="stage-card__num">01</span>
+            <h3>{{flow.s1_title}}</h3>
+            <p>{{flow.s1_body}}</p>
+          </div>
+        </li>
+        <li class="stage-card" data-stage="1">
+          <span class="stage-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 2.8 2.7L16.5 9"/></svg></span>
+          <div class="stage-card__text">
+            <span class="stage-card__num">02</span>
+            <h3>{{flow.s2_title}}</h3>
+            <p>{{flow.s2_body}}</p>
+          </div>
+        </li>
+        <li class="stage-card" data-stage="2">
+          <span class="stage-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 12.6V5a1.5 1.5 0 0 1 1.5-1.5h7.6a2 2 0 0 1 1.4.6l6.4 6.4a2 2 0 0 1 0 2.8l-6.1 6.1a2 2 0 0 1-2.8 0L4.1 14a2 2 0 0 1-.6-1.4z"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></span>
+          <div class="stage-card__text">
+            <span class="stage-card__num">03</span>
+            <h3>{{flow.s3_title}}</h3>
+            <p>{{flow.s3_body}}</p>
+          </div>
+        </li>
+        <li class="stage-card" data-stage="3">
+          <span class="stage-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-13"/><path d="M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></svg></span>
+          <div class="stage-card__text">
+            <span class="stage-card__num">04</span>
+            <h3>{{flow.s4_title}}</h3>
+            <p>{{flow.s4_body}}</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="privacy" id="privacy">
+    <img class="mascot mascot--privacy" src="{{base}}assets/mascot/privacy.webp" width="360" height="360" alt="" loading="lazy">
+    <div class="privacy__copy">
+      <p class="kicker">{{privacy.kicker}}</p>
+      <h2 class="title" data-reveal>{{privacy.title}}</h2>
+      <p class="manifesto" data-reveal><span>{{privacy.l1}}</span> <span>{{privacy.l2}}</span> <span>{{privacy.l3}}</span> <span>{{privacy.l4}}</span></p>
+      <table class="net">
+        <caption>{{privacy.table_title}}</caption>
+        <tr><th scope="row">{{privacy.r1}}</th><td class="net__never">{{privacy.r1v}}</td></tr>
+        <tr><th scope="row">{{privacy.r2}}</th><td>{{privacy.r2v}}</td></tr>
+        <tr><th scope="row">{{privacy.r3}}</th><td>{{privacy.r3v}}</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="ai" id="ai">
+    <div class="ai__copy">
+      <p class="kicker">{{ai.kicker}} <span class="badge">{{ai.badge}}</span></p>
+      <h2 class="title" data-reveal>{{ai.title}}</h2>
+      <p class="body">{{ai.body}}</p>
+      <figure class="chat" aria-label="{{ai.example}}">
+        <p class="chat__q">{{ai.q}}</p>
+        <p class="chat__a">{{ai.a}}</p>
+      </figure>
+    </div>
+    <img class="mascot mascot--ai" src="{{base}}assets/mascot/ai.webp" width="360" height="360" alt="" loading="lazy">
+  </section>
+
+  <section class="specs">
+    <header class="section-head">
+      <p class="kicker">{{specs.kicker}}</p>
+      <h2 class="title" data-reveal>{{specs.title}}</h2>
+    </header>
+    <dl class="specs__grid">
+      <div><dt>{{specs.size_value}}</dt><dd>{{specs.size}}</dd></div>
+      <div><dt>{{specs.chips_value}}</dt><dd>{{specs.chips}}</dd></div>
+      <div><dt data-count="2">{{specs.langs_value}}</dt><dd>{{specs.langs}}</dd></div>
+      <div><dt>{{specs.macos_value}}</dt><dd>{{specs.macos}}</dd></div>
+      <div><dt>{{specs.stack_value}}</dt><dd>{{specs.stack}}</dd></div>
+      <div><dt>{{specs.license_value}}</dt><dd>{{specs.license}}</dd></div>
+    </dl>
+  </section>
+
+  <section class="install" id="download">
+    <div class="install__mascot">
+      <img class="celebrate" data-trigger="#cta-final" src="{{base}}assets/mascot/celebrate.webp" width="420" height="420" alt="" loading="lazy">
+    </div>
+    <div class="install__copy">
+      <h2 class="title" data-reveal>{{install.title}}</h2>
+      <ol class="install__steps">
+        <li>{{install.s1}}</li>
+        <li>{{install.s2}}
+          <div class="cmd"><code id="cmd">xattr -dr com.apple.quarantine "/Applications/Finoinc.app"</code><button type="button" class="cmd__copy" aria-live="polite" data-copy="#cmd" data-done="{{install.copied}}" data-fail="{{install.copy_fail}}">{{install.copy}}</button></div>
+        </li>
+        <li>{{install.s3}}</li>
+      </ol>
+      <a class="btn btn--large" id="cta-final" href="https://github.com/MateusFonseK/finoinc/releases/latest"><svg class="btn__apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>{{install.cta}}</a>
+      <p class="note">{{install.cta_note}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <video data-autoplay muted playsinline loop preload="none" aria-hidden="true" poster="{{base}}assets/video/icon-alive-poster.webp" width="360" height="360">
+    <source src="{{base}}assets/video/icon-alive.mp4" type="video/mp4">
+  </video>
+  <nav class="footer__links" aria-label="Footer">
+    <a href="https://github.com/MateusFonseK/finoinc">{{footer.source}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc/releases">{{footer.releases}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc/blob/main/LICENSE">{{footer.license}}</a>
+    <a href="{{alt_href}}" hreflang="{{alt_hreflang}}">{{alt_label}}</a>
+  </nav>
+</footer>
+</body>
+</html>

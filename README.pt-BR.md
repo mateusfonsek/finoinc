@@ -24,6 +24,7 @@ Sem nuvem. Sem conta. Sem telemetria. Um arquivo SQLite que é seu.
 
 <br>
 
+<a href="https://mateusfonsek.github.io/finoinc/pt/"><strong>Site</strong></a> ·
 <a href="#-instalação">Instalação</a> ·
 <a href="#-o-que-ele-faz">O que ele faz</a> ·
 <a href="#-privacidade--a-afirmação-de-verdade">Privacidade</a> ·

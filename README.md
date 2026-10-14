@@ -24,6 +24,7 @@ No cloud. No account. No telemetry. One SQLite file you own.
 
 <br>
 
+<a href="https://mateusfonsek.github.io/finoinc/"><strong>Website</strong></a> ·
 <a href="#-install">Install</a> ·
 <a href="#-what-it-does">What it does</a> ·
 <a href="#-privacy--the-actual-claim">Privacy</a> ·

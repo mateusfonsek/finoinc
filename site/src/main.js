@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButtons();
   videos();
   productStage();
-  // Every plugin or none: a blocker that drops one file must not leave .motion's hidden
-  // states behind with nothing to reveal them.
+  // Every plugin or none: a blocker that drops one file would otherwise throw halfway
+  // through setup and leave the pipeline unlit for good.
   const { gsap, ScrollTrigger, SplitText, CustomEase } = window;
   if (!reduceMotion.matches && gsap && ScrollTrigger && SplitText && CustomEase) motion();
 });
@@ -73,6 +73,8 @@ function productStage() {
 
   const show = (i) => {
     for (const el of [...screens, ...steps, ...dots]) el.classList.toggle("is-active", Number(el.dataset.step) === i);
+    // Only the visible screenshot is announced; the others sit at opacity 0.
+    for (const img of screens) img.setAttribute("aria-hidden", String(Number(img.dataset.step) !== i));
   };
   // The step whose middle crosses the viewport's middle drives the stage. Works with plain
   // scrolling; no pin is needed because the stage is position: sticky.
@@ -90,7 +92,6 @@ function productStage() {
 function motion() {
   const { gsap, ScrollTrigger, SplitText, CustomEase } = window;
   gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
-  root.classList.add("motion");
   CustomEase.create("snap", "0.32,0.72,0,1");
 
   for (const el of document.querySelectorAll("[data-reveal]")) {
@@ -124,9 +125,13 @@ function motion() {
   const pipeline = document.querySelector(".pipeline");
   const fill = pipeline.querySelector(".pipeline__rail span");
   const cards = [...pipeline.querySelectorAll(".stage-card")];
+  const stacked = matchMedia("(max-width: 860px)");
   const track = (progress) => {
     gsap.set(fill, { scaleX: progress });
-    cards.forEach((card, i) => card.classList.toggle("is-lit", progress >= i / (cards.length - 1) - 0.001));
+    // In a row each stage lights when the rail reaches its icon; stacked, the last one
+    // would only light once the whole list had scrolled past, so the steps come earlier.
+    const steps = stacked.matches ? cards.length : cards.length - 1;
+    cards.forEach((card, i) => card.classList.toggle("is-lit", progress >= i / steps - 0.001));
   };
   pipeline.classList.add("is-tracking");
   ScrollTrigger.create({

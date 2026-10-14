@@ -135,7 +135,8 @@ section { padding: clamp(80px, 12vw, 160px) var(--gutter); max-width: var(--max)
 .stage-card { display: grid; gap: 20px; align-content: start; }
 .stage-card__icon {
   position: relative; z-index: 1; display: grid; place-items: center; width: var(--icon); height: var(--icon); border-radius: 14px;
-  background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-hi);
+  /* Tint over an opaque base: a translucent fill would let the rail show through. */
+  background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--bg); border: 1px solid var(--accent); color: var(--accent-hi);
   box-shadow: 0 0 0 6px var(--bg);
   transition: background-color 340ms var(--ease-snap), border-color 340ms var(--ease-snap), color 340ms var(--ease-snap), transform 340ms var(--ease-snap);
 }

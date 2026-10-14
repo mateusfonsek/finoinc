@@ -71,7 +71,7 @@
     "s2_title": "Review it",
     "s2_body": "Duplicates and refunds come pre-flagged. Nothing is saved until you confirm.",
     "s3_title": "Rules sort it",
-    "s3_body": "Every charge lands in its category, and you teach new ones in a click.",
+    "s3_body": "Charges that match a rule land in their category; the ones that don't, you teach in a click.",
     "s4_title": "One file, yours",
     "s4_body": "finan.db, plain SQLite. Back it up, move it, open it anywhere."
   },

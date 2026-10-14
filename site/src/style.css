@@ -109,24 +109,57 @@ section { padding: clamp(80px, 12vw, 160px) var(--gutter); max-width: var(--max)
   .js .product__screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 340ms var(--ease-snap), transform 340ms var(--ease-snap); transform: scale(.985); }
   .js .product__screen.is-active { opacity: 1; transform: none; }
   .js .product__steps { gap: 0; }
-  .js .step { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; opacity: .38; transition: opacity 340ms var(--ease-snap); }
-  .js .step.is-active { opacity: 1; }
+  .js .step { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; }
+  .js .step h3 { color: var(--fg-muted); transition: color 340ms var(--ease-snap); }
+  .js .step.is-active h3 { color: var(--fg); }
   .js .step__shot { display: none; }
-  .product__dots { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
-  .product__dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-3); cursor: pointer; transition: background-color 220ms, transform 90ms ease-out; }
-  .product__dots button.is-active { background: var(--accent); }
-  .product__dots button:active { transform: scale(.85); }
+  .product__dots { display: flex; gap: 0; justify-content: center; margin-top: 20px; }
+  /* 24px hit area (WCAG 2.5.8) around an 8px dot. */
+  .product__dots button { position: relative; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .product__dots button::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--surface-3); transition: background-color 220ms, transform 90ms ease-out; }
+  .product__dots button.is-active::before { background: var(--accent); }
+  .product__dots button:active::before { transform: scale(.85); }
 }
 
-.flow { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-.flow__diagram { grid-column: 1 / -1; width: 100%; height: auto; }
-.flow__diagram .wire { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; }
-.flow__diagram rect { fill: var(--surface-2); stroke: var(--border); }
-.flow__diagram .node--db rect { fill: var(--accent-soft); stroke: var(--accent); }
-.flow__diagram text { fill: var(--fg); font: 600 14px var(--font-body); text-anchor: middle; }
+.flow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 48px; align-items: center; }
 .mascot { width: min(360px, 70vw); }
-.mascot--flow { justify-self: center; grid-row: 1; grid-column: 2; }
-@media (max-width: 860px) { .flow { grid-template-columns: 1fr; } .mascot--flow { grid-row: auto; grid-column: auto; } }
+.mascot--flow { width: min(280px, 60vw); justify-self: end; }
+
+/* A rail runs through the stage icons; scrolling fills it and lights each stage. Without
+   motion everything renders filled and lit. */
+.pipeline { grid-column: 1 / -1; position: relative; margin-top: 24px; --icon: 48px; --gap: 24px; }
+.pipeline__stages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); position: relative; }
+.pipeline__rail { position: absolute; top: calc(var(--icon) / 2 - 1px); height: 2px; left: calc(var(--icon) / 2);
+  right: calc((100% - 3 * var(--gap)) / 4 - var(--icon) / 2); background: var(--border); border-radius: 2px; overflow: hidden; }
+.pipeline__rail span { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left center; }
+.stage-card { display: grid; gap: 20px; align-content: start; }
+.stage-card__icon {
+  position: relative; z-index: 1; display: grid; place-items: center; width: var(--icon); height: var(--icon); border-radius: 14px;
+  background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-hi);
+  box-shadow: 0 0 0 6px var(--bg);
+  transition: background-color 340ms var(--ease-snap), border-color 340ms var(--ease-snap), color 340ms var(--ease-snap), transform 340ms var(--ease-snap);
+}
+.stage-card__icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.stage-card__num { display: block; margin-bottom: 6px; color: var(--fg-muted); font: 600 12px/1 var(--font-mono); letter-spacing: .04em; }
+.stage-card h3 { font-size: 19px; }
+.stage-card p { margin: 0; color: var(--fg-muted); font-size: 15px; line-height: 1.5; max-width: 30ch; }
+.pipeline.is-tracking .stage-card:not(.is-lit) .stage-card__icon { background: var(--surface-2); border-color: var(--border); color: var(--fg-muted); transform: scale(.94); }
+
+@media (max-width: 860px) {
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .mascot--flow { justify-self: start; width: min(220px, 55vw); }
+  .pipeline__stages { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .stage-card { grid-template-columns: var(--icon) minmax(0, 1fr); gap: 18px; }
+  /* Stacked: one connector per gap, so the line never runs past the last icon. */
+  .pipeline__rail { display: none; }
+  .stage-card { position: relative; }
+  .stage-card:not(:last-child)::after {
+    content: ""; position: absolute; left: calc(var(--icon) / 2 - 1px); top: calc(var(--icon) + 8px); bottom: -24px; width: 2px;
+    border-radius: 2px; background: var(--accent); transition: background-color 340ms var(--ease-snap);
+  }
+  .pipeline.is-tracking .stage-card:not(.is-lit)::after,
+  .pipeline.is-tracking .stage-card:has(+ .stage-card:not(.is-lit))::after { background: var(--border); }
+}
 
 .privacy { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: start; }
 .manifesto { margin: 8px 0 32px; font: 680 clamp(26px, 3.4vw, 40px)/1.15 var(--font-display); letter-spacing: -0.025em; }
@@ -178,9 +211,6 @@ section { padding: clamp(80px, 12vw, 160px) var(--gutter); max-width: var(--max)
 
 .notfound main { min-height: 100vh; display: grid; place-content: center; justify-items: center; text-align: center; padding: 24px; }
 .notfound img { width: min(320px, 70vw); }
-
-/* Motion-only initial states: present only when main.js decided to animate. */
-.motion .flow__diagram .node { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

@@ -119,15 +119,19 @@ function motion() {
     scrollTrigger: { trigger: ".bars", start: "top 85%", end: "top 45%", scrub: true },
   });
 
-  const wires = [...document.querySelectorAll(".flow .wire")];
-  const flow = gsap.timeline({ scrollTrigger: { trigger: ".flow__diagram", start: "top 85%", end: "center 60%", scrub: true } });
-  document.querySelectorAll(".flow .node").forEach((node, i) => {
-    flow.to(node, { opacity: 1, duration: 0.5 }, i);
-    const wire = wires[i];
-    if (wire) {
-      const len = wire.getTotalLength();
-      gsap.set(wire, { strokeDasharray: len, strokeDashoffset: len });
-      flow.to(wire, { strokeDashoffset: 0, duration: 0.5 }, i + 0.5);
-    }
+  // The rail fills with scroll progress and lights each stage as the fill reaches it.
+  // Stacked (phones) there is no rail: per-stage connectors light with the stages.
+  const pipeline = document.querySelector(".pipeline");
+  const fill = pipeline.querySelector(".pipeline__rail span");
+  const cards = [...pipeline.querySelectorAll(".stage-card")];
+  const track = (progress) => {
+    gsap.set(fill, { scaleX: progress });
+    cards.forEach((card, i) => card.classList.toggle("is-lit", progress >= i / (cards.length - 1) - 0.001));
+  };
+  pipeline.classList.add("is-tracking");
+  ScrollTrigger.create({
+    trigger: pipeline, start: "top 80%", end: "bottom 55%", scrub: true,
+    onUpdate: (self) => track(self.progress),
+    onRefresh: (self) => track(self.progress),
   });
 }

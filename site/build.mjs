@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const SITE_URL = "https://mateusfonsek.github.io/finoinc/";
+const BASE_PATH = new URL(SITE_URL).pathname;
 
 const LOCALES = {
-  en: { out: "index.html", vars: { base: "./", lang: "en", screens: "en", alt_href: "pt/", alt_label: "PT", alt_hreflang: "pt-BR", site_url: SITE_URL } },
-  pt: { out: "pt/index.html", vars: { base: "../", lang: "pt-BR", screens: "pt", alt_href: "../", alt_label: "EN", alt_hreflang: "en", site_url: SITE_URL } },
+  en: { out: "index.html", vars: { base: "./", lang: "en", screens: "en", alt_href: "pt/", alt_label: "PT", alt_hreflang: "pt-BR", site_url: SITE_URL, page_url: SITE_URL } },
+  pt: { out: "pt/index.html", vars: { base: "../", lang: "pt-BR", screens: "pt", alt_href: "../", alt_label: "EN", alt_hreflang: "en", site_url: SITE_URL, page_url: `${SITE_URL}pt/` } },
 };
 
 export function render(template, strings, locale) {
@@ -38,7 +39,7 @@ export function build(outDir = join(ROOT, "_site")) {
   }
   // One 404 for every path: GitHub Pages serves it from any depth, so it carries both
   // languages instead of guessing one.
-  const notFound = { en: strings.en, pt: strings.pt, site_url: SITE_URL };
+  const notFound = { en: strings.en, pt: strings.pt, base_path: BASE_PATH };
   writeFileSync(join(outDir, "404.html"), render(read("src/404.html"), notFound, "404"));
   for (const dir of ["assets", "vendor"]) cpSync(join(ROOT, dir), join(outDir, dir), { recursive: true });
   for (const file of ["style.css", "main.js"]) cpSync(join(ROOT, "src", file), join(outDir, file));
@@ -61,7 +62,7 @@ export function checkLinks(outDir) {
     const from = baseHref ? outDir : dirname(file);
     for (const [, url] of html.matchAll(/\s(?:src|href|poster)="([^"]+)"/g)) {
       if (SKIP.test(url) || url === "") continue;
-      const local = baseHref ? url.replace(/^\/finoinc\//, "") : url;
+      const local = baseHref && url.startsWith(BASE_PATH) ? url.slice(BASE_PATH.length) : url;
       const target = resolve(from, local.split(/[?#]/)[0]);
       const ok = existsSync(target) && (!statSync(target).isDirectory() || existsSync(join(target, "index.html")));
       if (!ok) missing.push(`${relative(outDir, file)} -> ${url}`);

@@ -1,1 +1,112 @@
-{ "meta": { "title": "Finoinc" }, "hero": { "title": "O dinheiro é seu. Os dados também." }, "notfound": { "title": "Oinc? Essa página não existe." } }
+{
+  "meta": {
+    "title": "Finoinc — Finanças pessoais que nunca saem do seu Mac",
+    "description": "Finanças pessoais grátis e open source pro macOS. Importe o extrato OFX do seu banco, categorize com regras e guarde tudo num arquivo SQLite no seu Mac.",
+    "og_locale": "pt_BR"
+  },
+  "nav": { "skip": "Pular para o conteúdo", "features": "Recursos", "privacy": "Privacidade", "ai": "IA", "github": "GitHub", "download": "Baixar", "home": "Início do Finoinc", "lang_switch": "Read in English" },
+  "hero": {
+    "eyebrow": "Grátis e open source · pro macOS",
+    "title": "O dinheiro é seu.<br>Os dados também.",
+    "subtitle": "Finanças pessoais que nunca saem do seu Mac.",
+    "cta": "Baixar pro macOS",
+    "cta_note": "Grátis · ~20 MB · macOS 12+",
+    "secondary": "Ver no GitHub"
+  },
+  "proof": {
+    "network": "chamadas de rede por padrão",
+    "file": "arquivo SQLite que é seu",
+    "license_value": "MIT",
+    "license": "licença open source",
+    "universal_value": "Universal",
+    "universal": "Apple Silicon + Intel"
+  },
+  "product": {
+    "kicker": "Como é usar",
+    "title": "Solte um extrato. Leia o seu mês.",
+    "progress": "Mostrar passo",
+    "steps": {
+      "import": { "title": "Você revisa antes de salvar", "body": "Arraste o .ofx, abra pelo Finder ou deixe o app observando uma pasta. Duplicatas vêm marcadas e desmarcadas, estornos aparecem junto da compra, e nada é gravado até você confirmar.", "alt": "A revisão da importação, com linhas duplicadas marcadas e um estorno pareado com a compra" },
+      "rules": { "title": "Regras que categorizam por você", "body": "Se a descrição contém isso, vai pra aquela categoria. As regras rodam em toda importação, já vêm prontas pro seu idioma, e a categoria que você escolhe na mão sempre vence.", "alt": "A lista de regras, cada uma ligando trechos da descrição a uma categoria" },
+      "suggestions": { "title": "Ele mostra as regras que faltam", "body": "O Finoinc acha os gastos recorrentes que caíram sem categoria e já preenche a regra. Você escolhe a categoria: o app aponta o padrão, nunca adivinha o que ele significa.", "alt": "Sugestões de regra para gastos recorrentes sem categoria" },
+      "dashboard": { "title": "Um mês que dá pra ler", "body": "Renda, gastos, saldo, gastos por categoria e de onde vem a sua renda. Transferência entre suas contas nunca conta duas vezes, e investimento tem painel próprio.", "alt": "O dashboard com os totais do mês, a rosca de categorias e onze meses de tendência" },
+      "calendar": { "title": "Contas no calendário, não na cabeça", "body": "Toda regra com dia de vencimento vira uma conta. Veja o que está pago, pendente e atrasado, e dê baixa contra a transação exata que pagou.", "alt": "O calendário de contas com contas pagas, pendentes e atrasadas" }
+    }
+  },
+  "flow": {
+    "kicker": "Como funciona",
+    "title": "Do arquivo do banco às respostas, tudo no seu Mac.",
+    "body": "Seu banco já exporta OFX. O Finoinc lê, você revisa, suas regras arquivam, e tudo cai num arquivo SQLite na sua pasta de usuário.",
+    "n1": "extrato.ofx",
+    "n2": "Você revisa",
+    "n3": "Regras arquivam",
+    "n4": "finan.db"
+  },
+  "privacy": {
+    "kicker": "Privacidade",
+    "title": "Privado por construção, não por promessa.",
+    "l1": "Sem conta.",
+    "l2": "Sem login.",
+    "l3": "Sem telemetria.",
+    "l4": "Sem anúncio.",
+    "table_title": "Quando ele usa a rede?",
+    "r1": "Abrir, importar, categorizar, navegar, fazer backup",
+    "r1v": "Nunca",
+    "r2": "Servidor MCP ligado",
+    "r2v": "Nunca chama ninguém. Só escuta em 127.0.0.1",
+    "r3": "Consulta de CNPJ (desligada por padrão)",
+    "r3v": "Só os dígitos do CNPJ, pra BrasilAPI, depois que você liga",
+    "path_lead": "Tudo fica em",
+    "path_tail": "Faça backup, copie pra outro Mac, abra em qualquer cliente SQLite. É seu.",
+    "free_title": "Por que é grátis?",
+    "free_body": "Licença MIT e feito pelo autor pro próprio dinheiro. Não tem servidor pra pagar nem nada pra vender."
+  },
+  "ai": {
+    "badge": "Novo",
+    "kicker": "IA, do seu jeito",
+    "title": "Sua IA pergunta. Seu Mac responde.",
+    "body": "Ligue o servidor MCP e um agente de IA neste Mac pode perguntar sobre o seu dinheiro em linguagem natural. O servidor só escuta em 127.0.0.1, vem desligado, e você liga cada ferramenta.",
+    "q": "Quanto eu gastei com restaurante no mês passado, e está subindo?",
+    "a": "R$ 374,93 em restaurantes em setembro, 12% menos que em agosto. Caiu dois meses seguidos.",
+    "example": "Conversa de exemplo",
+    "tools_title": "Você escolhe cada ferramenta",
+    "read": "Leitura · ligadas",
+    "write": "Escrita · desligadas",
+    "warning": "O servidor não manda nada pra lugar nenhum, mas o agente que você conecta manda: o que ele lê, ele repassa pro provedor dele. A decisão é sua, e é por isso que o servidor vem desligado e a escrita começa desligada."
+  },
+  "specs": {
+    "kicker": "Por dentro",
+    "title": "Pequeno, nativo, seu.",
+    "size_value": "~20 MB",
+    "size": "instalado, sem Electron",
+    "chips_value": "Universal",
+    "chips": "Apple Silicon + Intel",
+    "langs_value": "2",
+    "langs": "idiomas inclusos",
+    "macos_value": "12+",
+    "macos": "macOS",
+    "stack_value": "Rust + Svelte",
+    "stack": "no WebKit que o seu Mac já tem",
+    "license_value": "MIT",
+    "license": "leia cada linha"
+  },
+  "install": {
+    "title": "Instala em um minuto.",
+    "s1": "Baixe o .dmg e arraste o Finoinc pra Aplicativos.",
+    "s2": "O Finoinc não é assinado com certificado pago da Apple, então o macOS bloqueia a primeira abertura uma vez. Clique em OK (nunca em Mover pro Lixo) e rode no Terminal:",
+    "s3": "Abra normalmente. Pronto.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copy_fail": "Selecionado, aperte ⌘C",
+    "cta": "Baixar pro macOS",
+    "cta_note": "Grátis · ~20 MB · macOS 12+"
+  },
+  "footer": {
+    "name": "Finoinc = finan + oinc, o barulho do porco.",
+    "zero": "Este site não faz nenhuma requisição a terceiros.",
+    "releases": "Versões",
+    "license": "Licença MIT",
+    "source": "Código-fonte"
+  },
+  "notfound": { "title": "Oinc? Essa página não existe.", "home": "Voltar pro início" }
+}

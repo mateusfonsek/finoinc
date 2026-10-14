@@ -6,8 +6,8 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 const SITE_URL = "https://mateusfonsek.github.io/finoinc/";
 
 const LOCALES = {
-  en: { out: "index.html", vars: { base: "./", lang: "en", screens: "en", alt_href: "pt/", alt_label: "PT", site_url: SITE_URL } },
-  pt: { out: "pt/index.html", vars: { base: "../", lang: "pt-BR", screens: "pt", alt_href: "../", alt_label: "EN", site_url: SITE_URL } },
+  en: { out: "index.html", vars: { base: "./", lang: "en", screens: "en", alt_href: "pt/", alt_label: "PT", alt_hreflang: "pt-BR", site_url: SITE_URL } },
+  pt: { out: "pt/index.html", vars: { base: "../", lang: "pt-BR", screens: "pt", alt_href: "../", alt_label: "EN", alt_hreflang: "en", site_url: SITE_URL } },
 };
 
 export function render(template, strings, locale) {

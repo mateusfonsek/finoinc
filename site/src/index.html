@@ -1,3 +1,217 @@
 <!doctype html>
-<html lang="{{lang}}"><head><meta charset="utf-8"><title>{{meta.title}}</title><link rel="stylesheet" href="{{base}}style.css"></head>
-<body><h1>{{hero.title}}</h1><a href="{{alt_href}}">{{alt_label}}</a><script src="{{base}}main.js" defer></script></body></html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{meta.title}}</title>
+<meta name="description" content="{{meta.description}}">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121416">
+<link rel="icon" type="image/png" sizes="32x32" href="{{base}}assets/favicon-32.png">
+<link rel="apple-touch-icon" href="{{base}}assets/apple-touch-icon.png">
+<link rel="alternate" hreflang="en" href="{{site_url}}">
+<link rel="alternate" hreflang="pt-BR" href="{{site_url}}pt/">
+<link rel="alternate" hreflang="x-default" href="{{site_url}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{meta.title}}">
+<meta property="og:description" content="{{meta.description}}">
+<meta property="og:image" content="{{site_url}}assets/og-image.png">
+<meta property="og:locale" content="{{meta.og_locale}}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="{{base}}style.css">
+<script src="{{base}}vendor/gsap.min.js" defer></script>
+<script src="{{base}}vendor/ScrollTrigger.min.js" defer></script>
+<script src="{{base}}vendor/SplitText.min.js" defer></script>
+<script src="{{base}}vendor/CustomEase.min.js" defer></script>
+<script src="{{base}}main.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">{{nav.skip}}</a>
+
+<header class="nav">
+  <a class="nav__brand" href="./" aria-label="{{nav.home}}"><img src="{{base}}assets/favicon-32.png" width="28" height="28" alt=""><span>Finoinc</span></a>
+  <nav class="nav__links" aria-label="Primary">
+    <a href="#product">{{nav.features}}</a>
+    <a href="#privacy">{{nav.privacy}}</a>
+    <a href="#ai">{{nav.ai}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc">{{nav.github}}</a>
+  </nav>
+  <div class="nav__end">
+    <a class="nav__lang" href="{{alt_href}}" hreflang="{{alt_hreflang}}" aria-label="{{nav.lang_switch}}">{{alt_label}}</a>
+    <a class="btn btn--small" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{nav.download}}</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="hero__copy">
+      <p class="eyebrow">{{hero.eyebrow}}</p>
+      <h1 class="display" data-reveal>{{hero.title}}</h1>
+      <p class="lead">{{hero.subtitle}}</p>
+      <div class="cta-row">
+        <a class="btn" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{hero.cta}}</a>
+        <a class="link" href="https://github.com/MateusFonseK/finoinc">{{hero.secondary}} →</a>
+      </div>
+      <p class="note">{{hero.cta_note}}</p>
+    </div>
+    <div class="hero__mascot">
+      <video data-autoplay muted playsinline loop preload="none" aria-hidden="true" poster="{{base}}assets/mascot/wave.webp" width="600" height="600">
+        <source src="{{base}}assets/video/mascot-wave.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <section class="proof" aria-label="Facts">
+    <div><strong data-count="0">0</strong><span>{{proof.network}}</span></div>
+    <div><strong data-count="1">1</strong><span>{{proof.file}}</span></div>
+    <div><strong>{{proof.license_value}}</strong><span>{{proof.license}}</span></div>
+    <div><strong>{{proof.universal_value}}</strong><span>{{proof.universal}}</span></div>
+  </section>
+
+  <section class="product" id="product">
+    <header class="section-head">
+      <p class="kicker">{{product.kicker}}</p>
+      <h2 class="title" data-reveal>{{product.title}}</h2>
+    </header>
+    <div class="product__grid">
+      <div class="product__stage" aria-hidden="true">
+        <div class="window">
+          <img class="product__screen is-active" data-step="0" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="">
+          <img class="product__screen" data-step="1" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="" loading="lazy">
+          <img class="product__screen" data-step="2" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="" loading="lazy">
+          <img class="product__screen" data-step="3" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="" loading="lazy">
+          <img class="product__screen" data-step="4" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="" loading="lazy">
+        </div>
+        <div class="product__dots">
+          <button type="button" data-step="0" aria-label="{{product.progress}} 1"></button>
+          <button type="button" data-step="1" aria-label="{{product.progress}} 2"></button>
+          <button type="button" data-step="2" aria-label="{{product.progress}} 3"></button>
+          <button type="button" data-step="3" aria-label="{{product.progress}} 4"></button>
+          <button type="button" data-step="4" aria-label="{{product.progress}} 5"></button>
+        </div>
+      </div>
+      <ol class="product__steps">
+        <li class="step" data-step="0"><h3>{{product.steps.import.title}}</h3><p>{{product.steps.import.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="{{product.steps.import.alt}}" loading="lazy"></li>
+        <li class="step" data-step="1"><h3>{{product.steps.rules.title}}</h3><p>{{product.steps.rules.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="{{product.steps.rules.alt}}" loading="lazy"></li>
+        <li class="step" data-step="2"><h3>{{product.steps.suggestions.title}}</h3><p>{{product.steps.suggestions.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="{{product.steps.suggestions.alt}}" loading="lazy"></li>
+        <li class="step" data-step="3"><h3>{{product.steps.dashboard.title}}</h3><p>{{product.steps.dashboard.body}}</p>
+          <div class="bars" aria-hidden="true">
+            <span style="--in:.78;--out:.58"></span><span style="--in:.80;--out:.64"></span><span style="--in:.74;--out:.66"></span>
+            <span style="--in:.82;--out:.55"></span><span style="--in:.83;--out:.62"></span><span style="--in:.75;--out:.73"></span>
+            <span style="--in:.77;--out:.63"></span><span style="--in:.95;--out:.72"></span><span style="--in:.77;--out:.68"></span>
+            <span style="--in:.75;--out:.60"></span><span style="--in:.84;--out:.48"></span>
+          </div>
+          <img class="step__shot" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="{{product.steps.dashboard.alt}}" loading="lazy"></li>
+        <li class="step" data-step="4"><h3>{{product.steps.calendar.title}}</h3><p>{{product.steps.calendar.body}}</p><img class="step__shot" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="{{product.steps.calendar.alt}}" loading="lazy"></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="flow">
+    <div class="flow__copy">
+      <p class="kicker">{{flow.kicker}}</p>
+      <h2 class="title" data-reveal>{{flow.title}}</h2>
+      <p class="body">{{flow.body}}</p>
+    </div>
+    <svg class="flow__diagram" viewBox="0 0 640 220" role="img" aria-label="{{flow.n1}} → {{flow.n2}} → {{flow.n3}} → {{flow.n4}}">
+      <path class="wire" d="M120 110 H200"/><path class="wire" d="M300 110 H360"/><path class="wire" d="M460 110 H520"/>
+      <g class="node"><rect x="10" y="80" width="110" height="60" rx="13"/><text x="65" y="115">{{flow.n1}}</text></g>
+      <g class="node"><rect x="200" y="80" width="100" height="60" rx="13"/><text x="250" y="115">{{flow.n2}}</text></g>
+      <g class="node"><rect x="360" y="80" width="100" height="60" rx="13"/><text x="410" y="115">{{flow.n3}}</text></g>
+      <g class="node node--db"><rect x="520" y="80" width="110" height="60" rx="13"/><text x="575" y="115">{{flow.n4}}</text></g>
+    </svg>
+    <img class="mascot mascot--flow" src="{{base}}assets/mascot/statement.webp" width="360" height="360" alt="" loading="lazy">
+  </section>
+
+  <section class="privacy" id="privacy">
+    <img class="mascot mascot--privacy" src="{{base}}assets/mascot/privacy.webp" width="360" height="360" alt="" loading="lazy">
+    <div class="privacy__copy">
+      <p class="kicker">{{privacy.kicker}}</p>
+      <h2 class="title" data-reveal>{{privacy.title}}</h2>
+      <p class="manifesto" data-reveal><span>{{privacy.l1}}</span> <span>{{privacy.l2}}</span> <span>{{privacy.l3}}</span> <span>{{privacy.l4}}</span></p>
+      <table class="net">
+        <caption>{{privacy.table_title}}</caption>
+        <tr><th scope="row">{{privacy.r1}}</th><td class="net__never">{{privacy.r1v}}</td></tr>
+        <tr><th scope="row">{{privacy.r2}}</th><td>{{privacy.r2v}}</td></tr>
+        <tr><th scope="row">{{privacy.r3}}</th><td>{{privacy.r3v}}</td></tr>
+      </table>
+      <p class="body">{{privacy.path_lead}} <code>~/Library/Application Support/app.finan/finan.db</code>. {{privacy.path_tail}}</p>
+      <aside class="card">
+        <h3>{{privacy.free_title}}</h3>
+        <p>{{privacy.free_body}}</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="ai" id="ai">
+    <div class="ai__copy">
+      <p class="kicker">{{ai.kicker}} <span class="badge">{{ai.badge}}</span></p>
+      <h2 class="title" data-reveal>{{ai.title}}</h2>
+      <p class="body">{{ai.body}}</p>
+      <figure class="chat" aria-label="{{ai.example}}">
+        <p class="chat__q">{{ai.q}}</p>
+        <p class="chat__a">{{ai.a}}</p>
+      </figure>
+      <div class="tools">
+        <h3>{{ai.tools_title}}</h3>
+        <ul>
+          <li class="on"><span>{{ai.read}}</span><code>list_transactions</code><code>get_month_summary</code><code>get_trend</code><code>list_bills</code><code>list_categories</code><code>list_rules</code></li>
+          <li><span>{{ai.write}}</span><code>categorize_transactions</code><code>create_rule</code><code>settle_bill</code></li>
+        </ul>
+      </div>
+      <p class="warning">{{ai.warning}}</p>
+    </div>
+    <img class="mascot mascot--ai" src="{{base}}assets/mascot/ai.webp" width="360" height="360" alt="" loading="lazy">
+  </section>
+
+  <section class="specs">
+    <header class="section-head">
+      <p class="kicker">{{specs.kicker}}</p>
+      <h2 class="title" data-reveal>{{specs.title}}</h2>
+    </header>
+    <dl class="specs__grid">
+      <div><dt>{{specs.size_value}}</dt><dd>{{specs.size}}</dd></div>
+      <div><dt>{{specs.chips_value}}</dt><dd>{{specs.chips}}</dd></div>
+      <div><dt data-count="2">{{specs.langs_value}}</dt><dd>{{specs.langs}}</dd></div>
+      <div><dt>{{specs.macos_value}}</dt><dd>{{specs.macos}}</dd></div>
+      <div><dt>{{specs.stack_value}}</dt><dd>{{specs.stack}}</dd></div>
+      <div><dt>{{specs.license_value}}</dt><dd>{{specs.license}}</dd></div>
+    </dl>
+  </section>
+
+  <section class="install" id="download">
+    <div class="install__mascot">
+      <video id="celebrate" data-trigger="#cta-final" muted playsinline preload="none" aria-hidden="true" poster="{{base}}assets/mascot/celebrate.webp" width="600" height="600">
+        <source src="{{base}}assets/video/mascot-celebrate.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="install__copy">
+      <h2 class="title" data-reveal>{{install.title}}</h2>
+      <ol class="install__steps">
+        <li>{{install.s1}}</li>
+        <li>{{install.s2}}
+          <div class="cmd"><code id="cmd">xattr -dr com.apple.quarantine "/Applications/Finoinc.app"</code><button type="button" class="cmd__copy" data-copy="#cmd" data-done="{{install.copied}}" data-fail="{{install.copy_fail}}">{{install.copy}}</button></div>
+        </li>
+        <li>{{install.s3}}</li>
+      </ol>
+      <a class="btn" id="cta-final" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{install.cta}}</a>
+      <p class="note">{{install.cta_note}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <video data-autoplay muted playsinline loop preload="none" aria-hidden="true" poster="{{base}}assets/icon.png" width="360" height="360">
+    <source src="{{base}}assets/video/icon-alive.mp4" type="video/mp4">
+  </video>
+  <p class="footer__name">{{footer.name}}</p>
+  <p class="footer__zero">{{footer.zero}}</p>
+  <nav class="footer__links" aria-label="Footer">
+    <a href="https://github.com/MateusFonseK/finoinc">{{footer.source}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc/releases">{{footer.releases}}</a>
+    <a href="https://github.com/MateusFonseK/finoinc/blob/main/LICENSE">{{footer.license}}</a>
+    <a href="{{alt_href}}" hreflang="{{alt_hreflang}}">{{alt_label}}</a>
+  </nav>
+</footer>
+</body>
+</html>

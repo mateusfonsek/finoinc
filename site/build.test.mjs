@@ -55,7 +55,7 @@ test("hidden initial states only exist under .js/.motion, so content shows witho
 test("every video can autoplay on Safari and falls back to a picture", () => {
   const html = readFileSync(join(ROOT, "src/index.html"), "utf8");
   const videos = [...html.matchAll(/<video\b[^>]*>/g)].map((m) => m[0]);
-  assert.ok(videos.length >= 3);
+  assert.ok(videos.length >= 2);
   for (const v of videos) {
     assert.match(v, /\smuted\b/);
     assert.match(v, /\splaysinline\b/);

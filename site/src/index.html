@@ -52,7 +52,7 @@
       <h1 class="display" data-reveal>{{hero.title}}</h1>
       <p class="lead">{{hero.subtitle}}</p>
       <div class="cta-row">
-        <a class="btn" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{hero.cta}}</a>
+        <a class="btn btn--large" href="https://github.com/MateusFonseK/finoinc/releases/latest"><svg class="btn__apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>{{hero.cta}}</a>
         <a class="link" href="https://github.com/MateusFonseK/finoinc">{{hero.secondary}} →</a>
       </div>
       <p class="note">{{hero.cta_note}}</p>
@@ -168,11 +168,6 @@
         <tr><th scope="row">{{privacy.r2}}</th><td>{{privacy.r2v}}</td></tr>
         <tr><th scope="row">{{privacy.r3}}</th><td>{{privacy.r3v}}</td></tr>
       </table>
-      <p class="body">{{privacy.path_lead}} <code>~/Library/Application Support/app.finan/finan.db</code>. {{privacy.path_tail}}</p>
-      <aside class="card">
-        <h3>{{privacy.free_title}}</h3>
-        <p>{{privacy.free_body}}</p>
-      </aside>
     </div>
   </section>
 
@@ -185,14 +180,6 @@
         <p class="chat__q">{{ai.q}}</p>
         <p class="chat__a">{{ai.a}}</p>
       </figure>
-      <div class="tools">
-        <h3>{{ai.tools_title}}</h3>
-        <ul>
-          <li class="on"><span>{{ai.read}}</span><code>list_transactions</code><code>get_month_summary</code><code>get_trend</code><code>list_bills</code><code>list_categories</code><code>list_rules</code></li>
-          <li><span>{{ai.write}}</span><code>categorize_transactions</code><code>create_rule</code><code>settle_bill</code></li>
-        </ul>
-      </div>
-      <p class="warning">{{ai.warning}}</p>
     </div>
     <img class="mascot mascot--ai" src="{{base}}assets/mascot/ai.webp" width="360" height="360" alt="" loading="lazy">
   </section>
@@ -214,9 +201,7 @@
 
   <section class="install" id="download">
     <div class="install__mascot">
-      <video id="celebrate" data-trigger="#cta-final" muted playsinline preload="none" aria-hidden="true" poster="{{base}}assets/video/mascot-celebrate-poster.webp" width="600" height="600">
-        <source src="{{base}}assets/video/mascot-celebrate.mp4" type="video/mp4">
-      </video>
+      <img class="celebrate" data-trigger="#cta-final" src="{{base}}assets/mascot/celebrate.webp" width="420" height="420" alt="" loading="lazy">
     </div>
     <div class="install__copy">
       <h2 class="title" data-reveal>{{install.title}}</h2>
@@ -227,7 +212,7 @@
         </li>
         <li>{{install.s3}}</li>
       </ol>
-      <a class="btn" id="cta-final" href="https://github.com/MateusFonseK/finoinc/releases/latest">{{install.cta}}</a>
+      <a class="btn btn--large" id="cta-final" href="https://github.com/MateusFonseK/finoinc/releases/latest"><svg class="btn__apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>{{install.cta}}</a>
       <p class="note">{{install.cta_note}}</p>
     </div>
   </section>
@@ -237,8 +222,6 @@
   <video data-autoplay muted playsinline loop preload="none" aria-hidden="true" poster="{{base}}assets/video/icon-alive-poster.webp" width="360" height="360">
     <source src="{{base}}assets/video/icon-alive.mp4" type="video/mp4">
   </video>
-  <p class="footer__name">{{footer.name}}</p>
-  <p class="footer__zero">{{footer.zero}}</p>
   <nav class="footer__links" aria-label="Footer">
     <a href="https://github.com/MateusFonseK/finoinc">{{footer.source}}</a>
     <a href="https://github.com/MateusFonseK/finoinc/releases">{{footer.releases}}</a>

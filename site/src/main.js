@@ -51,12 +51,14 @@ function videos() {
   }, { threshold: 0.25 });
   loops.forEach((v) => io.observe(v));
 
-  // The celebration plays while the CTA is hovered or focused. On leave it finishes the
-  // current cycle instead of cutting: the clip ends on the pose it starts from.
-  for (const video of document.querySelectorAll("video[data-trigger]")) {
-    const trigger = document.querySelector(video.dataset.trigger);
-    const start = () => { video.loop = true; if (video.paused) { video.currentTime = 0; video.play().catch(() => {}); } };
-    const stop = () => { video.loop = false; };
+  // The pig hops while the CTA is hovered or focused. On leave it finishes the hop in
+  // progress instead of snapping back: each cycle starts and ends at rest.
+  for (const pig of document.querySelectorAll("[data-trigger]")) {
+    const trigger = document.querySelector(pig.dataset.trigger);
+    let leaving = false;
+    const start = () => { leaving = false; pig.classList.add("is-hopping"); };
+    const stop = () => { leaving = true; };
+    pig.addEventListener("animationiteration", () => { if (leaving) pig.classList.remove("is-hopping"); });
     trigger.addEventListener("pointerenter", start);
     trigger.addEventListener("focus", start);
     trigger.addEventListener("pointerleave", stop);

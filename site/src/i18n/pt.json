@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Finoinc — Finanças pessoais que nunca saem do seu Mac",
+    "title": "Finoinc — Finanças pessoais que ficam com você",
     "description": "Finanças pessoais grátis e open source pro macOS. Importe o extrato OFX do seu banco, categorize com regras e guarde tudo num arquivo SQLite que é seu.",
     "og_locale": "pt_BR"
   },
@@ -15,11 +15,11 @@
     "lang_switch": "Read in English"
   },
   "hero": {
-    "eyebrow": "Grátis e open source · pro macOS",
+    "eyebrow": "Grátis e open source",
     "title": "O dinheiro é seu.<br>Os dados também.",
-    "subtitle": "Finanças pessoais que nunca saem do seu Mac.",
-    "cta": "Baixar pro macOS",
-    "cta_note": "Grátis · ~20 MB · macOS 12+",
+    "subtitle": "Finanças pessoais que ficam com você. Sem nuvem, sem conta.",
+    "cta": "Baixar grátis",
+    "cta_note": "Disponível pro macOS 12+ · ~20 MB",
     "secondary": "Ver no GitHub"
   },
   "proof": {
@@ -88,11 +88,7 @@
     "r2": "Servidor MCP ligado",
     "r2v": "Nunca chama ninguém. Só escuta em 127.0.0.1",
     "r3": "Consulta de CNPJ (desligada por padrão)",
-    "r3v": "Só os dígitos do CNPJ, pra BrasilAPI, depois que você liga",
-    "path_lead": "Tudo fica em",
-    "path_tail": "Faça backup, copie pra onde quiser, abra em qualquer cliente SQLite. É seu.",
-    "free_title": "Por que é grátis?",
-    "free_body": "Licença MIT e feito pelo autor pro próprio dinheiro. Não tem servidor pra pagar nem nada pra vender."
+    "r3v": "Só os dígitos do CNPJ, pra BrasilAPI, depois que você liga"
   },
   "ai": {
     "badge": "Novo",
@@ -101,11 +97,7 @@
     "body": "Ligue o servidor MCP e um agente de IA local pode perguntar sobre o seu dinheiro em linguagem natural. O servidor só escuta em 127.0.0.1 e vem desligado. As ferramentas de leitura começam ligadas e as de escrita, desligadas, cada uma com seu interruptor.",
     "q": "Quanto eu gastei com restaurante no mês passado, e está subindo?",
     "a": "R$ 374,93 em restaurantes em setembro, 12% menos que em agosto. Caiu dois meses seguidos.",
-    "example": "Conversa de exemplo",
-    "tools_title": "Você escolhe cada ferramenta",
-    "read": "Leitura · ligadas",
-    "write": "Escrita · desligadas",
-    "warning": "O servidor não manda nada pra lugar nenhum, mas o agente que você conecta manda: o que ele lê, ele repassa pro provedor dele. A decisão é sua, e é por isso que o servidor vem desligado e a escrita começa desligada."
+    "example": "Conversa de exemplo"
   },
   "specs": {
     "kicker": "Por dentro",
@@ -131,12 +123,10 @@
     "copy": "Copiar",
     "copied": "Copiado",
     "copy_fail": "Selecionado, aperte ⌘C",
-    "cta": "Baixar pro macOS",
-    "cta_note": "Grátis · ~20 MB · macOS 12+"
+    "cta": "Baixar grátis",
+    "cta_note": "Disponível pro macOS 12+ · ~20 MB"
   },
   "footer": {
-    "name": "Finoinc = finan + oinc, o barulho do porco.",
-    "zero": "Este site não faz nenhuma requisição a terceiros.",
     "releases": "Versões",
     "license": "Licença MIT",
     "source": "Código-fonte"

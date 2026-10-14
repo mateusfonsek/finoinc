@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Finoinc — Personal finance that never leaves your Mac",
+    "title": "Finoinc — Personal finance that stays with you",
     "description": "Free, open-source personal finance for macOS. Import your bank's OFX statement, categorize it with rules, and keep everything in one SQLite file you own.",
     "og_locale": "en_US"
   },
@@ -15,11 +15,11 @@
     "lang_switch": "Ler em português"
   },
   "hero": {
-    "eyebrow": "Free & open source · for macOS",
+    "eyebrow": "Free & open source",
     "title": "Your money.<br>Your data too.",
-    "subtitle": "Personal finance that never leaves your Mac.",
-    "cta": "Download for macOS",
-    "cta_note": "Free · ~20 MB · macOS 12+",
+    "subtitle": "Personal finance that stays with you. No cloud, no account.",
+    "cta": "Download for free",
+    "cta_note": "Available for macOS 12+ · ~20 MB",
     "secondary": "View on GitHub"
   },
   "proof": {
@@ -88,11 +88,7 @@
     "r2": "MCP server on",
     "r2v": "Never dials out. It only listens on 127.0.0.1",
     "r3": "Brazilian company lookup (off by default)",
-    "r3v": "Only the CNPJ digits, to BrasilAPI, after you turn it on",
-    "path_lead": "Everything lives in",
-    "path_tail": "Back it up, copy it anywhere, open it with any SQLite client. It's yours.",
-    "free_title": "Why is it free?",
-    "free_body": "MIT-licensed and built by its author for their own money. There are no servers to pay for and nothing to sell."
+    "r3v": "Only the CNPJ digits, to BrasilAPI, after you turn it on"
   },
   "ai": {
     "badge": "New",
@@ -101,11 +97,7 @@
     "body": "Turn on the MCP server and a local AI agent can ask about your money in plain language. The server listens on 127.0.0.1 only and starts off. Read tools start on, write tools start off, and every tool has its own switch.",
     "q": "How much did I spend on restaurants last month, and is it going up?",
     "a": "R$ 374,93 on restaurants in September, 12% less than August. It has dropped two months in a row.",
-    "example": "Example conversation",
-    "tools_title": "You pick every tool",
-    "read": "Read · on",
-    "write": "Write · off",
-    "warning": "The server sends nothing anywhere, but the agent you connect does: whatever it reads, it forwards to its own provider. That's your call to make, which is why the server ships off and writing starts off."
+    "example": "Example conversation"
   },
   "specs": {
     "kicker": "Under the hood",
@@ -131,12 +123,10 @@
     "copy": "Copy",
     "copied": "Copied",
     "copy_fail": "Selected, press ⌘C",
-    "cta": "Download for macOS",
-    "cta_note": "Free · ~20 MB · macOS 12+"
+    "cta": "Download for free",
+    "cta_note": "Available for macOS 12+ · ~20 MB"
   },
   "footer": {
-    "name": "Finoinc = finan + oinc, the sound a pig makes.",
-    "zero": "This site makes zero third-party requests.",
     "releases": "Releases",
     "license": "MIT license",
     "source": "Source code"

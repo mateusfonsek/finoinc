@@ -28,3 +28,6 @@ src-tauri/icons/StoreLogo.png
 # Env
 .env
 .env.local
+
+# Website build output
+site/_site/

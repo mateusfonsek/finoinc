@@ -4,7 +4,16 @@
     "description": "Free, open-source personal finance for macOS. Import your bank's OFX statement, categorize it with rules, and keep everything in one SQLite file on your Mac.",
     "og_locale": "en_US"
   },
-  "nav": { "skip": "Skip to content", "features": "Features", "privacy": "Privacy", "ai": "AI", "github": "GitHub", "download": "Download", "home": "Finoinc home", "lang_switch": "Ler em português" },
+  "nav": {
+    "skip": "Skip to content",
+    "features": "Features",
+    "privacy": "Privacy",
+    "ai": "AI",
+    "github": "GitHub",
+    "download": "Download",
+    "home": "Finoinc home",
+    "lang_switch": "Ler em português"
+  },
   "hero": {
     "eyebrow": "Free & open source · for macOS",
     "title": "Your money.<br>Your data too.",
@@ -26,11 +35,31 @@
     "title": "Drop in a statement. Read your month.",
     "progress": "Show step",
     "steps": {
-      "import": { "title": "Review before anything is saved", "body": "Drag the .ofx in, open it from Finder, or let the app watch a folder. Duplicates are flagged and left unchecked, refunds are paired with their charges, and nothing is written until you say so.", "alt": "The import review, with duplicate rows flagged and a refund paired with its charge" },
-      "rules": { "title": "Rules that categorize for you", "body": "If the description contains this, file it under that. Rules run on every import, ship ready for your language, and a category you pick by hand always wins.", "alt": "The rules list, each rule matching description snippets to a category" },
-      "suggestions": { "title": "It shows you which rules you're missing", "body": "Finoinc spots recurring charges that landed without a category and pre-fills the rule. You pick the category: the app points at the pattern, it never guesses what it means.", "alt": "Suggested rules for recurring uncategorized charges" },
-      "dashboard": { "title": "A month you can actually read", "body": "Income, expenses, balance, spending by category and where your income comes from. Transfers between your own accounts never count twice, and investments get their own panel.", "alt": "The dashboard with monthly totals, category donut and eleven months of trend" },
-      "calendar": { "title": "Bills on a calendar, not in your head", "body": "Every rule with a due day becomes a bill. See what's paid, pending and overdue, and settle it against the exact transaction that paid it.", "alt": "The bills calendar with paid, pending and overdue bills" }
+      "import": {
+        "title": "Review before anything is saved",
+        "body": "Drag the .ofx in, open it from Finder, or let the app watch a folder. Duplicates are flagged and left unchecked, refunds are paired with their charges, and nothing is written until you say so.",
+        "alt": "The import review, with duplicate rows flagged and a refund paired with its charge"
+      },
+      "rules": {
+        "title": "Rules that categorize for you",
+        "body": "If the description contains this, file it under that. Rules run on every import, ship ready for your language, and a category you pick by hand always wins.",
+        "alt": "The rules list, each rule matching description snippets to a category"
+      },
+      "suggestions": {
+        "title": "It shows you which rules you're missing",
+        "body": "Finoinc spots recurring charges that landed without a category and pre-fills the rule. You pick the category: the app points at the pattern, it never guesses what it means.",
+        "alt": "Suggested rules for recurring uncategorized charges"
+      },
+      "dashboard": {
+        "title": "A month you can actually read",
+        "body": "Income, expenses, balance, spending by category and where your income comes from. Transfers between your own accounts never count twice, and investments get their own panel.",
+        "alt": "The dashboard with monthly totals, category donut and eleven months of trend"
+      },
+      "calendar": {
+        "title": "Bills on a calendar, not in your head",
+        "body": "Every rule with a due day becomes a bill. See what's paid, pending and overdue, and settle it against the exact transaction that paid it.",
+        "alt": "The bills calendar with paid, pending and overdue bills"
+      }
     }
   },
   "flow": {
@@ -65,7 +94,7 @@
     "badge": "New",
     "kicker": "AI, on your terms",
     "title": "Your AI asks. Your Mac answers.",
-    "body": "Turn on the MCP server and an AI agent on this Mac can ask about your money in plain language. The server listens on 127.0.0.1 only, starts off, and you switch on every tool yourself.",
+    "body": "Turn on the MCP server and an AI agent on this Mac can ask about your money in plain language. The server listens on 127.0.0.1 only and starts off. Read tools start on, write tools start off, and every tool has its own switch.",
     "q": "How much did I spend on restaurants last month, and is it going up?",
     "a": "R$ 374,93 on restaurants in September, 12% less than August. It has dropped two months in a row.",
     "example": "Example conversation",
@@ -108,5 +137,8 @@
     "license": "MIT license",
     "source": "Source code"
   },
-  "notfound": { "title": "Oinc? This page doesn't exist.", "home": "Back home" }
+  "notfound": {
+    "title": "Oinc? This page doesn't exist.",
+    "home": "Back home"
+  }
 }

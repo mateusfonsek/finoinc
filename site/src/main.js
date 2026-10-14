@@ -8,7 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButtons();
   videos();
   productStage();
-  if (!reduceMotion.matches && window.gsap && window.ScrollTrigger) motion();
+  // Every plugin or none: a blocker that drops one file must not leave .motion's hidden
+  // states behind with nothing to reveal them.
+  const { gsap, ScrollTrigger, SplitText, CustomEase } = window;
+  if (!reduceMotion.matches && gsap && ScrollTrigger && SplitText && CustomEase) motion();
 });
 
 function navMaterial() {

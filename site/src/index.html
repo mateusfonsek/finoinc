@@ -75,13 +75,13 @@
       <h2 class="title" data-reveal>{{product.title}}</h2>
     </header>
     <div class="product__grid">
-      <div class="product__stage" aria-hidden="true">
+      <div class="product__stage">
         <div class="window">
-          <img class="product__screen is-active" data-step="0" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="">
-          <img class="product__screen" data-step="1" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="" loading="lazy">
-          <img class="product__screen" data-step="2" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="" loading="lazy">
-          <img class="product__screen" data-step="3" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="" loading="lazy">
-          <img class="product__screen" data-step="4" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="" loading="lazy">
+          <img class="product__screen is-active" data-step="0" src="{{base}}assets/screens/{{screens}}/import.webp" width="1600" height="934" alt="{{product.steps.import.alt}}">
+          <img class="product__screen" data-step="1" src="{{base}}assets/screens/{{screens}}/rules.webp" width="1600" height="934" alt="{{product.steps.rules.alt}}" loading="lazy">
+          <img class="product__screen" data-step="2" src="{{base}}assets/screens/{{screens}}/suggestions.webp" width="1600" height="934" alt="{{product.steps.suggestions.alt}}" loading="lazy">
+          <img class="product__screen" data-step="3" src="{{base}}assets/screens/{{screens}}/dashboard.webp" width="1600" height="934" alt="{{product.steps.dashboard.alt}}" loading="lazy">
+          <img class="product__screen" data-step="4" src="{{base}}assets/screens/{{screens}}/calendar.webp" width="1600" height="934" alt="{{product.steps.calendar.alt}}" loading="lazy">
         </div>
         <div class="product__dots">
           <button type="button" data-step="0" aria-label="{{product.progress}} 1"></button>

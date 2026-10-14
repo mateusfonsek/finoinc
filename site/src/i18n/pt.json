@@ -4,7 +4,16 @@
     "description": "Finanças pessoais grátis e open source pro macOS. Importe o extrato OFX do seu banco, categorize com regras e guarde tudo num arquivo SQLite no seu Mac.",
     "og_locale": "pt_BR"
   },
-  "nav": { "skip": "Pular para o conteúdo", "features": "Recursos", "privacy": "Privacidade", "ai": "IA", "github": "GitHub", "download": "Baixar", "home": "Início do Finoinc", "lang_switch": "Read in English" },
+  "nav": {
+    "skip": "Pular para o conteúdo",
+    "features": "Recursos",
+    "privacy": "Privacidade",
+    "ai": "IA",
+    "github": "GitHub",
+    "download": "Baixar",
+    "home": "Início do Finoinc",
+    "lang_switch": "Read in English"
+  },
   "hero": {
     "eyebrow": "Grátis e open source · pro macOS",
     "title": "O dinheiro é seu.<br>Os dados também.",
@@ -26,11 +35,31 @@
     "title": "Solte um extrato. Leia o seu mês.",
     "progress": "Mostrar passo",
     "steps": {
-      "import": { "title": "Você revisa antes de salvar", "body": "Arraste o .ofx, abra pelo Finder ou deixe o app observando uma pasta. Duplicatas vêm marcadas e desmarcadas, estornos aparecem junto da compra, e nada é gravado até você confirmar.", "alt": "A revisão da importação, com linhas duplicadas marcadas e um estorno pareado com a compra" },
-      "rules": { "title": "Regras que categorizam por você", "body": "Se a descrição contém isso, vai pra aquela categoria. As regras rodam em toda importação, já vêm prontas pro seu idioma, e a categoria que você escolhe na mão sempre vence.", "alt": "A lista de regras, cada uma ligando trechos da descrição a uma categoria" },
-      "suggestions": { "title": "Ele mostra as regras que faltam", "body": "O Finoinc acha os gastos recorrentes que caíram sem categoria e já preenche a regra. Você escolhe a categoria: o app aponta o padrão, nunca adivinha o que ele significa.", "alt": "Sugestões de regra para gastos recorrentes sem categoria" },
-      "dashboard": { "title": "Um mês que dá pra ler", "body": "Renda, gastos, saldo, gastos por categoria e de onde vem a sua renda. Transferência entre suas contas nunca conta duas vezes, e investimento tem painel próprio.", "alt": "O dashboard com os totais do mês, a rosca de categorias e onze meses de tendência" },
-      "calendar": { "title": "Contas no calendário, não na cabeça", "body": "Toda regra com dia de vencimento vira uma conta. Veja o que está pago, pendente e atrasado, e dê baixa contra a transação exata que pagou.", "alt": "O calendário de contas com contas pagas, pendentes e atrasadas" }
+      "import": {
+        "title": "Você revisa antes de salvar",
+        "body": "Arraste o .ofx, abra pelo Finder ou deixe o app observando uma pasta. Duplicatas vêm marcadas e desmarcadas, estornos aparecem junto da compra, e nada é gravado até você confirmar.",
+        "alt": "A revisão da importação, com linhas duplicadas marcadas e um estorno pareado com a compra"
+      },
+      "rules": {
+        "title": "Regras que categorizam por você",
+        "body": "Se a descrição contém isso, vai pra aquela categoria. As regras rodam em toda importação, já vêm prontas pro seu idioma, e a categoria que você escolhe na mão sempre vence.",
+        "alt": "A lista de regras, cada uma ligando trechos da descrição a uma categoria"
+      },
+      "suggestions": {
+        "title": "Ele mostra as regras que faltam",
+        "body": "O Finoinc acha os gastos recorrentes que caíram sem categoria e já preenche a regra. Você escolhe a categoria: o app aponta o padrão, nunca adivinha o que ele significa.",
+        "alt": "Sugestões de regra para gastos recorrentes sem categoria"
+      },
+      "dashboard": {
+        "title": "Um mês que dá pra ler",
+        "body": "Renda, gastos, saldo, gastos por categoria e de onde vem a sua renda. Transferência entre suas contas nunca conta duas vezes, e investimento tem painel próprio.",
+        "alt": "O dashboard com os totais do mês, a rosca de categorias e onze meses de tendência"
+      },
+      "calendar": {
+        "title": "Contas no calendário, não na cabeça",
+        "body": "Toda regra com dia de vencimento vira uma conta. Veja o que está pago, pendente e atrasado, e dê baixa contra a transação exata que pagou.",
+        "alt": "O calendário de contas com contas pagas, pendentes e atrasadas"
+      }
     }
   },
   "flow": {
@@ -65,7 +94,7 @@
     "badge": "Novo",
     "kicker": "IA, do seu jeito",
     "title": "Sua IA pergunta. Seu Mac responde.",
-    "body": "Ligue o servidor MCP e um agente de IA neste Mac pode perguntar sobre o seu dinheiro em linguagem natural. O servidor só escuta em 127.0.0.1, vem desligado, e você liga cada ferramenta.",
+    "body": "Ligue o servidor MCP e um agente de IA neste Mac pode perguntar sobre o seu dinheiro em linguagem natural. O servidor só escuta em 127.0.0.1 e vem desligado. As ferramentas de leitura começam ligadas e as de escrita, desligadas, cada uma com seu interruptor.",
     "q": "Quanto eu gastei com restaurante no mês passado, e está subindo?",
     "a": "R$ 374,93 em restaurantes em setembro, 12% menos que em agosto. Caiu dois meses seguidos.",
     "example": "Conversa de exemplo",
@@ -108,5 +137,8 @@
     "license": "Licença MIT",
     "source": "Código-fonte"
   },
-  "notfound": { "title": "Oinc? Essa página não existe.", "home": "Voltar pro início" }
+  "notfound": {
+    "title": "Oinc? Essa página não existe.",
+    "home": "Voltar pro início"
+  }
 }

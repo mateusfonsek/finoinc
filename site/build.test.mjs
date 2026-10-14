@@ -64,3 +64,28 @@ test("every video can autoplay on Safari and falls back to a picture", () => {
     assert.match(v, /\saria-hidden="true"/);
   }
 });
+
+test("the AI copy states the real tool defaults: read tools on, write tools off (README)", () => {
+  assert.match(json("src/i18n/en.json").ai.body, /read tools start on, write tools start off/i);
+  assert.match(json("src/i18n/pt.json").ai.body, /leitura começam ligadas e as de escrita, desligadas/i);
+});
+
+test("nothing focusable hides inside aria-hidden, and screenshot alt text is never display:none", () => {
+  const html = readFileSync(join(ROOT, "src/index.html"), "utf8");
+  for (const m of html.matchAll(/<(div|section|span)\b[^>]*aria-hidden="true"[^>]*>/g)) {
+    // Walk to the matching close tag of the same element name.
+    const tag = m[1];
+    let depth = 0, i = m.index, end = html.length;
+    const re = new RegExp(`<\\/?${tag}\\b[^>]*>`, "g");
+    re.lastIndex = i;
+    for (let t; (t = re.exec(html)); ) {
+      depth += t[0].startsWith("</") ? -1 : 1;
+      if (depth === 0) { end = re.lastIndex; break; }
+    }
+    assert.doesNotMatch(html.slice(i, end), /<(?:button|a|input|select|textarea)\b/, `focusable inside aria-hidden ${tag}`);
+  }
+  // On desktop the inline shots are hidden, so the stage images must carry the descriptions.
+  const stageAlts = [...html.matchAll(/<img class="product__screen[^>]*\salt="([^"]*)"/g)].map((m) => m[1]);
+  assert.equal(stageAlts.length, 5);
+  for (const alt of stageAlts) assert.notEqual(alt, "");
+});

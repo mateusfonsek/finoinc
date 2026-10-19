@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use rusqlite::{params, Connection};
@@ -17,6 +17,47 @@ pub struct Db {
     pub fresh: bool,
 }
 
+const DB_FILE: &str = "finoinc.db";
+/// Data dir and database name from before the app was renamed to Finoinc.
+const LEGACY_DIR: &str = "app.finan";
+const LEGACY_DB_FILE: &str = "finan.db";
+
+/// Copies the pre-rename data dir into the current one on first launch, so an
+/// existing user keeps their data after the bundle identifier changed. The
+/// legacy dir is left untouched as a backup. No-op once the new DB exists.
+pub fn adopt_legacy_data(app: &AppHandle) -> AppResult<()> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Path(e.to_string()))?;
+    copy_legacy_dir(&dir.with_file_name(LEGACY_DIR), &dir)
+}
+
+fn copy_legacy_dir(legacy: &Path, dir: &Path) -> AppResult<()> {
+    if dir.join(DB_FILE).exists() || !legacy.join(LEGACY_DB_FILE).is_file() {
+        return Ok(());
+    }
+    std::fs::create_dir_all(dir)?;
+    for entry in std::fs::read_dir(legacy)? {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if !entry.file_type()?.is_file() || name == ".DS_Store" || name == LEGACY_DB_FILE {
+            continue;
+        }
+        let target = match name.strip_prefix(LEGACY_DB_FILE) {
+            Some(suffix) => format!("{DB_FILE}{suffix}"),
+            None => name,
+        };
+        std::fs::copy(entry.path(), dir.join(target))?;
+    }
+    // The main DB goes last, through a rename: its presence is what marks the
+    // copy as done, so an interrupted copy is redone on the next launch.
+    let tmp = dir.join(format!("{DB_FILE}.partial"));
+    std::fs::copy(legacy.join(LEGACY_DB_FILE), &tmp)?;
+    std::fs::rename(&tmp, dir.join(DB_FILE))?;
+    Ok(())
+}
+
 pub fn init(app: &AppHandle) -> AppResult<Db> {
     let dir = app
         .path()
@@ -24,7 +65,7 @@ pub fn init(app: &AppHandle) -> AppResult<Db> {
         .map_err(|e| AppError::Path(e.to_string()))?;
 
     std::fs::create_dir_all(&dir)?;
-    let path = dir.join("finan.db");
+    let path = dir.join(DB_FILE);
 
     let conn = Connection::open(&path)?;
     conn.pragma_update(None, "journal_mode", "WAL")?;
@@ -138,6 +179,57 @@ mod tests {
         conn.pragma_update(None, "foreign_keys", "ON").unwrap();
         migrations::apply(&conn).unwrap();
         conn
+    }
+
+    fn tmpdir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("finoinc-db-test-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn copy_legacy_dir_renames_db_files_and_keeps_the_legacy_dir() {
+        let root = tmpdir("legacy");
+        let legacy = root.join("app.finan");
+        std::fs::create_dir_all(&legacy).unwrap();
+        for (name, body) in [("finan.db", "db"), ("finan.db-wal", "wal"), ("active_locale", "pt-BR")] {
+            std::fs::write(legacy.join(name), body).unwrap();
+        }
+        let dir = root.join("app.finoinc");
+
+        copy_legacy_dir(&legacy, &dir).unwrap();
+
+        assert_eq!(std::fs::read_to_string(dir.join("finoinc.db")).unwrap(), "db");
+        assert_eq!(std::fs::read_to_string(dir.join("finoinc.db-wal")).unwrap(), "wal");
+        assert_eq!(std::fs::read_to_string(dir.join("active_locale")).unwrap(), "pt-BR");
+        assert!(!dir.join("finoinc.db.partial").exists());
+        assert!(legacy.join("finan.db").exists(), "legacy dir stays as a backup");
+    }
+
+    #[test]
+    fn copy_legacy_dir_never_overwrites_an_existing_db() {
+        let root = tmpdir("existing");
+        let legacy = root.join("app.finan");
+        let dir = root.join("app.finoinc");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(legacy.join("finan.db"), "old").unwrap();
+        std::fs::write(dir.join("finoinc.db"), "current").unwrap();
+
+        copy_legacy_dir(&legacy, &dir).unwrap();
+
+        assert_eq!(std::fs::read_to_string(dir.join("finoinc.db")).unwrap(), "current");
+    }
+
+    #[test]
+    fn copy_legacy_dir_is_a_no_op_without_legacy_data() {
+        let root = tmpdir("none");
+        let dir = root.join("app.finoinc");
+
+        copy_legacy_dir(&root.join("app.finan"), &dir).unwrap();
+
+        assert!(!dir.exists());
     }
 
     fn en_us_pack() -> LocalePack {

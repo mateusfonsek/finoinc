@@ -159,7 +159,7 @@ categoria deixa as transações dela intactas e sem categoria — nada se perde.
 ## 🔒 Privacidade — a afirmação de verdade
 
 Sem conta. Sem login. Sem telemetria. Sem anúncio. Sem SDK de analytics. Tudo mora em
-`~/Library/Application Support/app.finan/finan.db`, e **Configurações → Abrir no Finder** te
+`~/Library/Application Support/app.finoinc/finoinc.db`, e **Configurações → Abrir no Finder** te
 leva direto lá. Faça backup, copie pra outro Mac, abra com qualquer cliente SQLite. É seu.
 
 Sendo específico sobre rede, porque "local-first" é palavra que muita gente usa mal:
@@ -256,7 +256,7 @@ de uma biblioteca de ~1.500.
 │  mcp/       — servidor, tools, log      │
 └───────────────┬─────────────────────────┘
                 │
-        ~/Library/Application Support/app.finan/finan.db
+        ~/Library/Application Support/app.finoinc/finoinc.db
 ```
 
 Algumas decisões que valem conhecer:

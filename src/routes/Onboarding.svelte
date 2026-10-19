@@ -14,7 +14,7 @@
   function onparsed(detail: { file: File; parsed: ParsedOfx }) {
     // Hand off to /import via window. Svelte stores would be cleaner;
     // acceptable for MVP, refactor in fase 5.
-    (window as unknown as { __finanPending?: typeof detail }).__finanPending = detail;
+    (window as unknown as { __finoincPending?: typeof detail }).__finoincPending = detail;
     push("/import");
   }
 
@@ -54,7 +54,7 @@
     <Icon name="lock" size={11} />
     {t("onboarding.data_location")}
     <span class="font-mono text-fg-subtle selectable">
-      ~/Library/Application Support/app.finan/finan.db
+      ~/Library/Application Support/app.finoinc/finoinc.db
     </span>
   </p>
 </section>

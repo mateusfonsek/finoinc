@@ -73,7 +73,7 @@
     "s3_title": "As regras organizam",
     "s3_body": "O que bate com uma regra cai na categoria certa; o que não bate, você ensina num clique.",
     "s4_title": "Um arquivo seu",
-    "s4_body": "finan.db, SQLite puro. Faça backup, leve, abra onde quiser."
+    "s4_body": "finoinc.db, SQLite puro. Faça backup, leve, abra onde quiser."
   },
   "privacy": {
     "kicker": "Privacidade",

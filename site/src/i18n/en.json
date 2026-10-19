@@ -73,7 +73,7 @@
     "s3_title": "Rules sort it",
     "s3_body": "Charges that match a rule land in their category; the ones that don't, you teach in a click.",
     "s4_title": "One file, yours",
-    "s4_body": "finan.db, plain SQLite. Back it up, move it, open it anywhere."
+    "s4_body": "finoinc.db, plain SQLite. Back it up, move it, open it anywhere."
   },
   "privacy": {
     "kicker": "Privacy",

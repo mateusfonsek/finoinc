@@ -47,5 +47,5 @@ cat <<'EOF'
    xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
-3. Abra normalmente. Tudo **100% local** — seus dados ficam só no seu Mac, em `~/Library/Application Support/app.finan/finan.db`.
+3. Abra normalmente. Tudo **100% local** — seus dados ficam só no seu Mac, em `~/Library/Application Support/app.finoinc/finoinc.db`.
 EOF

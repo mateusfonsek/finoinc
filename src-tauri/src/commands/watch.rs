@@ -489,7 +489,7 @@ mod tests {
 
     /// Unique temp folder per test, without external crates.
     fn tmpdir(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("finan-watch-test-{name}"));
+        let dir = std::env::temp_dir().join(format!("finoinc-watch-test-{name}"));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
@@ -501,7 +501,7 @@ mod tests {
         let dir = tmpdir("add");
         let folder = add_folder(&conn, dir.to_str().unwrap()).unwrap();
 
-        assert_eq!(folder.label, "finan-watch-test-add");
+        assert_eq!(folder.label, "finoinc-watch-test-add");
         assert!(folder.exists);
         assert_eq!(folder.imported_count, 0);
         assert_eq!(folder.last_imported_at, None);
@@ -558,7 +558,7 @@ mod tests {
 
         let moved = update_folder_path(&conn, created.id, new.to_str().unwrap()).unwrap();
         assert_eq!(moved.id, created.id, "Localizar… preserva o registro");
-        assert_eq!(moved.label, "finan-watch-test-new");
+        assert_eq!(moved.label, "finoinc-watch-test-new");
         assert_eq!(list_folders(&conn).unwrap().len(), 1);
     }
 
@@ -597,7 +597,7 @@ mod tests {
 
     #[test]
     fn ensure_dir_creates_and_is_idempotent() {
-        let dir = tmpdir("ensure").join("finan");
+        let dir = tmpdir("ensure").join("finoinc");
         assert!(!dir.exists());
 
         ensure_dir(dir.to_string_lossy().to_string()).unwrap();

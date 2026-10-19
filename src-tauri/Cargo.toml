@@ -1,6 +1,6 @@
 [package]
 name = "finoinc"
-version = "0.10.0"
+version = "0.11.0"
 description = "Finoinc — app local de finanças pessoais"
 edition = "2021"
 rust-version = "1.77"

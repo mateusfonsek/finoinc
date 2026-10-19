@@ -19,7 +19,7 @@ setup_fixture() {
   # package.json
   cat > "$tmpdir/package.json" << 'EOF'
 {
-  "name": "finan",
+  "name": "finoinc",
   "version": "0.2.0",
   "type": "module"
 }
@@ -34,7 +34,7 @@ EOF
     "frontendDist": "dist"
   },
   "app": {
-    "windows": [{"fullscreen": false, "height": 600, "resizable": true, "title": "finan", "width": 800}],
+    "windows": [{"fullscreen": false, "height": 600, "resizable": true, "title": "finoinc", "width": 800}],
     "security": {"csp": null},
     "version": "0.2.0"
   }
@@ -49,7 +49,7 @@ EOF
   # src-tauri/Cargo.toml com [package] e [dependencies] sections
   cat > "$tmpdir/src-tauri/Cargo.toml" << 'EOF'
 [package]
-name = "finan"
+name = "finoinc"
 version = "0.2.0"
 description = "A tauri app"
 authors = ["you"]
@@ -242,7 +242,7 @@ cleanup_fixture() {
 
   cat > "$fixture/src-tauri/Cargo.toml" << 'EOF'
 [package]
-  name = "finan"
+  name = "finoinc"
   version = "0.2.0"
   edition = "2021"
 
@@ -282,7 +282,7 @@ EOF
 
   cat > "$fixture/src-tauri/Cargo.toml" << 'EOF'
 [package]
-  name = "finan"
+  name = "finoinc"
   version = "0.2.0"
   edition = "2021"
 

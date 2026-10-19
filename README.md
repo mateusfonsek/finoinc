@@ -160,7 +160,7 @@ Deleting a category leaves its transactions intact and uncategorized — nothing
 ## 🔒 Privacy — the actual claim
 
 No account. No login. No telemetry. No ads. No analytics SDK. Everything lives in
-`~/Library/Application Support/app.finan/finan.db`, and **Settings → Open in Finder** takes
+`~/Library/Application Support/app.finoinc/finoinc.db`, and **Settings → Open in Finder** takes
 you straight to it. Back it up, copy it to another Mac, open it with any SQLite client. It
 is yours.
 
@@ -258,7 +258,7 @@ than a library of ~1,500.
 │  mcp/       — server, tools, audit log  │
 └───────────────┬─────────────────────────┘
                 │
-        ~/Library/Application Support/app.finan/finan.db
+        ~/Library/Application Support/app.finoinc/finoinc.db
 ```
 
 A few decisions worth knowing about:

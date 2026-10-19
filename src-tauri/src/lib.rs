@@ -117,6 +117,9 @@ pub fn run() {
         })
         .invoke_handler(specta_builder.invoke_handler())
         .setup(|app| {
+            // Before anything reads the data dir: the locale state reads
+            // `active_locale` from it.
+            db::adopt_legacy_data(app.handle()).expect("failed to copy pre-rename data");
             let locale_state = locale::LocaleState::init(app.handle());
 
             // Native menu, localized from the active pack. The literals below are

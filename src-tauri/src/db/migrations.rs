@@ -354,12 +354,12 @@ mod tests {
         apply(&conn).unwrap();
 
         conn.execute(
-            "INSERT INTO watched_folders (path, label) VALUES ('/tmp/finan', 'finan')",
+            "INSERT INTO watched_folders (path, label) VALUES ('/tmp/finoinc', 'finoinc')",
             [],
         )
         .unwrap();
         let result = conn.execute(
-            "INSERT INTO watched_folders (path, label) VALUES ('/tmp/finan', 'outro')",
+            "INSERT INTO watched_folders (path, label) VALUES ('/tmp/finoinc', 'outro')",
             [],
         );
         assert!(result.is_err(), "the same folder cannot be added twice");

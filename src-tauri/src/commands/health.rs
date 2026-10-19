@@ -36,7 +36,7 @@ mod tests {
     fn health_info_struct_serializes() {
         let info = HealthInfo {
             version: "0.1.0".to_string(),
-            db_path: "/tmp/finan.db".to_string(),
+            db_path: "/tmp/finoinc.db".to_string(),
             category_count: 9,
         };
         let json = serde_json::to_string(&info).unwrap();

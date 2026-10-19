@@ -90,7 +90,7 @@ mod tests {
 
     fn temp_path(name: &str) -> PathBuf {
         let mut p = std::env::temp_dir();
-        p.push(format!("finan-test-{}-{name}", std::process::id()));
+        p.push(format!("finoinc-test-{}-{name}", std::process::id()));
         p
     }
 

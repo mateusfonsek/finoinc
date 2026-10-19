@@ -6,16 +6,16 @@ import type { ParsedOfx } from "./types";
  *  a watched folder — it is what allows marking it imported at the end. */
 export type PendingImport = { file: File; parsed: ParsedOfx; watchHash?: string };
 
-type StashWindow = Window & { __finanPending?: PendingImport };
+type StashWindow = Window & { __finoincPending?: PendingImport };
 
 export function stashPending(pending: PendingImport): void {
-  (window as unknown as StashWindow).__finanPending = pending;
+  (window as unknown as StashWindow).__finoincPending = pending;
 }
 
 export function takeStashed(): PendingImport | undefined {
   const w = window as unknown as StashWindow;
-  const stash = w.__finanPending;
-  w.__finanPending = undefined;
+  const stash = w.__finoincPending;
+  w.__finoincPending = undefined;
   return stash;
 }
 

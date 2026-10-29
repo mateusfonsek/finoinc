@@ -18,28 +18,26 @@ pub fn kpis(conn: &Connection, month: Option<&str>) -> AppResult<KpiSummary> {
     // Excludes tx whose category.kind = 'transfer' (internal moves like paying
     // a card bill or moving money to savings). A NULL category counts normally.
     let mut stmt = conn.prepare(
-        "SELECT t.amount
+        "SELECT t.amount, c.kind
          FROM transactions t
          LEFT JOIN categories c ON c.id = t.category_id
          WHERE (?1 IS NULL OR t.date LIKE ?1)
            AND COALESCE(c.kind, '') != 'transfer'",
     )?;
     let pat_ref: Option<&str> = pattern.as_deref();
-    let rows: Vec<String> = stmt
-        .query_map(params![pat_ref], |row| row.get::<_, String>(0))?
+    let rows: Vec<(String, Option<String>)> = stmt
+        .query_map(params![pat_ref], |row| Ok((row.get(0)?, row.get(1)?)))?
         .collect::<rusqlite::Result<Vec<_>>>()?;
 
     let mut income = Decimal::ZERO;
     let mut expense = Decimal::ZERO;
     let count = rows.len() as u32;
-    for s in &rows {
+    for (s, kind) in &rows {
         let d = Decimal::from_str(s)
             .map_err(|e| AppError::Invalid(format!("bad amount '{s}': {e}")))?;
-        if d.is_sign_negative() {
-            expense += -d;
-        } else {
-            income += d;
-        }
+        let (i, e) = flow(d, kind.as_deref());
+        income += i;
+        expense += e;
     }
     let net = income - expense;
 
@@ -49,6 +47,18 @@ pub fn kpis(conn: &Connection, month: Option<&str>) -> AppResult<KpiSummary> {
         net: net.to_string(),
         transaction_count: count,
     })
+}
+
+/// Splits an amount into (income, expense) by its category's kind. A refund in
+/// an expense category gives spending back instead of counting as income;
+/// an uncategorized row goes by its sign.
+fn flow(amount: Decimal, kind: Option<&str>) -> (Decimal, Decimal) {
+    match kind {
+        Some("expense") => (Decimal::ZERO, -amount),
+        Some("income") => (amount, Decimal::ZERO),
+        _ if amount.is_sign_negative() => (Decimal::ZERO, -amount),
+        _ => (amount, Decimal::ZERO),
+    }
 }
 
 #[tauri::command]
@@ -62,39 +72,43 @@ pub fn by_category(conn: &Connection, month: Option<&str>) -> AppResult<Vec<Cate
     let pattern = month.map(|m| format!("{m}-%"));
 
     let mut stmt = conn.prepare(
-        "SELECT t.amount, t.category_id, c.name, c.color_token
+        "SELECT t.amount, t.category_id, c.name, c.color_token, c.kind
          FROM transactions t
          LEFT JOIN categories c ON c.id = t.category_id
          WHERE (?1 IS NULL OR t.date LIKE ?1)
            AND COALESCE(c.kind, '') != 'transfer'",
     )?;
-    type CategoryRow = (String, Option<i64>, Option<String>, Option<String>);
+    type CategoryRow = (String, Option<i64>, Option<String>, Option<String>, Option<String>);
     let pat_for_query: Option<&str> = pattern.as_deref();
     let rows: Vec<CategoryRow> = stmt
         .query_map(params![pat_for_query], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?))
         })?
         .collect::<rusqlite::Result<Vec<_>>>()?;
 
     let mut by: HashMap<Option<i64>, (String, Option<String>, Decimal)> = HashMap::new();
-    let mut total_expense = Decimal::ZERO;
 
-    for (amt, cat_id, name, color) in rows {
+    for (amt, cat_id, name, color, kind) in rows {
         let d =
             Decimal::from_str(&amt).map_err(|e| AppError::Invalid(format!("bad amount: {e}")))?;
-        if !d.is_sign_negative() {
+        let spends = match kind.as_deref() {
+            Some(k) => k == "expense",
+            None => d.is_sign_negative(),
+        };
+        if !spends {
             continue;
         }
-        let abs = -d;
-        total_expense += abs;
         // No label invented here: `category_id: None` already means
         // "uncategorized", and the wording belongs to the locale pack.
         let display_name = name.unwrap_or_default();
         let entry = by
             .entry(cat_id)
             .or_insert((display_name, color, Decimal::ZERO));
-        entry.2 += abs;
+        entry.2 += flow(d, kind.as_deref()).1;
     }
+    // A category whose refunds outweigh its purchases this month has no slice.
+    by.retain(|_, (_, _, total)| total.is_sign_positive() && !total.is_zero());
+    let total_expense: Decimal = by.values().map(|(_, _, total)| *total).sum();
 
     let mut out: Vec<CategorySpend> = by
         .into_iter()
@@ -137,27 +151,25 @@ pub fn by_month(conn: &Connection, months_back: u32) -> AppResult<Vec<MonthSumma
     let cutoff = compute_cutoff(months_back);
 
     let mut stmt = conn.prepare(
-        "SELECT substr(t.date, 1, 7) AS month, t.amount
+        "SELECT substr(t.date, 1, 7) AS month, t.amount, c.kind
          FROM transactions t
          LEFT JOIN categories c ON c.id = t.category_id
          WHERE t.date >= ?1
            AND COALESCE(c.kind, '') != 'transfer'
          ORDER BY t.date ASC",
     )?;
-    let rows: Vec<(String, String)> = stmt
-        .query_map(params![cutoff], |row| Ok((row.get(0)?, row.get(1)?)))?
+    let rows: Vec<(String, String, Option<String>)> = stmt
+        .query_map(params![cutoff], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
         .collect::<rusqlite::Result<Vec<_>>>()?;
 
     let mut by_month: HashMap<String, (Decimal, Decimal)> = HashMap::new();
-    for (m, amt) in rows {
+    for (m, amt, kind) in rows {
         let d =
             Decimal::from_str(&amt).map_err(|e| AppError::Invalid(format!("bad amount: {e}")))?;
         let entry = by_month.entry(m).or_insert((Decimal::ZERO, Decimal::ZERO));
-        if d.is_sign_negative() {
-            entry.1 += -d;
-        } else {
-            entry.0 += d;
-        }
+        let (i, e) = flow(d, kind.as_deref());
+        entry.0 += i;
+        entry.1 += e;
     }
 
     let mut out: Vec<MonthSummary> = by_month
@@ -187,7 +199,7 @@ pub fn investments(conn: &Connection, month: Option<&str>) -> AppResult<Investme
         "SELECT t.amount
          FROM transactions t
          JOIN categories c ON c.id = t.category_id
-         WHERE c.is_investment = 1
+         WHERE c.is_investment = 1 AND c.kind = 'transfer'
            AND (?1 IS NULL OR t.date LIKE ?1)",
     )?;
     let pat_ref: Option<&str> = pattern.as_deref();
@@ -217,7 +229,7 @@ pub fn investments(conn: &Connection, month: Option<&str>) -> AppResult<Investme
         let mut all_stmt = conn.prepare(
             "SELECT t.amount FROM transactions t
              JOIN categories c ON c.id = t.category_id
-             WHERE c.is_investment = 1",
+             WHERE c.is_investment = 1 AND c.kind = 'transfer'",
         )?;
         let all_rows: Vec<String> = all_stmt
             .query_map([], |row| row.get::<_, String>(0))?
@@ -294,7 +306,7 @@ pub fn transfer_summary(
     })
 }
 
-/// Aggregates the month's inflows (`amount > 0`, kind != 'transfer') by
+/// Aggregates the month's inflows (`amount > 0`, kind not transfer or expense) by
 /// counterparty. Marks a source recurring when it also appeared in BOTH months
 /// immediately before the displayed one (see `is_recurring`).
 pub fn income(
@@ -302,13 +314,13 @@ pub fn income(
     pack: &crate::locale::LocalePack,
     month: Option<&str>,
 ) -> AppResult<Vec<IncomeSource>> {
-    // Loads ALL real inflows (positive, non-transfer) from the whole DB — the
-    // full history is needed to detect recurrence.
+    // Loads ALL real inflows from the whole DB — the full history is needed to
+    // detect recurrence. A positive row in an expense category is a refund.
     let mut stmt = conn.prepare(
         "SELECT t.date, t.amount, t.description
          FROM transactions t
          LEFT JOIN categories c ON c.id = t.category_id
-         WHERE COALESCE(c.kind, '') != 'transfer'
+         WHERE COALESCE(c.kind, '') NOT IN ('transfer', 'expense')
            AND CAST(t.amount AS REAL) > 0",
     )?;
     type Row = (String, String, String);
@@ -489,6 +501,44 @@ mod tests {
             |r| r.get(0),
         )
         .unwrap()
+    }
+
+    /// A refund filed under an expense category gives back what the purchase
+    /// spent; it is not income.
+    #[test]
+    fn a_refund_in_an_expense_category_cancels_the_purchase() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let market = cat_id(&conn, "Mercado");
+        insert_tx(&conn, acc, "2026-04-05", "-200.00", Some(market));
+        insert_tx(&conn, acc, "2026-04-08", "200.00", Some(market));
+        insert_tx(&conn, acc, "2026-04-09", "-50.00", Some(market));
+
+        let k = kpis(&conn, Some("2026-04")).unwrap();
+        assert_eq!((k.income.as_str(), k.expense.as_str()), ("0", "50.00"));
+        let cats = by_category(&conn, Some("2026-04")).unwrap();
+        assert_eq!(cats.len(), 1);
+        assert_eq!(cats[0].total, "50.00");
+        let months = by_month(&conn, 1200).unwrap();
+        let april = months.iter().find(|m| m.month == "2026-04").unwrap();
+        assert_eq!((april.income.as_str(), april.expense.as_str()), ("0", "50.00"));
+        let pack = crate::locale::LocalePack::embedded_pt_br();
+        assert!(income(&conn, &pack, Some("2026-04")).unwrap().is_empty());
+    }
+
+    /// Changing Investimentos to an expense makes its rows ordinary spending;
+    /// they must not also stay in the investments panel.
+    #[test]
+    fn an_investment_category_turned_into_an_expense_counts_once() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let inv = cat_id(&conn, "Investimentos");
+        conn.execute("UPDATE categories SET kind = 'expense' WHERE id = ?1", [inv])
+            .unwrap();
+        insert_tx(&conn, acc, "2026-04-05", "-1000.00", Some(inv));
+
+        assert_eq!(kpis(&conn, Some("2026-04")).unwrap().expense, "1000.00");
+        assert_eq!(investments(&conn, Some("2026-04")).unwrap().applied_in_month, "0");
     }
 
     #[test]

@@ -77,12 +77,14 @@
 
   type Bucket = "gastos" | "renda" | "transfer" | "investimento";
 
+  /** The category's kind decides, as on the dashboard: a refund filed under
+   *  an expense category is spending given back, not income. Only an
+   *  uncategorized row goes by its sign. */
   function bucketOf(tx: Transaction, cats: Category[]): Bucket {
-    if (tx.category_id != null) {
-      const c = cats.find((x) => x.id === tx.category_id);
-      if (c?.is_investment) return "investimento";
-      if (c?.kind === "transfer") return "transfer";
-    }
+    const c = tx.category_id != null ? cats.find((x) => x.id === tx.category_id) : undefined;
+    if (c?.kind === "transfer") return c.is_investment ? "investimento" : "transfer";
+    if (c?.kind === "expense") return "gastos";
+    if (c?.kind === "income") return "renda";
     return Number(tx.amount) >= 0 ? "renda" : "gastos";
   }
 
@@ -117,7 +119,8 @@
   let totals = $derived.by(() => {
     const find = (b: Bucket) => groups.find((g) => g.bucket === b);
     const renda = find("renda")?.total ?? 0;
-    const gastos = Math.abs(find("gastos")?.total ?? 0);
+    // Negated, not abs(): a day with only a refund gives spending back.
+    const gastos = -(find("gastos")?.total ?? 0);
     return { renda, gastos, net: renda - gastos };
   });
 

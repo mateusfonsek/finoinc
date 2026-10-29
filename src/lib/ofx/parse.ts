@@ -19,7 +19,7 @@ import type {
  *   - `.getCreditCardTransferList()`  — credit-card transactions
  */
 export function parseOfx(content: string): ParsedOfx {
-  const ofx = new Ofx(content);
+  const ofx = new Ofx(escapeTextLeaves(content));
   const structure = ofx.getContent();
 
   const ofxNode = structure?.OFX ?? {};
@@ -52,7 +52,7 @@ export function parseOfx(content: string): ParsedOfx {
     acctid = (ccAcct["ACCTID"] as string | undefined) ?? null;
     // A card has neither branchid nor bankid in CCACCTFROM.
     try {
-      rawTxs = ofx.getCreditCardTransferList() as Array<Record<string, unknown>>;
+      rawTxs = (ofx.getCreditCardTransferList() as Array<Record<string, unknown>> | undefined) ?? [];
     } catch {
       rawTxs = [];
     }
@@ -61,7 +61,8 @@ export function parseOfx(content: string): ParsedOfx {
     branchid = (bankAcct["BRANCHID"] as string | undefined) ?? null;
     bankid = (bankAcct["BANKID"] as string | undefined) ?? null;
     acctid = (bankAcct["ACCTID"] as string | undefined) ?? null;
-    rawTxs = ofx.getBankTransferList() as Array<Record<string, unknown>>;
+    // An empty <BANKTRANLIST> comes back as undefined, not [].
+    rawTxs = (ofx.getBankTransferList() as Array<Record<string, unknown>> | undefined) ?? [];
   }
 
   const bank = detectBank({ fid, org, bankid });
@@ -109,7 +110,7 @@ export function parseOfx(content: string): ParsedOfx {
       fitid,
       date,
       amount: String(t.TRNAMT ?? "0"),
-      description: String(t.MEMO ?? t.NAME ?? ""),
+      description: decodeEntities(String(t.MEMO ?? t.NAME ?? "")),
     };
   });
 
@@ -195,4 +196,27 @@ function computeSummary(txs: ParsedTransaction[]): ParsedSummary {
     earliest,
     latest,
   };
+}
+
+/** Free-text fields the bank fills in, one per line in SGML. */
+const TEXT_LEAF = /^(\s*)<(MEMO|NAME)>(.*?)(?:<\/\2>)?\s*$/gm;
+
+/** `ofx-data-extractor` turns SGML into JSON by string rewriting, so a text
+ *  leaf with no value (`<MEMO>` alone) or a raw `<` inside one breaks the
+ *  whole statement. Empty leaves are dropped and `<` is escaped; the
+ *  description is decoded again afterwards. */
+function escapeTextLeaves(content: string): string {
+  return content.replace(TEXT_LEAF, (_, indent: string, tag: string, value: string) =>
+    value.trim() === "" ? "" : `${indent}<${tag}>${value.replaceAll("<", "&lt;")}</${tag}>`,
+  );
+}
+
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (whole, name: string) => {
+    if (name[0] !== "#") return ENTITIES[name.toLowerCase()] ?? whole;
+    const code = name[1] === "x" || name[1] === "X" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
+  });
 }

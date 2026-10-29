@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest";
 import { detectEncoding, normalizeTransactionText } from "./normalize";
 
 describe("detectEncoding", () => {
+  it("reads the encoding of an OFX 2.x XML declaration", () => {
+    expect(detectEncoding('<?xml version="1.0" encoding="UTF-8"?>\n<?OFX OFXHEADER="200"?>')).toBe("utf-8");
+  });
+
   it("detects CHARSET:1252 as windows-1252", () => {
     const header = `OFXHEADER:100
 DATA:OFXSGML

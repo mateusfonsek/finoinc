@@ -224,9 +224,9 @@ folder and translating JSON. Pull requests welcome.
 **~20 MB installed.** No Electron, no bundled Chromium: the interface
 is [Svelte 5](https://svelte.dev) running in the WebKit view macOS already ships, and
 everything underneath is Rust. Of those ~20 MB, 18 are the binary — and it is universal, so
-that single file carries both Apple Silicon and Intel. The entire interface, both locale
-packs and every icon add up to under 200 KB: 55 hand-picked icons embedded as data rather
-than a library of ~1,500.
+that single file carries both Apple Silicon and Intel. The interface code, both locale
+packs and every icon come to about 120 KB compressed — only the logo image weighs more: 55
+hand-picked icons embedded as data rather than a library of ~1,500.
 
 <br>
 

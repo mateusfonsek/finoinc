@@ -16,7 +16,7 @@ use tauri::State;
 
 use sha2::{Digest, Sha256};
 
-use crate::commands::app_settings::get_setting;
+use crate::commands::app_settings::{get_setting, set_setting};
 use crate::db::Db;
 use crate::error::{AppError, AppResult};
 
@@ -447,6 +447,21 @@ pub fn mark(conn: &Connection, content_hash: &str, status: &str) -> AppResult<()
     Ok(())
 }
 
+/// Gives files marked `invalid` one more pass whenever the app version
+/// changes: the parser that rejected them may have been fixed since, and one
+/// that still fails is simply marked again.
+pub fn retry_invalid_after_update(conn: &Connection, version: &str) -> AppResult<()> {
+    const KEY: &str = "invalid_files_retried_for";
+    if get_setting(conn, KEY)?.as_deref() == Some(version) {
+        return Ok(());
+    }
+    conn.execute(
+        "UPDATE seen_files SET status = 'pending', resolved_at = NULL WHERE status = 'invalid'",
+        [],
+    )?;
+    set_setting(conn, KEY, version)
+}
+
 /// The scan runs on window focus — exactly when the user is coming back to
 /// interact. So the DB mutex is taken in two short moments (read the folders /
 /// write the result) and **released** during disk work: holding it end to end
@@ -485,6 +500,34 @@ mod tests {
         migrations::apply(&conn).unwrap();
         crate::db::seed_from_pack(&conn, &crate::locale::LocalePack::embedded_pt_br()).unwrap();
         conn
+    }
+
+    fn status_of(conn: &Connection, hash: &str) -> String {
+        conn.query_row("SELECT status FROM seen_files WHERE content_hash = ?1", [hash], |r| r.get(0))
+            .unwrap()
+    }
+
+    /// A file the parser rejected may parse after an update fixed the parser;
+    /// marked invalid for good, it would never surface again.
+    #[test]
+    fn invalid_files_get_one_more_try_per_app_version() {
+        let conn = fresh_conn();
+        conn.execute(
+            "INSERT INTO seen_files (content_hash, path, file_name, size, status)
+             VALUES ('h', '/x/a.ofx', 'a.ofx', 1, 'invalid')",
+            [],
+        )
+        .unwrap();
+
+        retry_invalid_after_update(&conn, "1.0.0").unwrap();
+        assert_eq!(status_of(&conn, "h"), "pending");
+
+        mark(&conn, "h", "invalid").unwrap();
+        retry_invalid_after_update(&conn, "1.0.0").unwrap();
+        assert_eq!(status_of(&conn, "h"), "invalid", "same version: no second retry");
+
+        retry_invalid_after_update(&conn, "1.0.1").unwrap();
+        assert_eq!(status_of(&conn, "h"), "pending");
     }
 
     /// Unique temp folder per test, without external crates.

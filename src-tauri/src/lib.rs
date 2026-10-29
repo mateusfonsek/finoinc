@@ -101,6 +101,10 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        // Managed on the builder, not in `setup`: on a cold start macOS can
+        // deliver `RunEvent::Opened` before `setup` runs, and with no state to
+        // queue into, the files that launched the app were dropped.
+        .manage(commands::openfile::PendingOpen::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -180,9 +184,14 @@ pub fn run() {
                 let pack = locale_state.pack.lock().expect("locale mutex poisoned");
                 db::seed_from_pack(&conn, &pack).expect("failed to seed from locale pack");
             }
+            {
+                let conn = database.conn.lock().expect("db mutex poisoned");
+                let version = app.package_info().version.to_string();
+                // A failed retry only delays it to the next launch.
+                let _ = commands::watch::retry_invalid_after_update(&conn, &version);
+            }
             app.manage(database);
             app.manage(locale_state);
-            app.manage(commands::openfile::PendingOpen::default());
             app.manage(commands::enrich_job::EnrichJob::default());
 
             app.manage(mcp::McpState::new());

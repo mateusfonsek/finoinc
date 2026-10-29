@@ -187,6 +187,15 @@
               {#if opt.kind === "clear"}
                 <Icon name="x" size={11} stroke={2.2} class="opacity-70" />
                 <span>{t("category_picker.remove_category")}</span>
+                <!-- Clearing hands the transaction back to the rules: the next
+                     import may file it again. -->
+                <span
+                  class="ml-auto text-cap shrink-0 {i === highlighted
+                    ? 'opacity-70'
+                    : 'text-fg-faint'}"
+                >
+                  {t("category_picker.remove_category_hint")}
+                </span>
               {:else if opt.kind === "category"}
                 <span
                   class="w-2 h-2 rounded-full shrink-0"

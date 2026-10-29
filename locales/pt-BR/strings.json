@@ -184,6 +184,7 @@
     "no_category": "Sem categoria",
     "search_or_create": "Buscar ou criar…",
     "remove_category": "Remover categoria",
+    "remove_category_hint": "as regras decidem",
     "create_prefix": "Criar",
     "empty": "Nenhuma categoria"
   },
@@ -439,10 +440,10 @@
     "scope_note": "Renomear ou trocar a cor vale na hora em todas as transações desta categoria."
   },
   "categories_page": {
-    "desc": "Crie, edite ou apague qualquer categoria. As 13 categorias iniciais vêm pré-criadas mas podem ser modificadas ou removidas livremente — apagar deixa as transações vinculadas sem categoria.",
-    "delete_confirm": "Apagar \"{name}\"?",
-    "delete_confirm_one": "Apagar \"{name}\"? {n} transação ficará sem categoria.",
-    "delete_confirm_many": "Apagar \"{name}\"? {n} transações ficarão sem categoria."
+    "desc": "Crie, edite ou apague qualquer categoria. As 13 categorias iniciais vêm pré-criadas mas podem ser modificadas ou removidas livremente — apagar deixa as transações vinculadas sem categoria e apaga as regras dela.",
+    "delete_confirm": "Apagar \"{name}\"? As regras dela também serão apagadas.",
+    "delete_confirm_one": "Apagar \"{name}\"? {n} transação ficará sem categoria, e as regras dela também serão apagadas.",
+    "delete_confirm_many": "Apagar \"{name}\"? {n} transações ficarão sem categoria, e as regras dela também serão apagadas."
   },
   "rule_panel": {
     "title": "Editar regra",

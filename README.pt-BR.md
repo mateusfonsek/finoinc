@@ -150,7 +150,8 @@ dashboard, com aplicado no mês, resgatado e saldo — porque mandar dinheiro pr
 marcado no pacote de idioma; as demais transferências apenas ficam de fora.
 
 Renomeie, troque a cor, mude o tipo, apague as que não quer, crie as suas. Apagar uma
-categoria deixa as transações dela intactas e sem categoria — nada se perde.
+categoria deixa as transações dela intactas e sem categoria, e remove as regras que
+caíam nela.
 
 ![Categorias](docs/screenshots/pt/categories.png)
 
@@ -250,7 +251,7 @@ escolhidos a dedo e embutidos como dado, em vez de uma biblioteca de ~1.500.
 │  Rust                                   │
 │  commands/  — um módulo por feature     │
 │  domain/    — Account, Rule, Summary…   │
-│  db/        — 18 migrations só pra frente│
+│  db/        — 19 migrations só pra frente│
 │  locale/    — pacotes + teste de contrato│
 │  enrich/    — consulta de CNPJ (opt-in) │
 │  mcp/       — servidor, tools, log      │

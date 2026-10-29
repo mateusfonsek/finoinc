@@ -128,16 +128,25 @@ pub fn update_category(
     .map_err(AppError::from)
 }
 
-/// Deletes a category. Transactions referencing it get category_id=NULL.
+/// Deletes a category and its rules. Transactions referencing it get
+/// category_id=NULL.
 #[tauri::command]
 #[specta::specta]
 pub fn delete_category(db: State<'_, Db>, category_id: i64) -> AppResult<()> {
     let mut conn = db.conn.lock().expect("db mutex poisoned");
+    delete(&mut conn, category_id)
+}
+
+fn delete(conn: &mut rusqlite::Connection, category_id: i64) -> AppResult<()> {
     let tx = conn.transaction()?;
     tx.execute(
-        "UPDATE transactions SET category_id = NULL WHERE category_id = ?1",
+        "UPDATE transactions SET category_id = NULL, categorized_by_rule = NULL
+          WHERE category_id = ?1",
         params![category_id],
     )?;
+    // A rule cannot exist without its category; its snippets and bill
+    // settlements go with it through ON DELETE CASCADE.
+    tx.execute("DELETE FROM rules WHERE category_id = ?1", params![category_id])?;
     let deleted = tx.execute(
         "DELETE FROM categories WHERE id = ?1",
         params![category_id],
@@ -207,6 +216,28 @@ mod tests {
             params!["Mercado", "--color-cat-mercado", "expense"],
         );
         assert!(r.is_err(), "UNIQUE constraint on name should reject");
+    }
+
+    /// Seeded categories all have rules, and `rules.category_id` is NOT NULL,
+    /// so deleting one failed with a foreign-key error.
+    #[test]
+    fn a_category_with_rules_can_be_deleted() {
+        let mut conn = fresh_conn();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        let market: i64 = conn
+            .query_row("SELECT id FROM categories WHERE key = 'market'", [], |r| r.get(0))
+            .unwrap();
+        let rules_before: i64 = conn
+            .query_row("SELECT COUNT(*) FROM rules WHERE category_id = ?1", [market], |r| r.get(0))
+            .unwrap();
+        assert!(rules_before > 0, "precondition: the seed gives Mercado rules");
+
+        super::delete(&mut conn, market).unwrap();
+
+        let rules_after: i64 = conn
+            .query_row("SELECT COUNT(*) FROM rules WHERE category_id = ?1", [market], |r| r.get(0))
+            .unwrap();
+        assert_eq!(rules_after, 0);
     }
 
     #[test]

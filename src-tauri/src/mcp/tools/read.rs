@@ -19,8 +19,11 @@ fn opt_str(args: &Value, key: &str) -> Option<String> {
     args.get(key).and_then(Value::as_str).map(str::to_string)
 }
 
+/// Saturates rather than wraps: `as u32` turned 2^32 into 0.
 fn opt_u32(args: &Value, key: &str) -> Option<u32> {
-    args.get(key).and_then(Value::as_u64).map(|n| n as u32)
+    args.get(key)
+        .and_then(Value::as_u64)
+        .map(|n| u32::try_from(n).unwrap_or(u32::MAX))
 }
 
 /// A month argument reaches SQL as a `LIKE` prefix, so it is validated with the
@@ -170,7 +173,19 @@ pub fn list_bills(conn: &Connection, cfg: &McpConfig, args: &Value) -> AppResult
             )));
         }
     }
-    Ok(serde_json::to_value(rules::calendar_events_with_conn(conn, &month)?)?)
+    let mut events = rules::calendar_events_with_conn(conn, &month)?;
+    // A bill inside the window can still have been settled, in the app,
+    // against a transaction from before it.
+    if let Some(cutoff) = cfg.cutoff() {
+        for e in &mut events {
+            if e.paid_date.as_deref().is_some_and(|d| d < cutoff.as_str()) {
+                e.paid_date = None;
+                e.paid_amount = None;
+                e.paid_transaction_id = None;
+            }
+        }
+    }
+    Ok(serde_json::to_value(events)?)
 }
 
 pub fn list_categories(conn: &Connection, _cfg: &McpConfig, _args: &Value) -> AppResult<Value> {
@@ -456,6 +471,55 @@ mod tests {
     /// The bug this guards against: `list_bills` ignored `cfg` entirely, so an
     /// agent could walk the whole history two months at a time even though the
     /// tool is on by default.
+    /// A bill settled in the UI against an old transaction still belongs to a
+    /// month inside the window; its payment details must not leak through.
+    #[test]
+    fn list_bills_hides_a_payment_older_than_the_window() {
+        let conn = seeded();
+        let cfg12 = cfg(12);
+        let month = chrono::Local::now().format("%Y-%m").to_string();
+        let old = tx(&conn, "2019-03-02", "-1234.56", "ALUGUEL");
+        conn.execute(
+            "INSERT INTO rules (category_id, priority, due_day) VALUES ((SELECT MIN(id) FROM categories), 0, 10)",
+            [],
+        )
+        .unwrap();
+        let rule = conn.last_insert_rowid();
+        conn.execute("INSERT INTO rule_patterns (rule_id, pattern) VALUES (?1, 'ALUGUEL')", [rule])
+            .unwrap();
+        conn.execute(
+            "INSERT INTO bill_settlements (rule_id, due_month, transaction_id) VALUES (?1, ?2, ?3)",
+            rusqlite::params![rule, month, old],
+        )
+        .unwrap();
+
+        let out = list_bills(&conn, &cfg12, &json!({ "month": month })).unwrap();
+        let bill = &out.as_array().unwrap()[0];
+
+        assert!(bill["paid_date"].is_null(), "leaked {bill}");
+        assert!(bill["paid_amount"].is_null());
+        assert!(bill["paid_transaction_id"].is_null());
+    }
+
+    #[test]
+    fn a_month_that_does_not_exist_is_refused() {
+        let conn = seeded();
+        for month in ["2026-13", "2026-00"] {
+            assert!(list_bills(&conn, &cfg(0), &json!({ "month": month })).is_err(), "{month}");
+        }
+    }
+
+    /// `as u32` wrapped 2^32 to 0, so a huge limit returned nothing at all.
+    #[test]
+    fn a_limit_too_large_for_u32_is_not_wrapped_to_zero() {
+        let conn = seeded();
+        tx(&conn, &format!("{}-01", chrono::Local::now().format("%Y-%m")), "-5.00", "PADARIA");
+
+        let out = list_transactions(&conn, &cfg(0), &json!({ "limit": 4294967296u64 })).unwrap();
+
+        assert_eq!(out.as_array().unwrap().len(), 1);
+    }
+
     #[test]
     fn list_bills_refuses_a_month_outside_the_window() {
         let conn = seeded();

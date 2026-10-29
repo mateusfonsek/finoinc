@@ -626,9 +626,6 @@ async markFile(contentHash: string, status: string) : Promise<Result<null, strin
     else return { status: "error", error: e  as any };
 }
 },
-async listLocales() : Promise<LocaleInfo[]> {
-    return await TAURI_INVOKE("list_locales");
-},
 async getActiveLocale() : Promise<string> {
     return await TAURI_INVOKE("get_active_locale");
 },
@@ -810,7 +807,6 @@ export type InsertResult = { inserted: number; skipped_duplicates: number; auto_
  */
 export type InvestmentSummary = { applied_in_month: string; redeemed_in_month: string; applications_count: number; redemptions_count: number; accumulated_balance: string }
 export type KpiSummary = { income: string; expense: string; net: string; transaction_count: number }
-export type LocaleInfo = { code: string; name: string; flag: string }
 export type McpStatus = { enabled: boolean; 
 /**
  * `None` while the server is down — a URL for a closed port is a lie.

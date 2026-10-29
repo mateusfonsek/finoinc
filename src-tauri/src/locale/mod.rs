@@ -13,8 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-use specta::Type;
+use serde::Deserialize;
 use tauri::{AppHandle, Manager, State};
 
 use crate::error::{AppError, AppResult};
@@ -23,9 +22,7 @@ fn invalid<E: std::fmt::Display>(e: E) -> AppError {
     AppError::Invalid(e.to_string())
 }
 
-// ---------------------------------------------------------------------------
-// Deserialized shapes (mirror the JSON files in locales/<code>/)
-// ---------------------------------------------------------------------------
+// The structs below mirror the JSON files in locales/<code>/.
 
 // Several manifest fields (currency, dateLocale, code…) are consumed by the
 // frontend and by tests, not by core Rust — silence dead-code noise here.
@@ -171,10 +168,6 @@ pub struct RulesDef {
     pub reversals: Reversals,
 }
 
-// ---------------------------------------------------------------------------
-// LocalePack — a fully-loaded, ready-to-use locale (with compiled regexes)
-// ---------------------------------------------------------------------------
-
 /// `Clone` exists for the background work: the enrichment thread takes its own
 /// copy instead of holding the locale `Mutex` for the job's ~30s, which would
 /// block any other command that reads the pack. Every field was already
@@ -260,10 +253,6 @@ impl LocalePack {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Discovery + persistence of the active locale
-// ---------------------------------------------------------------------------
-
 const DEFAULT_LOCALE: &str = "pt-BR";
 const ACTIVE_FILE: &str = "active_locale";
 
@@ -307,32 +296,6 @@ fn resource_locales_root(app: &AppHandle) -> Option<PathBuf> {
     app.path().resource_dir().ok().map(|r| r.join("locales"))
 }
 
-/// Enumerate available locale codes by listing subfolders that contain a
-/// `manifest.json`. Always includes the default when discovery finds nothing.
-fn discover_codes(root: Option<&Path>) -> Vec<String> {
-    let mut codes: Vec<String> = Vec::new();
-    if let Some(root) = root {
-        if let Ok(entries) = std::fs::read_dir(root) {
-            for entry in entries.flatten() {
-                if entry.path().join("manifest.json").is_file() {
-                    if let Some(name) = entry.file_name().to_str() {
-                        codes.push(name.to_string());
-                    }
-                }
-            }
-        }
-    }
-    if codes.is_empty() {
-        codes.push(DEFAULT_LOCALE.to_string());
-    }
-    codes.sort();
-    codes
-}
-
-// ---------------------------------------------------------------------------
-// Managed state
-// ---------------------------------------------------------------------------
-
 pub struct LocaleState {
     locales_root: Option<PathBuf>,
     data_dir: PathBuf,
@@ -356,36 +319,6 @@ impl LocaleState {
             pack: Mutex::new(pack),
         }
     }
-}
-
-// ---------------------------------------------------------------------------
-// Commands
-// ---------------------------------------------------------------------------
-
-#[derive(Debug, Clone, Serialize, Type)]
-pub struct LocaleInfo {
-    pub code: String,
-    pub name: String,
-    pub flag: String,
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn list_locales(state: State<'_, LocaleState>) -> Vec<LocaleInfo> {
-    let codes = discover_codes(state.locales_root.as_deref());
-    codes
-        .into_iter()
-        .map(|code| {
-            // Load each manifest for its display name/flag; fall back to the code.
-            let (name, flag) = state
-                .locales_root
-                .as_deref()
-                .and_then(|root| LocalePack::load_from_dir(&root.join(&code)).ok())
-                .map(|p| (p.manifest.name, p.manifest.flag))
-                .unwrap_or_else(|| (code.clone(), String::new()));
-            LocaleInfo { code, name, flag }
-        })
-        .collect()
 }
 
 #[tauri::command]

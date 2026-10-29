@@ -64,7 +64,7 @@ pub fn category_for_activity(
     let mut best: Option<&crate::locale::CnaeEntry> = None;
     for entry in &pack.rules.cnae_map {
         if activity_code.starts_with(&entry.prefix)
-            && best.map_or(true, |b| entry.prefix.len() > b.prefix.len())
+            && best.is_none_or(|b| entry.prefix.len() > b.prefix.len())
         {
             best = Some(entry);
         }

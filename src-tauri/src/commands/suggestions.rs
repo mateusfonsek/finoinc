@@ -55,26 +55,22 @@ pub fn normalize(description: &str, pack: &LocalePack) -> (String, String, Strin
                     );
                 }
             }
-            "masked" => {
-                if description.starts_with(&rule.prefix) {
-                    if let Some(re) = pack.cpf_mask_re.as_ref() {
-                        if let Some(mask) = re.find(description) {
-                            let mask_s = mask.as_str();
-                            let name =
-                                pix_name(description, sep).unwrap_or_else(|| mask_s.to_string());
-                            return (
-                                format!("{}:{mask_s}", rule.key_prefix),
-                                rule.label.replace("{name}", &name),
-                                mask_s.to_string(),
-                            );
-                        }
+            "masked" if description.starts_with(&rule.prefix) => {
+                if let Some(re) = pack.cpf_mask_re.as_ref() {
+                    if let Some(mask) = re.find(description) {
+                        let mask_s = mask.as_str();
+                        let name =
+                            pix_name(description, sep).unwrap_or_else(|| mask_s.to_string());
+                        return (
+                            format!("{}:{mask_s}", rule.key_prefix),
+                            rule.label.replace("{name}", &name),
+                            mask_s.to_string(),
+                        );
                     }
                 }
             }
-            "system" => {
-                if description.starts_with(&rule.prefix) {
-                    return (rule.key.clone(), rule.label.clone(), rule.prefix.clone());
-                }
+            "system" if description.starts_with(&rule.prefix) => {
+                return (rule.key.clone(), rule.label.clone(), rule.prefix.clone());
             }
             _ => {}
         }
@@ -91,8 +87,9 @@ pub fn normalize(description: &str, pack: &LocalePack) -> (String, String, Strin
 /// Extracts the counterparty name from Nubank Pix descriptions.
 /// Format: `Transferência (enviada|recebida) pelo Pix - NAME - CPF_MASK - BANK ...`
 fn pix_name(description: &str, sep: &str) -> Option<String> {
-    let after_prefix = description.splitn(2, sep).nth(1)?.splitn(2, sep).next()?;
-    Some(after_prefix.trim().to_string())
+    let (_, rest) = description.split_once(sep)?;
+    let name = rest.split_once(sep).map_or(rest, |(name, _)| name);
+    Some(name.trim().to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -216,12 +213,12 @@ mod tests {
     #[test]
     fn normalize_pix_out_groups_by_cpf_mask() {
         let p = pack();
-        let a = "Transferência enviada pelo Pix - Mateus Fonseca (CAIXA) - •••.982.424-•• - CAIXA";
-        let b = "Transferência enviada pelo Pix - Mateus Fonseca (Caixa) - •••.982.424-•• - CAIXA outro";
+        let a = "Transferência enviada pelo Pix - Ana Souza (CAIXA) - •••.123.456-•• - CAIXA";
+        let b = "Transferência enviada pelo Pix - Ana Souza (Caixa) - •••.123.456-•• - CAIXA outro";
         let (k1, _, p1) = normalize(a, &p);
         let (k2, _, _) = normalize(b, &p);
         assert_eq!(k1, k2, "same CPF mask = same key, even with name variation");
-        assert_eq!(p1, "•••.982.424-••");
+        assert_eq!(p1, "•••.123.456-••");
     }
 
     #[test]

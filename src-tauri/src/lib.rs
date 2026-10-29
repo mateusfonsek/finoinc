@@ -75,7 +75,6 @@ pub fn run() {
         commands::watch::dir_exists,
         commands::watch::scan_watched_folders,
         commands::watch::mark_file,
-        locale::list_locales,
         locale::get_active_locale,
         locale::set_active_locale,
     ]);

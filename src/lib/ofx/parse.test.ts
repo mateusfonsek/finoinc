@@ -53,7 +53,7 @@ describe("parseOfx — Itaú minimal fixture", () => {
   });
 });
 
-describe("parseOfx — FITID duplicado dentro do mesmo arquivo (Nubank CC)", () => {
+describe("parseOfx — FITID duplicated within one file (Nubank card)", () => {
   const ofx = `OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
@@ -88,7 +88,7 @@ NEWFILEUID:NONE
 <CCSTMTRS>
 <CURDEF>BRL</CURDEF>
 <CCACCTFROM>
-<ACCTID>625c3a3e-2d92-4924-a81e-7d53ee5f511f</ACCTID>
+<ACCTID>00000000-0000-4000-8000-000000000001</ACCTID>
 </CCACCTFROM>
 <BANKTRANLIST>
 <DTSTART>20260318000000[-3:BRT]</DTSTART>
@@ -98,14 +98,14 @@ NEWFILEUID:NONE
 <DTPOSTED>20260318000000[-3:BRT]</DTPOSTED>
 <TRNAMT>3.75</TRNAMT>
 <FITID>SHARED-FITID</FITID>
-<MEMO>IOF de "Myclaw.Ai"</MEMO>
+<MEMO>IOF de "Acme.Ai"</MEMO>
 </STMTTRN>
 <STMTTRN>
 <TRNTYPE>CREDIT</TRNTYPE>
 <DTPOSTED>20260318000000[-3:BRT]</DTPOSTED>
 <TRNAMT>108.14</TRNAMT>
 <FITID>SHARED-FITID</FITID>
-<MEMO>Estorno de "Myclaw.Ai" (Myclaw.Ai)</MEMO>
+<MEMO>Estorno de "Acme.Ai" (Acme.Ai)</MEMO>
 </STMTTRN>
 <STMTTRN>
 <TRNTYPE>DEBIT</TRNTYPE>

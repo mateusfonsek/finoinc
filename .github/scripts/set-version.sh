@@ -5,14 +5,14 @@
 # stayed at 0.1.0 while package.json and tauri.conf.json moved to 0.2.0.
 set -euo pipefail
 
-v=${1:?uso: set-version.sh <versao>}
+v=${1:?usage: set-version.sh <version>}
 
 # Validates the input version before any substitution. Without this, a leading
 # `v` (the most common way to pass a git tag by mistake) or an incomplete "X.Y"
 # slips through node and silently produces invalid JSON. Rejecting here, loud
 # and clear, is the only defence.
 if [[ ! $v =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  printf 'erro: versão inválida: "%s" (esperado X.Y.Z, sem "v" na frente)\n' "$v" >&2
+  printf 'error: invalid version: "%s" (expected X.Y.Z, without a leading "v")\n' "$v" >&2
   exit 1
 fi
 
@@ -33,7 +33,7 @@ node -e '
     const content = fs.readFileSync(f, "utf8");
     const updated = content.replace(/"version":\s*"[^"]*"/, `"version": "${v}"`);
     if (updated === content) {
-      console.error(`erro: chave "version" não encontrada em ${f}`);
+      console.error(`error: "version" key not found in ${f}`);
       process.exit(1);
     }
     fs.writeFileSync(f, updated);
@@ -67,7 +67,7 @@ perl -pi -e 'if (!$done && s/^version = "[^"]*"/version = "'"$v"'"/) { $done = 1
 # that without giving up the `^version = "..."` anchor, which is what actually
 # matters here.
 if ! grep -Eq '^version = "'"$v"'"[[:space:]]*(#.*)?$' src-tauri/Cargo.toml; then
-  printf 'erro: a versão %s não foi escrita em src-tauri/Cargo.toml (linha `version = "..."` da seção [package] não encontrada)\n' "$v" >&2
+  printf 'error: version %s was not written to src-tauri/Cargo.toml (the [package] `version = "..."` line was not found)\n' "$v" >&2
   exit 1
 fi
 

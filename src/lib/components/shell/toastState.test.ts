@@ -23,19 +23,19 @@ describe("phaseOf", () => {
     expect(phaseOf(withDiscovery(), false)).toBe("expanded");
   });
 
-  it("esconde durante um import, mesmo com descoberta pendente", () => {
+  it("hides during an import, even with a pending discovery", () => {
     expect(phaseOf(withDiscovery(), true)).toBe("hidden");
   });
 
-  it("encolhe quando o timer dispara", () => {
+  it("collapses when the timer fires", () => {
     expect(phaseOf(autoCollapse(withDiscovery()), false)).toBe("collapsed");
   });
 
-  it("encolhe quando o usuário clica no controle", () => {
+  it("collapses when the user clicks the control", () => {
     expect(phaseOf(collapse(withDiscovery()), false)).toBe("collapsed");
   });
 
-  it("reabre quando o usuário clica na pastilha", () => {
+  it("reopens when the user clicks the pill", () => {
     const s = expand(autoCollapse(withDiscovery()));
     expect(phaseOf(s, false)).toBe("expanded");
   });
@@ -56,19 +56,19 @@ describe("phaseOf", () => {
 });
 
 describe("syncHash", () => {
-  it("descoberta nova volta a expandir e limpa o que o usuário fez na anterior", () => {
+  it("a new discovery expands again and forgets what the user did to the previous one", () => {
     const s = collapse(withDiscovery("h1"));
     const nova = syncHash(s, "h2");
     expect(phaseOf(nova, false)).toBe("expanded");
   });
 
-  it("re-sincronizar a MESMA descoberta preserva o estado", () => {
+  it("re-syncing the SAME discovery keeps the state", () => {
     // Without this, any re-render would reopen the pill the user closed.
     const s = collapse(withDiscovery("h1"));
     expect(phaseOf(syncHash(s, "h1"), false)).toBe("collapsed");
   });
 
-  it("perder a descoberta esconde", () => {
+  it("losing the discovery hides it", () => {
     expect(phaseOf(syncHash(withDiscovery(), null), false)).toBe("hidden");
   });
 });
@@ -99,7 +99,7 @@ describe("autoCollapseArmed", () => {
     expect(autoCollapseArmed(initialToastState, false, false)).toBe(false);
   });
 
-  it("volta a armar quando chega uma descoberta diferente", () => {
+  it("re-arms when a different discovery arrives", () => {
     const s = syncHash(expand(autoCollapse(withDiscovery("h1"))), "h2");
     expect(autoCollapseArmed(s, false, false)).toBe(true);
   });

@@ -22,7 +22,7 @@
 # keeps a docs-only merge from becoming a release.
 set -euo pipefail
 
-current=${1:?uso: next-version.sh <versao-atual>}
+current=${1:?usage: next-version.sh <current-version>}
 
 # Validates the input version before any computation. Without this, a leading
 # `v` (the most common way to pass a git tag by mistake) or an incomplete "X.Y"
@@ -30,7 +30,7 @@ current=${1:?uso: next-version.sh <versao-atual>}
 # stray error on stderr that nobody checks. Rejecting here, loud and clear, is
 # the only defence.
 if [[ ! $current =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  printf 'erro: versão atual inválida: "%s" (esperado X.Y.Z, sem "v" na frente)\n' "$current" >&2
+  printf 'error: invalid current version: "%s" (expected X.Y.Z, without a leading "v")\n' "$current" >&2
   exit 1
 fi
 

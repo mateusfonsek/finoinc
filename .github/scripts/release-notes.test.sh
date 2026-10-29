@@ -14,62 +14,62 @@ contains() {
 
   out=$(printf '%b' "$subjects" | ./release-notes.sh)
   if printf '%s' "$out" | grep -qF "$needle"; then
-    got=contem
+    got=must-contain
   else
-    got=nao-contem
+    got=must-not-contain
   fi
 
   if [ "$got" = "$mode" ]; then
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n  esperado: %s [%s]\n  saída:\n%s\n' "$desc" "$mode" "$needle" "$out"
+    printf 'FAILED: %s\n  expected: %s [%s]\n  output:\n%s\n' "$desc" "$mode" "$needle" "$out"
   fi
 }
 
-# `linha_exata <desc> <linha-inteira> <assuntos>`
+# `exact_line <desc> <whole-line> <subjects>`
 #
 # Exists because `contains` is far too loose to cover the ONLY transformation
-# release-notes.sh performs. Searching for "pasta observada" matches equally in
-# `- feat(watch): pasta observada` (the raw line, with no normalisation at all),
+# release-notes.sh performs. Searching for "watched folder" matches equally in
+# `- feat(watch): watched folder` (the raw line, with no normalisation at all),
 # and searching for "watch" even matches an intact `feat(watch):`. In other
 # words: the whole sed could be ripped out and the suite would stay green.
 # Comparing the WHOLE LINE (`grep -x`) is what pins the final shape.
-linha_exata() {
+exact_line() {
   desc=$1
-  linha=$2
+  line=$2
   subjects=$3
 
   out=$(printf '%b' "$subjects" | ./release-notes.sh)
   # `--` is mandatory: every expected line starts with the markdown hyphen, and
   # without it grep would read "- watch: ..." as an option.
-  if printf '%s\n' "$out" | grep -qxF -- "$linha"; then
+  if printf '%s\n' "$out" | grep -qxF -- "$line"; then
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n  esperava a linha exata: %s\n  saída:\n%s\n' "$desc" "$linha" "$out"
+    printf 'FAILED: %s\n  expected the exact line: %s\n  output:\n%s\n' "$desc" "$line" "$out"
   fi
 }
 
-contains "feat vira Novidades"        contem     "### Novidades"   'feat: pasta observada\n'
-contains "feat aparece sem o prefixo" contem     "pasta observada" 'feat: pasta observada\n'
-contains "fix vira Correções"         contem     "### Correções"   'fix: corrige guard\n'
-contains "perf vira Performance"      contem     "### Performance" 'perf: fora do mutex\n'
-contains "i18n vira Traduções"        contem     "### Traduções"   'i18n: traduz\n'
-contains "chore não aparece"          nao-contem "sobe dependência" 'chore: sobe dependência\n'
-contains "docs não aparece"           nao-contem "ajusta README"   'docs: ajusta README\n'
-contains "seção vazia não é impressa" nao-contem "### Correções"   'feat: a\n'
-contains "escopo é preservado"        contem     "watch"           'feat(watch): pasta observada\n'
-contains "bloco do Gatekeeper sempre entra" contem "xattr -dr com.apple.quarantine" 'feat: a\n'
-contains "instalação sempre entra"    contem     "## Instalação (macOS)" 'fix: a\n'
+contains "feat becomes New"           must-contain     "### New"          'feat: watched folder\n'
+contains "feat shows without the prefix" must-contain   "watched folder"   'feat: watched folder\n'
+contains "fix becomes Fixes"         must-contain     "### Fixes"        'fix: fix the guard\n'
+contains "perf becomes Performance"  must-contain     "### Performance"  'perf: outside the mutex\n'
+contains "i18n becomes Translations" must-contain     "### Translations" 'i18n: translate\n'
+contains "chore does not show"       must-not-contain "bump dependency"  'chore: bump dependency\n'
+contains "docs does not show"        must-not-contain "tweak README"     'docs: tweak README\n'
+contains "empty section is not printed" must-not-contain "### Fixes"     'feat: a\n'
+contains "scope is preserved"        must-contain     "watch"            'feat(watch): watched folder\n'
+contains "Gatekeeper block always included" must-contain "xattr -dr com.apple.quarantine" 'feat: a\n'
+contains "install section always included"  must-contain "## Install (macOS)" 'fix: a\n'
 
 # The line's final shape, character by character: the type goes away, the scope
 # becomes a `scope: ` prefix, and the item gains the markdown hyphen.
-linha_exata "escopo vira prefixo, tipo some" '- watch: pasta observada' 'feat(watch): pasta observada\n'
-linha_exata "sem escopo, só a descrição"     '- outra coisa'            'feat: outra coisa\n'
-linha_exata "fix com escopo idem"            '- ofx: corrige guard'     'fix(ofx): corrige guard\n'
-linha_exata "breaking change perde o !"      '- nova api'               'feat!: nova api\n'
-linha_exata "breaking com escopo"            '- db: nova api'           'feat(db)!: nova api\n'
+exact_line "scope becomes a prefix, type goes away" '- watch: watched folder' 'feat(watch): watched folder\n'
+exact_line "no scope, only the description" '- something else'       'feat: something else\n'
+exact_line "fix with a scope likewise"      '- ofx: fix the guard'   'fix(ofx): fix the guard\n'
+exact_line "breaking change loses the !"    '- new api'              'feat!: new api\n'
+exact_line "breaking with a scope"          '- db: new api'          'feat(db)!: new api\n'
 
-printf '\n%d passaram, %d falharam\n' "$pass" "$fail"
+printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

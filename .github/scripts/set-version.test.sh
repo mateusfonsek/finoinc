@@ -46,7 +46,7 @@ EOF
 fn main() {}
 EOF
 
-  # src-tauri/Cargo.toml com [package] e [dependencies] sections
+  # src-tauri/Cargo.toml with [package] and [dependencies] sections
   cat > "$tmpdir/src-tauri/Cargo.toml" << 'EOF'
 [package]
 name = "finoinc"
@@ -76,7 +76,7 @@ cleanup_fixture() {
 
 # Test 1: a valid version (1.0.0) rewrites the three files, one line each
 {
-  desc="versão válida (1.0.0) reescreve arquivos"
+  desc="valid version (1.0.0) rewrites the files"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && "$set_version_script" "1.0.0" 2>/dev/null)
@@ -90,7 +90,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -98,7 +98,7 @@ cleanup_fixture() {
 
 # Test 2: v1.2.0 is rejected, no file modified
 {
-  desc="v1.2.0 é rejeitado (nenhum arquivo modificado)"
+  desc="v1.2.0 is rejected (no file modified)"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script "v1.2.0" 2>/dev/null)
@@ -111,7 +111,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -119,7 +119,7 @@ cleanup_fixture() {
 
 # Test 3: 1.2 is rejected (incomplete), no file modified
 {
-  desc="1.2 é rejeitado (incompleto)"
+  desc="1.2 is rejected (incomplete)"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script "1.2" 2>/dev/null)
@@ -131,7 +131,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -139,7 +139,7 @@ cleanup_fixture() {
 
 # Test 4: bad"version is rejected, the JSON stays valid
 {
-  desc='bad"version é rejeitado, JSON válido'
+  desc='bad"version is rejected, JSON stays valid'
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script 'bad"version' 2>/dev/null)
@@ -148,7 +148,7 @@ cleanup_fixture() {
   # Checks that it failed
   if [ $ret -eq 0 ]; then
     fail=$((fail + 1))
-    printf 'FALHOU: %s (deveria ter falhado mas teve sucesso)\n' "$desc"
+    printf 'FAILED: %s (should have failed but succeeded)\n' "$desc"
   else
     # Checks that no file was modified
     if grep -qF '"version": "0.2.0"' "$fixture/package.json" && \
@@ -159,11 +159,11 @@ cleanup_fixture() {
         pass=$((pass + 1))
       else
         fail=$((fail + 1))
-        printf 'FALHOU: %s (JSON inválido)\n' "$desc"
+        printf 'FAILED: %s (invalid JSON)\n' "$desc"
       fi
     else
       fail=$((fail + 1))
-      printf 'FALHOU: %s (arquivo foi modificado)\n' "$desc"
+      printf 'FAILED: %s (file was modified)\n' "$desc"
     fi
   fi
 
@@ -172,7 +172,7 @@ cleanup_fixture() {
 
 # Test 5: no argument is rejected
 {
-  desc="nenhum argumento é rejeitado"
+  desc="no argument is rejected"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script 2>/dev/null)
@@ -183,7 +183,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -191,7 +191,7 @@ cleanup_fixture() {
 
 # Test 6: a valid version (1.5.3) rewrites
 {
-  desc="versão válida (1.5.3) reescreve arquivos"
+  desc="valid version (1.5.3) rewrites the files"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script "1.5.3" 2>/dev/null)
@@ -204,7 +204,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -212,7 +212,7 @@ cleanup_fixture() {
 
 # Test 7: the [package] version changes, [dependencies] versions do not
 {
-  desc="[package] version muda, [dependencies] versões não mudam"
+  desc="[package] version changes, [dependencies] versions do not"
   fixture=$(setup_fixture)
 
   (cd "$fixture" && $set_version_script "2.0.0" 2>/dev/null)
@@ -225,7 +225,7 @@ cleanup_fixture() {
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s\n' "$desc"
+    printf 'FAILED: %s\n' "$desc"
   fi
 
   cleanup_fixture "$fixture"
@@ -237,7 +237,7 @@ cleanup_fixture() {
 # nothing, exits 0, and the script finishes successfully having bumped only the
 # JSON files.
 {
-  desc="Cargo.toml não substituído reprova (não fica em silêncio)"
+  desc="unsubstituted Cargo.toml fails (not silently)"
   fixture=$(setup_fixture)
 
   cat > "$fixture/src-tauri/Cargo.toml" << 'EOF'
@@ -257,7 +257,7 @@ EOF
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s (saiu %d)\n' "$desc" "$ret"
+    printf 'FAILED: %s (exited %d)\n' "$desc" "$ret"
   fi
 
   cleanup_fixture "$fixture"
@@ -277,7 +277,7 @@ EOF
 # the dependency line and reports success, even with [package] untouched. The
 # correct guard only accepts when the line STARTS with "version = ".
 {
-  desc="versão pedida igual à de uma dependência não engana a guarda"
+  desc="requested version equal to a dependency's does not fool the guard"
   fixture=$(setup_fixture)
 
   cat > "$fixture/src-tauri/Cargo.toml" << 'EOF'
@@ -297,11 +297,11 @@ EOF
     pass=$((pass + 1))
   else
     fail=$((fail + 1))
-    printf 'FALHOU: %s (saiu %d)\n' "$desc" "$ret"
+    printf 'FAILED: %s (exited %d)\n' "$desc" "$ret"
   fi
 
   cleanup_fixture "$fixture"
 }
 
-printf '\n%d passaram, %d falharam\n' "$pass" "$fail"
+printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

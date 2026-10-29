@@ -415,7 +415,7 @@ mod tests {
         seed_tx(&conn, acc, "Pix - ENERGISA - 09.095.183/0001-40 - ITAU");
         conn.execute(
             "INSERT INTO rules (category_id, priority, due_day, display_name)
-             VALUES ((SELECT id FROM categories LIMIT 1), 10, NULL, 'já existe')",
+             VALUES ((SELECT id FROM categories LIMIT 1), 10, NULL, 'already exists')",
             [],
         )
         .unwrap();

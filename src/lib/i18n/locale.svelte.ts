@@ -1,12 +1,8 @@
-import { invoke } from "@tauri-apps/api/core";
+import { commands } from "$lib/bindings";
 import type { ReversalPhase } from "$lib/ofx/reversals";
 
-// -------------------------------------------------------------------------
-// Auto-discovery of locale packs.
-//
 // Every folder under /locales/<code>/ is picked up at build time via glob —
 // adding a new language is "drop a folder + translate JSON", no code changes.
-// -------------------------------------------------------------------------
 
 export type Manifest = {
   code: string;
@@ -208,7 +204,7 @@ function createLocale() {
       code = next;
       storageSet(next);
       try {
-        await invoke("set_active_locale", { code: next });
+        await commands.setActiveLocale(next);
       } catch {
         // backend not available (e.g. web preview) — localStorage still holds it
       }
@@ -220,7 +216,7 @@ function createLocale() {
       const firstRun = storageGet() === null;
 
       try {
-        const active = await invoke<string>("get_active_locale");
+        const active = await commands.getActiveLocale();
         if (active && packs[active]) {
           code = active;
           storageSet(active);

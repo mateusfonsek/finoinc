@@ -481,7 +481,7 @@ mod tests {
         assert_eq!(
             hits,
             vec!["F2".to_string(), "F4".to_string()],
-            "deve trazer F2 (-200) e F4 (-150), nessa ordem; sem F5 (entrada) e sem F6 (transfer)"
+            "must return F2 (-200) and F4 (-150), in that order; no F5 (income) and no F6 (transfer)"
         );
     }
 
@@ -545,7 +545,7 @@ mod tests {
         let txs = vec![mk("F1", "10"), mk("F2", "20"), mk("F3", "30")];
         raw_insert_batch(&mut conn, acc, &txs);
         conn.execute(
-            "UPDATE transactions SET notes = 'pagar uber depois' WHERE ofx_fitid = 'F2'",
+            "UPDATE transactions SET notes = 'pay uber later' WHERE ofx_fitid = 'F2'",
             [],
         )
         .unwrap();

@@ -129,7 +129,7 @@ describe("watch store", () => {
     expect(store.openRequest).toBeNull();
   });
 
-  it("resolve remove a descoberta da lista", async () => {
+  it("resolve removes the discovery from the list", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h3", "a.ofx")]);
     loadOfxFromPath.mockResolvedValue(parsed(10));
 
@@ -174,7 +174,7 @@ describe("watch store", () => {
     expect(api.scanWatchedFolders).not.toHaveBeenCalled();
   });
 
-  it("habilitar persiste e inverte a flag", async () => {
+  it("enabling persists and flips the flag", async () => {
     const store = createWatchStore();
 
     await store.setEnabled(true);
@@ -192,7 +192,7 @@ describe("watch store", () => {
     expect(api.scanWatchedFolders).toHaveBeenCalled();
   });
 
-  it("desabilitar persiste \"0\" e desativa a flag", async () => {
+  it("disabling persists \"0\" and clears the flag", async () => {
     const store = createWatchStore();
 
     await store.setEnabled(false);
@@ -201,7 +201,7 @@ describe("watch store", () => {
     expect(store.enabled).toBe(false);
   });
 
-  it("desabilitar limpa a lista de descobertas", async () => {
+  it("disabling clears the discovery list", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h4", "a.ofx")]);
     loadOfxFromPath.mockResolvedValue(parsed(5));
     const store = createWatchStore();

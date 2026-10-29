@@ -24,24 +24,24 @@ function tx(
   return { fitid, date, amount, description };
 }
 
-describe("detectReversalPairs — estornos", () => {
+describe("detectReversalPairs — reversals", () => {
   it("matches a single estorno with its original tx (same day, opposite amount)", () => {
-    const a = tx("A", "2026-01-20", "-1385.43", "Transferência enviada pelo Pix - Mateus");
-    const b = tx("B", "2026-01-20", "1385.43", "Estorno - Transferência enviada pelo Pix - Mateus");
+    const a = tx("A", "2026-01-20", "-1385.43", "Transferência enviada pelo Pix - Ana");
+    const b = tx("B", "2026-01-20", "1385.43", "Estorno - Transferência enviada pelo Pix - Ana");
     const map = detectReversalPairs([a, b], PT_BR_PHASES);
     expect(map.size).toBe(2);
     expect(map.get("A")).toEqual({ role: "reversed", pairFitid: "B" });
     expect(map.get("B")).toEqual({ role: "reversal", pairFitid: "A" });
   });
 
-  it("pairs N estornos with N of N+1 originals (FIFO), leaving one original unpaired", () => {
-    const o1 = tx("O1", "2026-01-20", "-1385.43", "Pix - Mateus");
-    const o2 = tx("O2", "2026-01-20", "-1385.43", "Pix - Mateus");
-    const o3 = tx("O3", "2026-01-20", "-1385.43", "Pix - Mateus");
-    const o4 = tx("O4", "2026-01-20", "-1385.43", "Pix - Mateus");
-    const e1 = tx("E1", "2026-01-20", "1385.43", "Estorno - Pix - Mateus");
-    const e2 = tx("E2", "2026-01-20", "1385.43", "Estorno - Pix - Mateus");
-    const e3 = tx("E3", "2026-01-20", "1385.43", "Estorno - Pix - Mateus");
+  it("pairs N reversals with N of N+1 originals (FIFO), leaving one original unpaired", () => {
+    const o1 = tx("O1", "2026-01-20", "-1385.43", "Pix - Ana");
+    const o2 = tx("O2", "2026-01-20", "-1385.43", "Pix - Ana");
+    const o3 = tx("O3", "2026-01-20", "-1385.43", "Pix - Ana");
+    const o4 = tx("O4", "2026-01-20", "-1385.43", "Pix - Ana");
+    const e1 = tx("E1", "2026-01-20", "1385.43", "Estorno - Pix - Ana");
+    const e2 = tx("E2", "2026-01-20", "1385.43", "Estorno - Pix - Ana");
+    const e3 = tx("E3", "2026-01-20", "1385.43", "Estorno - Pix - Ana");
 
     const map = detectReversalPairs([o1, o2, o3, o4, e1, e2, e3], PT_BR_PHASES);
 
@@ -83,9 +83,9 @@ describe("detectReversalPairs — estornos", () => {
   });
 });
 
-describe("detectReversalPairs — reembolsos", () => {
-  const ENVIADO = "Transferência enviada pelo Pix - AMAZON.COM.BR - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1000826878-6";
-  const REEMBOLSO = "Reembolso recebido pelo Pix - AMAZON SERVICOS DE VAREJO DO BRASIL LTDA. - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1000826878-6";
+describe("detectReversalPairs — refunds", () => {
+  const ENVIADO = "Transferência enviada pelo Pix - AMAZON.COM.BR - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1234567890-1";
+  const REEMBOLSO = "Reembolso recebido pelo Pix - AMAZON SERVICOS DE VAREJO DO BRASIL LTDA. - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1234567890-1";
 
   it("pairs reembolso with the matching Pix sent (name varies, CNPJ+account matches)", () => {
     const sent = tx("S", "2026-02-10", "-99.90", ENVIADO);
@@ -97,7 +97,7 @@ describe("detectReversalPairs — reembolsos", () => {
     expect(map.get("S")?.pairFitid).toBe("R");
   });
 
-  it("pairs FIFO when there are 6 sent + 6 reembolsos (real Amazon Feb case)", () => {
+  it("pairs FIFO when there are 6 sent + 6 refunds (real Amazon Feb case)", () => {
     const sents = [];
     const refunds = [];
     for (let i = 0; i < 6; i++) {
@@ -139,7 +139,7 @@ describe("detectReversalPairs — reembolsos", () => {
 });
 
 describe("detectReversalPairs — combined", () => {
-  it("handles a mix of estornos and reembolsos in the same batch", () => {
+  it("handles a mix of reversals and refunds in the same batch", () => {
     const eOrig = tx("EO", "2026-01-20", "-100", "Pix - João");
     const e = tx("E", "2026-01-20", "100", "Estorno - Pix - João");
     const rOrig = tx("RO", "2026-02-10", "-50",
@@ -155,16 +155,16 @@ describe("detectReversalPairs — combined", () => {
   });
 
   it("returns no pairs when the locale declares no phases", () => {
-    const a = tx("A", "2026-01-20", "-10.00", "Transferência enviada pelo Pix - Mateus");
-    const b = tx("B", "2026-01-20", "10.00", "Estorno - Transferência enviada pelo Pix - Mateus");
+    const a = tx("A", "2026-01-20", "-10.00", "Transferência enviada pelo Pix - Ana");
+    const b = tx("B", "2026-01-20", "10.00", "Estorno - Transferência enviada pelo Pix - Ana");
     expect(detectReversalPairs([a, b], []).size).toBe(0);
   });
 });
 
-describe("detectReversalPairs — estornos CC (Nubank)", () => {
+describe("detectReversalPairs — card reversals (Nubank)", () => {
   it("pairs CC estorno with original CC purchase (same merchant in quotes)", () => {
-    const purchase = tx("P", "2026-03-15", "-108.14", "Myclaw.Ai");
-    const estorno = tx("E", "2026-03-18", "108.14", `Estorno de "Myclaw.Ai" (Myclaw.Ai)`);
+    const purchase = tx("P", "2026-03-15", "-108.14", "Acme.Ai");
+    const estorno = tx("E", "2026-03-18", "108.14", `Estorno de "Acme.Ai" (Acme.Ai)`);
     const map = detectReversalPairs([purchase, estorno], PT_BR_PHASES);
     expect(map.size).toBe(2);
     expect(map.get("E")?.role).toBe("reversal");
@@ -173,13 +173,13 @@ describe("detectReversalPairs — estornos CC (Nubank)", () => {
 
   it("does not pair CC estorno with different merchant", () => {
     const purchase = tx("P", "2026-03-15", "-50", "Mana Poke");
-    const estorno = tx("E", "2026-03-18", "50", `Estorno de "Myclaw.Ai" (Myclaw.Ai)`);
+    const estorno = tx("E", "2026-03-18", "50", `Estorno de "Acme.Ai" (Acme.Ai)`);
     expect(detectReversalPairs([purchase, estorno], PT_BR_PHASES).size).toBe(0);
   });
 
   it("does not pair CC estorno when window > 30 days", () => {
-    const purchase = tx("P", "2026-01-01", "-108.14", "Myclaw.Ai");
-    const estorno = tx("E", "2026-03-15", "108.14", `Estorno de "Myclaw.Ai" (Myclaw.Ai)`);
+    const purchase = tx("P", "2026-01-01", "-108.14", "Acme.Ai");
+    const estorno = tx("E", "2026-03-15", "108.14", `Estorno de "Acme.Ai" (Acme.Ai)`);
     expect(detectReversalPairs([purchase, estorno], PT_BR_PHASES).size).toBe(0);
   });
 

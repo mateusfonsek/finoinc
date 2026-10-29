@@ -1046,7 +1046,7 @@ mod tests {
         let c = insert_tx(&conn, acc, "padaria do bairro", None);
 
         let n = apply_rules_internal(&mut conn, None).unwrap();
-        assert_eq!(n, 2, "os dois formatos casam a mesma regra");
+        assert_eq!(n, 2, "both formats match the same rule");
 
         for id in [a, b] {
             let cat: Option<i64> = conn
@@ -1077,7 +1077,7 @@ mod tests {
         let transporte = category_id(&conn, "Transporte");
         let outros = category_id(&conn, "Outros");
 
-        insert_rule_multi(&conn, &["nunca-casa", "testmerchant"], transporte, 10);
+        insert_rule_multi(&conn, &["never-matches", "testmerchant"], transporte, 10);
         insert_rule(&conn, "testmerchant trip", outros, 0);
 
         let tx_id = insert_tx(&conn, acc, "TESTMERCHANT TRIP 99", None);

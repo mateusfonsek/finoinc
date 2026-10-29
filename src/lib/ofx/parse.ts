@@ -77,24 +77,33 @@ export function parseOfx(content: string): ParsedOfx {
     type,
   };
 
-  // Nubank (and other Brazilian banks) reuse one FITID across distinct
-  // transactions in the same statement — real case: the IOF fee and the main
-  // purchase share a FITID, as do their two refunds. The original FITID is kept
-  // on the first occurrence and "#2", "#3", ... are appended to the rest so
-  // that: (a) the keyed `{#each ... (fitid)}` does not break, (b) the DB's
-  // UNIQUE(account_id, ofx_fitid) is not violated, (c) each can be selected
-  // individually. Ordering follows the OFX file and is stable across
-  // re-imports.
-  const seenFitid = new Map<string, number>();
-  const transactions: ParsedTransaction[] = rawTxs.map((t) => {
+  // Some banks reuse one FITID across distinct transactions. Nubank does it
+  // within a day (the IOF fee and its purchase); others repeat a constant
+  // FITID on every row. Each row still needs an id unique in the file (the
+  // keyed `{#each}`, the selection) and the SAME id in every statement that
+  // contains it, or re-importing an overlapping statement inserts it twice.
+  // So repeats are numbered within their day ("#2", "#3" — what Nubank rows
+  // have always been stored as), and a FITID that recurs on other days also
+  // carries its date.
+  const dated = rawTxs.map((t) => {
     const rawDate = (t.DTPOSTED as string | undefined) ?? "";
-    const date = isIsoDate(rawDate) ? rawDate : parseOfxDate(rawDate);
+    return { t, date: isIsoDate(rawDate) ? rawDate : parseOfxDate(rawDate) };
+  });
+  const daysOf = new Map<string, Set<string>>();
+  for (const { t, date } of dated) {
+    const raw = t.FITID as string | undefined;
+    if (raw) daysOf.set(raw, (daysOf.get(raw) ?? new Set()).add(date));
+  }
+  const seenThatDay = new Map<string, number>();
+  const transactions: ParsedTransaction[] = dated.map(({ t, date }) => {
     const rawFitid = (t.FITID as string | undefined) ?? null;
     let fitid = rawFitid;
     if (rawFitid) {
-      const count = seenFitid.get(rawFitid) ?? 0;
-      if (count > 0) fitid = `${rawFitid}#${count + 1}`;
-      seenFitid.set(rawFitid, count + 1);
+      if (daysOf.get(rawFitid)!.size > 1) fitid = `${rawFitid}#${date}`;
+      const dayKey = `${rawFitid}|${date}`;
+      const count = seenThatDay.get(dayKey) ?? 0;
+      if (count > 0) fitid = `${fitid}#${count + 1}`;
+      seenThatDay.set(dayKey, count + 1);
     }
     return {
       fitid,

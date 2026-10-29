@@ -141,3 +141,62 @@ NEWFILEUID:NONE
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+/** A card statement whose rows all carry the same FITID, as some banks emit. */
+function constantFitidStatement(rows: [string, string][]): string {
+  const txs = rows
+    .map(([date, amount]) => `<STMTTRN>
+<TRNTYPE>DEBIT</TRNTYPE>
+<DTPOSTED>${date.replaceAll("-", "")}000000[-3:BRT]</DTPOSTED>
+<TRNAMT>${amount}</TRNAMT>
+<FITID>0</FITID>
+<MEMO>PADARIA</MEMO>
+</STMTTRN>`)
+    .join("\n");
+  return `OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+<OFX>
+<CREDITCARDMSGSRSV1>
+<CCSTMTTRNRS>
+<CCSTMTRS>
+<CURDEF>BRL</CURDEF>
+<CCACCTFROM>
+<ACCTID>00000000-0000-4000-8000-000000000002</ACCTID>
+</CCACCTFROM>
+<BANKTRANLIST>
+<DTSTART>20260301000000[-3:BRT]</DTSTART>
+<DTEND>20260331000000[-3:BRT]</DTEND>
+${txs}
+</BANKTRANLIST>
+</CCSTMTRS>
+</CCSTMTTRNRS>
+</CREDITCARDMSGSRSV1>
+</OFX>`;
+}
+
+describe("parseOfx — FITID reused across days", () => {
+  // The same row must get the same FITID in any statement that contains it,
+  // or re-importing an overlapping statement inserts it twice.
+  it("gives a row the same FITID in two overlapping statements", () => {
+    const a = parseOfx(constantFitidStatement([["2026-03-03", "-10.00"], ["2026-03-09", "-20.00"]]));
+    const b = parseOfx(constantFitidStatement([["2026-03-09", "-20.00"], ["2026-03-12", "-30.00"]]));
+    const inA = a.transactions.find((t) => t.date === "2026-03-09")!.fitid;
+    const inB = b.transactions.find((t) => t.date === "2026-03-09")!.fitid;
+    expect(inA).toBe(inB);
+  });
+
+  it("still keeps every FITID in the file unique", () => {
+    const r = parseOfx(constantFitidStatement([
+      ["2026-03-03", "-10.00"], ["2026-03-09", "-20.00"], ["2026-03-09", "-20.00"],
+    ]));
+    const ids = r.transactions.map((t) => t.fitid);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});

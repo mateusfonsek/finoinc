@@ -20,7 +20,7 @@
   import { listCategories } from "$lib/api/categories";
   import { createRule, deleteRuleWithCleanup, updateRule } from "$lib/api/rules";
   import type { ParsedOfx } from "$lib/ofx/types";
-  import { takeStashed } from "$lib/ofx/open";
+  import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
   import { loadOfxFromPath } from "$lib/ofx/load";
@@ -69,13 +69,27 @@
 
   onMount(() => {
     void listCategories().then((c) => (categories = c));
-    const stash = takeStashed();
-    if (stash) {
-      pending = { file: stash.file, parsed: stash.parsed };
-      watchHash = stash.watchHash;
-      void prepareImport(stash.parsed);
-    }
+    serveStashed();
+    window.addEventListener(STASHED_EVENT, serveStashed);
+    return () => window.removeEventListener(STASHED_EVENT, serveStashed);
   });
+
+  /** Takes the next statement opened from Finder, unless one is still under
+   *  review — that one is finished or cancelled first, then `reset` calls in.
+   *  A finished import's result screen gives way right away. */
+  function serveStashed() {
+    if (busy || (pending && !importResult)) return;
+    if (importResult) return reset();
+    const stash = takeStashed();
+    if (!stash) return;
+    if ("error" in stash) {
+      error = stash.error;
+      return;
+    }
+    pending = { file: stash.file, parsed: stash.parsed };
+    watchHash = stash.watchHash;
+    void prepareImport(stash.parsed);
+  }
 
   // "Review" in the toast only asks; this screen opens. That covers both a
   // fresh mount (arriving from another route) and already being here — in the
@@ -294,6 +308,7 @@
     // Without this, "import another" with a loose file (DropZone) would inherit
     // the previous statement's hash coming from the watched folder.
     watchHash = undefined;
+    serveStashed();
   }
 
   /** Loads the next discovered statement straight into the preview, reusing the

@@ -64,14 +64,7 @@
   // them to the Import screen through the same stash it already reads.
   async function handleOpenedOfx() {
     const paths = await takePendingOfx();
-    for (const path of paths) {
-      try {
-        await openOfxPath(path);
-      } catch {
-        // An invalid file opened from Finder: Import shows the error on the
-        // next attempt. Not worth interrupting boot.
-      }
-    }
+    for (const path of paths) await openOfxPath(path);
   }
 
   const SHORTCUTS: Record<string, () => void> = {

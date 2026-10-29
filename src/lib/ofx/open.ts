@@ -6,23 +6,28 @@ import type { ParsedOfx } from "./types";
  *  a watched folder — it is what allows marking it imported at the end. */
 export type PendingImport = { file: File; parsed: ParsedOfx; watchHash?: string };
 
-type StashWindow = Window & { __finoincPending?: PendingImport };
+/** A statement opened from Finder, or why it could not be read. */
+export type Stashed = PendingImport | { error: string };
 
-export function stashPending(pending: PendingImport): void {
-  (window as unknown as StashWindow).__finoincPending = pending;
+/** Fired when something is queued, for an Import screen already on display:
+ *  navigating to the route it is on remounts nothing. */
+export const STASHED_EVENT = "finoinc:stashed";
+
+// Finder can hand over several files at once; each waits its turn.
+const queue: Stashed[] = [];
+
+export function takeStashed(): Stashed | undefined {
+  return queue.shift();
 }
 
-export function takeStashed(): PendingImport | undefined {
-  const w = window as unknown as StashWindow;
-  const stash = w.__finoincPending;
-  w.__finoincPending = undefined;
-  return stash;
-}
-
-/** Loads an .ofx by path, stashes it and navigates to Import. Used by both
- *  "Open with Finoinc" and the watched folder. */
-export async function openOfxPath(path: string, watchHash?: string): Promise<void> {
-  const loaded = await loadOfxFromPath(path);
-  stashPending({ ...loaded, watchHash });
+/** Loads an .ofx opened with Finoinc from Finder, queues it and navigates to
+ *  Import. */
+export async function openOfxPath(path: string): Promise<void> {
+  try {
+    queue.push(await loadOfxFromPath(path));
+  } catch (e) {
+    queue.push({ error: e instanceof Error ? e.message : String(e) });
+  }
+  window.dispatchEvent(new Event(STASHED_EVENT));
   push("/import");
 }

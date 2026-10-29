@@ -4,6 +4,7 @@ use tauri::State;
 use crate::commands::bills::validate_month;
 use crate::db::Db;
 use rust_decimal::Decimal;
+use std::collections::HashSet;
 use std::str::FromStr;
 
 use crate::domain::rule::{
@@ -607,13 +608,15 @@ pub fn calendar_events_with_conn(
 ) -> AppResult<Vec<CalendarEvent>> {
     validate_month(month)?;
 
-    type RuleRow = (i64, Vec<String>, Option<i32>, String, Option<String>, i64);
+    type RuleRow = (i64, Vec<String>, Option<i32>, String, Option<String>, i64, String);
+    // Bills first, then the order the categorization engine uses, so when two
+    // bills could both claim a payment, the one that categorizes it gets it.
     let rule_rows: Vec<RuleRow> = {
         let mut stmt = conn.prepare(
-            "SELECT r.id, r.due_day, c.name, c.color_token, r.pay_lead_months
+            "SELECT r.id, r.due_day, c.name, c.color_token, r.pay_lead_months, c.kind
              FROM rules r
              JOIN categories c ON c.id = r.category_id
-             ORDER BY r.created_at DESC",
+             ORDER BY r.due_day IS NULL, r.priority DESC, r.created_at DESC",
         )?;
         let rows = stmt
             .query_map([], |row| {
@@ -625,6 +628,7 @@ pub fn calendar_events_with_conn(
                     row.get(2)?,
                     row.get(3)?,
                     row.get(4)?,
+                    row.get(5)?,
                 ))
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -656,7 +660,16 @@ pub fn calendar_events_with_conn(
     };
 
     let mut events: Vec<CalendarEvent> = Vec::new();
-    for (rule_id, patterns, due_day, cat_name, cat_color, lead) in rule_rows {
+    // A transaction pays one bill at most. A rule with no due day is not a
+    // bill: it shows what it matched but holds nothing back from the bills.
+    let mut claimed: HashSet<i64> = HashSet::new();
+    for (rule_id, patterns, due_day, cat_name, cat_color, lead, kind) in rule_rows {
+        // A bill is money going out — or coming in, for an income rule. The
+        // opposite sign is its refund, which pays nothing.
+        let pays = |amount: &str| {
+            let outgoing = amount.trim_start().starts_with('-');
+            if kind == "income" { !outgoing } else { outgoing }
+        };
         let settlement: Option<(Option<i64>,)> = conn
             .query_row(
                 "SELECT transaction_id FROM bill_settlements
@@ -689,7 +702,9 @@ pub fn calendar_events_with_conn(
             None => {
                 let matched = tx_rows
                     .iter()
-                    .filter(|(_, date, _, _)| date.starts_with(&pay_prefix))
+                    .filter(|(id, date, amount, _)| {
+                        date.starts_with(&pay_prefix) && !claimed.contains(id) && pays(amount)
+                    })
                     .find_map(|(tx_id, date, amount, desc)| {
                         let desc_lc = desc.to_lowercase();
                         let hit = patterns_lc.iter().position(|p| desc_lc.contains(p))?;
@@ -697,6 +712,9 @@ pub fn calendar_events_with_conn(
                     });
                 match matched {
                     Some((tx_id, date, amount, hit)) => {
+                        if due_day.is_some() {
+                            claimed.insert(tx_id);
+                        }
                         (Some(date), Some(amount), Some(tx_id), false, Some(hit))
                     }
                     None => (None, None, None, false, None),
@@ -1373,6 +1391,49 @@ mod tests {
         )
         .unwrap();
         conn.last_insert_rowid()
+    }
+
+    /// SQLite's own LOWER only folds ASCII, so a rule typed in lowercase with
+    /// an accent never categorized the statement's uppercase line — while the
+    /// calendar, matching in Rust, already called the bill paid.
+    #[test]
+    fn a_rule_matches_an_accented_description_in_any_case() {
+        let (mut conn, cat) = calendar_fixture();
+        crate::db::register_functions(&conn).unwrap();
+        bill_rule(&conn, cat, "conta de água", 10, 0);
+        let tx = payment(&conn, "2026-10-08", "CONTA DE ÁGUA SABESP");
+
+        super::apply_rules_internal(&mut conn, None).unwrap();
+
+        let got: Option<i64> = conn
+            .query_row("SELECT category_id FROM transactions WHERE id = ?1", [tx], |r| r.get(0))
+            .unwrap();
+        assert_eq!(got, Some(cat));
+    }
+
+    #[test]
+    fn one_payment_settles_one_bill_only() {
+        let (conn, cat) = calendar_fixture();
+        bill_rule(&conn, cat, "ENERGIA", 6, 0);
+        bill_rule(&conn, cat, "ENERGIA ELETRICA", 6, 0);
+        payment(&conn, "2026-08-04", "PAG ENERGIA ELETRICA");
+
+        let events = super::calendar_events_with_conn(&conn, "2026-08").unwrap();
+
+        assert_eq!(events.iter().filter(|e| e.paid_date.is_some()).count(), 1);
+    }
+
+    #[test]
+    fn a_refund_does_not_pay_a_bill() {
+        let (conn, cat) = calendar_fixture();
+        bill_rule(&conn, cat, "NETFLIX", 6, 0);
+        let refund = payment(&conn, "2026-08-04", "Estorno NETFLIX");
+        conn.execute("UPDATE transactions SET amount = '39.90' WHERE id = ?1", [refund])
+            .unwrap();
+
+        let events = super::calendar_events_with_conn(&conn, "2026-08").unwrap();
+
+        assert_eq!(events[0].paid_date, None);
     }
 
     /// The month becomes a SQL `LIKE` prefix, so anything that reaches it must

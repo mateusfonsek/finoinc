@@ -151,7 +151,7 @@ brokerage is not spending, but it is not something you want out of sight either.
 treatment is marked in the locale pack; every other transfer simply stays out of the way.
 
 Rename them, recolor them, change their type, delete the ones you don't want, add your own.
-Deleting a category leaves its transactions intact and uncategorized — nothing is lost.
+Deleting a category leaves its transactions intact and uncategorized, and removes the rules that filed into it.
 
 ![Categories](docs/screenshots/en/categories.png)
 
@@ -252,7 +252,7 @@ hand-picked icons embedded as data rather than a library of ~1,500.
 │  Rust                                   │
 │  commands/  — one module per feature    │
 │  domain/    — Account, Rule, Summary…   │
-│  db/        — 18 forward-only migrations│
+│  db/        — 19 forward-only migrations│
 │  locale/    — packs + a contract test   │
 │  enrich/    — tax-id lookup (opt-in)    │
 │  mcp/       — server, tools, audit log  │

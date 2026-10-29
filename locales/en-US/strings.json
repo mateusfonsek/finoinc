@@ -184,6 +184,7 @@
     "no_category": "No category",
     "search_or_create": "Search or create…",
     "remove_category": "Remove category",
+    "remove_category_hint": "rules decide",
     "create_prefix": "Create",
     "empty": "No categories"
   },
@@ -439,10 +440,10 @@
     "scope_note": "Renaming or changing the color takes effect immediately on every transaction in this category."
   },
   "categories_page": {
-    "desc": "Create, edit, or delete any category. The 13 starter categories come pre-created but can be freely modified or removed — deleting one leaves its transactions uncategorized.",
-    "delete_confirm": "Delete \"{name}\"?",
-    "delete_confirm_one": "Delete \"{name}\"? {n} transaction will become uncategorized.",
-    "delete_confirm_many": "Delete \"{name}\"? {n} transactions will become uncategorized."
+    "desc": "Create, edit, or delete any category. The 13 starter categories come pre-created but can be freely modified or removed — deleting one leaves its transactions uncategorized and deletes its rules.",
+    "delete_confirm": "Delete \"{name}\"? Its rules are deleted too.",
+    "delete_confirm_one": "Delete \"{name}\"? {n} transaction will become uncategorized, and its rules are deleted too.",
+    "delete_confirm_many": "Delete \"{name}\"? {n} transactions will become uncategorized, and its rules are deleted too."
   },
   "rule_panel": {
     "title": "Edit rule",

@@ -228,7 +228,7 @@ pub fn set_category(
     category_id: Option<i64>,
 ) -> AppResult<()> {
     let changed = conn.execute(
-        "UPDATE transactions SET category_id = ?1 WHERE id = ?2",
+        "UPDATE transactions SET category_id = ?1, categorized_by_rule = NULL WHERE id = ?2",
         params![category_id, transaction_id],
     )?;
     if changed == 0 {

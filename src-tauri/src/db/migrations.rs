@@ -72,6 +72,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "0018_bill_settlements",
         include_str!("../../migrations/0018_bill_settlements.sql"),
     ),
+    (
+        "0019_categorized_by_rule",
+        include_str!("../../migrations/0019_categorized_by_rule.sql"),
+    ),
 ];
 
 /// Applies pending migrations. Returns `true` when this call created a **brand
@@ -273,6 +277,7 @@ mod tests {
                 "0016_watched_folders".to_string(),
                 "0017_rule_patterns".to_string(),
                 "0018_bill_settlements".to_string(),
+                "0019_categorized_by_rule".to_string(),
             ]
         );
     }

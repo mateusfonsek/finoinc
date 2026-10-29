@@ -277,33 +277,25 @@ pub fn delete_rule(db: State<'_, Db>, rule_id: i64) -> AppResult<()> {
 #[specta::specta]
 pub fn delete_rule_with_cleanup(db: State<'_, Db>, rule_id: i64) -> AppResult<u32> {
     let mut conn = db.conn.lock().expect("db mutex poisoned");
-    let category_id: i64 = conn
-        .query_row(
-            "SELECT category_id FROM rules WHERE id = ?1",
-            params![rule_id],
-            |r| r.get(0),
-        )
-        .map_err(|_| AppError::Invalid(format!("rule {rule_id} not found")))?;
-    let patterns = patterns_of(&conn, rule_id)?;
+    delete_with_cleanup(&mut conn, rule_id)
+}
 
+fn delete_with_cleanup(conn: &mut rusqlite::Connection, rule_id: i64) -> AppResult<u32> {
     let tx = conn.transaction()?;
-    // Clear before deleting: ON DELETE CASCADE would take the patterns with it
-    // and the query below could no longer tell what this rule categorized.
-    let mut cleared = 0usize;
-    for p in &patterns {
-        cleared += tx.execute(
-            "UPDATE transactions
-             SET category_id = NULL
-             WHERE category_id = ?1
-               AND LOWER(description) LIKE '%' || LOWER(?2) || '%'",
-            params![category_id, p],
-        )?;
+    // Clear before deleting: ON DELETE SET NULL would erase the very marker
+    // that says what this rule categorized.
+    let cleared = tx.execute(
+        "UPDATE transactions SET category_id = NULL, categorized_by_rule = NULL
+          WHERE categorized_by_rule = ?1",
+        params![rule_id],
+    )?;
+    if tx.execute("DELETE FROM rules WHERE id = ?1", params![rule_id])? == 0 {
+        return Err(AppError::Invalid(format!("rule {rule_id} not found")));
     }
-    tx.execute("DELETE FROM rules WHERE id = ?1", params![rule_id])?;
     tx.commit()?;
 
     // Re-apply remaining rules — a previously-shadowed rule may now match.
-    apply_rules_internal(&mut conn, None)?;
+    apply_rules_internal(conn, None)?;
     Ok(cleared as u32)
 }
 
@@ -522,11 +514,12 @@ pub fn apply_rules_since(
         bound.push(Box::new(date.to_string()));
     }
 
-    // A rule matches when ANY of its snippets appears in the description.
+    // A rule matches when ANY of its snippets appears in the description. The
+    // winning rule is recorded too, so undoing it clears only its own work.
     let sql = format!(
         "UPDATE transactions
-         SET category_id = (
-             SELECT r.category_id FROM rules r
+         SET (category_id, categorized_by_rule) = (
+             SELECT r.category_id, r.id FROM rules r
              WHERE EXISTS (
                  SELECT 1 FROM rule_patterns p
                  WHERE p.rule_id = r.id
@@ -930,33 +923,8 @@ mod tests {
         assert_eq!(a2_cat, None);
     }
 
-    /// Simulates delete_rule_with_cleanup logic (the tauri command needs State,
-    /// so we replicate the SQL here against a raw connection).
     fn cleanup_after_delete(conn: &mut Connection, rule_id: i64) -> u32 {
-        let category_id: i64 = conn
-            .query_row(
-                "SELECT category_id FROM rules WHERE id = ?1",
-                params![rule_id],
-                |r| r.get(0),
-            )
-            .unwrap();
-        let patterns = super::patterns_of(conn, rule_id).unwrap();
-        let tx = conn.transaction().unwrap();
-        let mut cleared = 0usize;
-        for p in &patterns {
-            cleared += tx
-                .execute(
-                    "UPDATE transactions SET category_id = NULL
-                     WHERE category_id = ?1 AND LOWER(description) LIKE '%' || LOWER(?2) || '%'",
-                    params![category_id, p],
-                )
-                .unwrap();
-        }
-        tx.execute("DELETE FROM rules WHERE id = ?1", params![rule_id])
-            .unwrap();
-        tx.commit().unwrap();
-        apply_rules_internal(conn, None).unwrap();
-        cleared as u32
+        super::delete_with_cleanup(conn, rule_id).unwrap()
     }
 
     #[test]
@@ -1009,6 +977,25 @@ mod tests {
             )
             .unwrap();
         assert_eq!(cat, Some(mercado), "manual category Mercado preserved");
+    }
+
+    /// The user filed it under the rule's own category by hand; undoing the
+    /// rule must not take that away.
+    #[test]
+    fn delete_with_cleanup_keeps_a_manual_choice_of_the_same_category() {
+        let mut conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let transporte = category_id(&conn, "Transporte");
+        let tx_id = insert_tx(&conn, acc, "TESTMERCHANT trip", None);
+        crate::commands::transactions::set_category(&conn, tx_id, Some(transporte)).unwrap();
+        let rule = insert_rule(&conn, "testmerchant", transporte, 0);
+
+        assert_eq!(cleanup_after_delete(&mut conn, rule), 0);
+
+        let cat: Option<i64> = conn
+            .query_row("SELECT category_id FROM transactions WHERE id = ?1", [tx_id], |r| r.get(0))
+            .unwrap();
+        assert_eq!(cat, Some(transporte));
     }
 
     #[test]

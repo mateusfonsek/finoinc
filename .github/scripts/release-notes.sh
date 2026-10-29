@@ -30,22 +30,24 @@ section() {
   printf '\n'
 }
 
-section "Novidades" "$feats"
-section "Correções" "$fixes"
+section "New" "$feats"
+section "Fixes" "$fixes"
 section "Performance" "$perfs"
-section "Traduções" "$i18ns"
+section "Translations" "$i18ns"
 
 cat <<'EOF'
 ---
 
-## Instalação (macOS)
+## Install (macOS)
 
-1. Baixe o `.dmg` abaixo, abra e arraste o **Finoinc** para a pasta **Aplicativos**.
-2. O app **não é assinado** (projeto open-source individual), então o macOS bloqueia na primeira abertura. Remova a quarentena do Gatekeeper no Terminal:
+1. Download the `.dmg` below, open it and drag **Finoinc** into **Applications**.
+2. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
 
-   ```
+   ```sh
    xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
-3. Abra normalmente. Tudo **100% local** — seus dados ficam só no seu Mac, em `~/Library/Application Support/app.finoinc/finoinc.db`.
+   Prefer not to use the Terminal? **System Settings → Privacy & Security → "Open Anyway"**, right after trying to open the app.
+
+3. Open it normally. Everything stays **100% local**, in `~/Library/Application Support/app.finoinc/finoinc.db`.
 EOF

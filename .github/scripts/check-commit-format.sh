@@ -34,7 +34,7 @@ validate() {
   what=$1
   msg=$2
   if ! printf '%s' "$msg" | grep -Eq "$PATTERN"; then
-    printf '::error::%s fora do padrão: %s\n' "$what" "$msg" >&2
+    printf '::error::%s does not match the format: %s\n' "$what" "$msg" >&2
     fail=1
     return
   fi
@@ -47,7 +47,7 @@ validate() {
   case " $TYPES " in
     *" $type "*) ;;
     *)
-      printf '::error::%s usa um tipo desconhecido "%s": %s\n' "$what" "$type" "$msg" >&2
+      printf '::error::%s uses an unknown type "%s": %s\n' "$what" "$type" "$msg" >&2
       fail=1
       ;;
   esac
@@ -57,11 +57,11 @@ validate() {
 # GitHub Actions expects rather than raw bash (:? would fail silently for tools
 # that do not read bash errors).
 if [ -z "${PR_TITLE:-}" ]; then
-  printf '::error::PR_TITLE não foi definido ou está vazio\n' >&2
+  printf '::error::PR_TITLE is not set or is empty\n' >&2
   exit 1
 fi
 
-validate "título da PR" "$PR_TITLE"
+validate "PR title" "$PR_TITLE"
 
 while IFS= read -r subject || [ -n "$subject" ]; do
   [ -z "$subject" ] && continue
@@ -82,19 +82,19 @@ if [ "$fail" -ne 0 ]; then
   # message and the gate diverge the day a new type was added.
   cat >&2 <<EOF
 
-O formato aceito é:  tipo(escopo opcional): descrição
+The accepted format is:  type(optional scope): description
 
-  feat: nova funcionalidade          → sobe a minor  (0.2.0 → 0.3.0)
-  fix: correção de bug               → sobe a patch  (0.2.0 → 0.2.1)
-  perf: melhoria de desempenho       → sobe a patch
-  i18n: tradução                     → sobe a patch
-  feat!: mudança incompatível        → sobe a major  (0.2.0 → 1.0.0)
+  feat: new feature                  → bumps the minor  (0.2.0 → 0.3.0)
+  fix: bug fix                       → bumps the patch  (0.2.0 → 0.2.1)
+  perf: performance improvement      → bumps the patch
+  i18n: translation                  → bumps the patch
+  feat!: breaking change             → bumps the major  (0.2.0 → 1.0.0)
 
-  Os demais tipos aceitos são válidos, mas não geram release.
+  The other accepted types are valid but do not trigger a release.
 
-Tipos aceitos: $TYPES
+Accepted types: $TYPES
 
-Detalhes em CONTRIBUTING.md.
+Details in CONTRIBUTING.md.
 EOF
   exit 1
 fi

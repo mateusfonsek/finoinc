@@ -180,6 +180,12 @@ pub fn run() {
                 let pack = locale_state.pack.lock().expect("locale mutex poisoned");
                 db::seed_from_pack(&conn, &pack).expect("failed to seed from locale pack");
             }
+            {
+                let conn = database.conn.lock().expect("db mutex poisoned");
+                let version = app.package_info().version.to_string();
+                // A failed retry only delays it to the next launch.
+                let _ = commands::watch::retry_invalid_after_update(&conn, &version);
+            }
             app.manage(database);
             app.manage(locale_state);
             app.manage(commands::openfile::PendingOpen::default());

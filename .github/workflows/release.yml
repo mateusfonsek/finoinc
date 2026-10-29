@@ -37,6 +37,16 @@ jobs:
           # exits 0 — the merge would slip by with no release and no error.
           set -euo pipefail
 
+          # A later merge has its own run queued behind this one, and that run
+          # releases these commits too. Releasing here would only lose the
+          # race to push onto a main that moved, so step aside.
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$latest" != "$GITHUB_SHA" ]; then
+            echo "::notice::main moved on to ${latest:0:7}; its own run releases these commits."
+            echo "next=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           current=$(node -p "require('./package.json').version")
           last_tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
           if [ -n "$last_tag" ]; then range="$last_tag..HEAD"; else range=HEAD; fi
@@ -104,9 +114,19 @@ jobs:
         run: pnpm tauri build --target universal-apple-darwin
 
       - name: Commit, tag and push
+        id: push
         if: steps.version.outputs.next != ''
         run: |
           set -euo pipefail
+
+          # Same reason as the check before the build: main can move during the
+          # ~10 minutes of it, and then the newer run takes over.
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$latest" != "$GITHUB_SHA" ]; then
+            echo "::notice::main moved on to ${latest:0:7} during the build; its own run releases these commits."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
@@ -136,9 +156,10 @@ jobs:
           #    HERE, alongside the commit.
           git tag -a "v${{ steps.version.outputs.next }}" -m "v${{ steps.version.outputs.next }}"
           git push --atomic origin HEAD:main "refs/tags/v${{ steps.version.outputs.next }}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Publish the release
-        if: steps.version.outputs.next != ''
+        if: steps.push.outputs.pushed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

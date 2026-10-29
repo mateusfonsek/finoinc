@@ -37,13 +37,13 @@
     "copyright": "© 2026 Mateus Fonseca",
     "publisher": "Mateus Fonseca",
     "homepage": "https://github.com/MateusFonseK/finoinc",
-    "shortDescription": "Suas finanças, só no seu Mac.",
-    "longDescription": "Organize suas finanças pessoais de forma 100% local: importe extratos OFX, categorize com regras e acompanhe tudo num app que não envia seus dados pra lugar nenhum.",
+    "shortDescription": "Your money, only on your Mac.",
+    "longDescription": "Personal finance that stays on your Mac: import OFX statements, categorize them with rules and read your month, in an app that never sends your data anywhere.",
     "fileAssociations": [
       {
         "ext": ["ofx"],
-        "name": "Extrato OFX",
-        "description": "Extrato bancário OFX",
+        "name": "OFX Statement",
+        "description": "OFX bank statement",
         "role": "Viewer"
       }
     ],

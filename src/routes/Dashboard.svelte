@@ -57,13 +57,15 @@
 
   async function refresh() {
     try {
-      const [k, c, topTx, inv, tr, src] = await Promise.all([
+      const [k, c, topTx, inv, tr, src, trend] = await Promise.all([
         summaryKpis(filters.month),
         summaryByCategory(filters.month),
         topExpenses(filters.month, 8),
         investmentSummary(filters.month),
         transferSummary(filters.month),
         incomeSources(filters.month),
+        // The current month and the 11 before it: one per chart column.
+        summaryByMonth(11),
       ]);
       kpis = k;
       byCategory = c;
@@ -71,6 +73,7 @@
       investments = inv;
       transfers = tr;
       sources = src;
+      byMonth = trend;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }
@@ -94,7 +97,6 @@
 
   onMount(async () => {
     try {
-      byMonth = await summaryByMonth(12);
       await loadFreshness();
       await refresh();
     } catch (e) {

@@ -18,7 +18,8 @@ pub fn validate_month(month: &str) -> AppResult<()> {
     let ok = month.len() == 7
         && month.as_bytes()[4] == b'-'
         && month[0..4].bytes().all(|b| b.is_ascii_digit())
-        && month[5..7].bytes().all(|b| b.is_ascii_digit());
+        && month[5..7].bytes().all(|b| b.is_ascii_digit())
+        && (1..=12).contains(&month[5..7].parse::<u32>().unwrap_or(0));
     if !ok {
         return Err(AppError::Invalid(format!(
             "month must be 'YYYY-MM' (got: '{month}')"

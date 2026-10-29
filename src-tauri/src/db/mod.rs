@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+use rusqlite::functions::FunctionFlags;
 use rusqlite::types::Value;
 use rusqlite::{params, Connection};
 use tauri::{AppHandle, Manager};
@@ -64,6 +65,20 @@ fn copy_legacy_dir(legacy: &Path, dir: &Path) -> AppResult<()> {
     Ok(())
 }
 
+/// SQLite's built-in `lower()` folds ASCII only, while matching elsewhere in
+/// Rust folds every letter; every rule-matching `LOWER(...) LIKE` goes through
+/// this one instead, so "água" matches "ÁGUA" everywhere. No index uses
+/// `lower()`, which is what makes replacing it safe.
+pub fn register_functions(conn: &Connection) -> AppResult<()> {
+    conn.create_scalar_function(
+        "lower",
+        1,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        |ctx| Ok(ctx.get::<Option<String>>(0)?.map(|s| s.to_lowercase())),
+    )?;
+    Ok(())
+}
+
 pub fn init(app: &AppHandle) -> AppResult<Db> {
     let dir = app
         .path()
@@ -76,6 +91,7 @@ pub fn init(app: &AppHandle) -> AppResult<Db> {
     let conn = Connection::open(&path)?;
     conn.pragma_update(None, "journal_mode", "WAL")?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
+    register_functions(&conn)?;
 
     let fresh = migrations::apply(&conn)?;
 

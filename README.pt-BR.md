@@ -222,9 +222,9 @@ traduzir JSON. Pull requests são bem-vindos.
 **~20 MB instalado.** Sem Electron, sem Chromium embutido: a interface é
 [Svelte 5](https://svelte.dev) rodando na WebKit que o macOS já tem, e tudo por baixo é
 Rust. Dos ~20 MB instalados, 18 são o binário — e ele é universal, ou seja, carrega Apple
-Silicon e Intel no mesmo arquivo. A interface inteira, os dois pacotes de idioma e todos os
-ícones somam menos de 200 KB: são 55 ícones escolhidos a dedo e embutidos como dado, em vez
-de uma biblioteca de ~1.500.
+Silicon e Intel no mesmo arquivo. O código da interface, os dois pacotes de idioma e todos os
+ícones somam cerca de 120 KB comprimidos — só a imagem do logo pesa mais: são 55 ícones
+escolhidos a dedo e embutidos como dado, em vez de uma biblioteca de ~1.500.
 
 <br>
 

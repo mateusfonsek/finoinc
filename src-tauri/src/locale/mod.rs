@@ -344,7 +344,8 @@ pub fn set_active_locale(
 
     {
         let mut conn = db.conn.lock().expect("db mutex poisoned");
-        if crate::db::is_pristine(&conn)? {
+        let seeded_from = state.pack.lock().expect("locale mutex poisoned").clone();
+        if crate::db::is_pristine(&conn, &seeded_from)? {
             crate::db::reseed_from_pack(&mut conn, &pack)?;
         }
     }

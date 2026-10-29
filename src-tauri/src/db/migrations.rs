@@ -78,13 +78,8 @@ const MIGRATIONS: &[(&str, &str)] = &[
 /// new** database (i.e. `0001_init` had not run before), so the caller can seed
 /// it from the active locale pack without clobbering an existing user's data.
 pub fn apply(conn: &Connection) -> AppResult<bool> {
-    conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS _migrations (
-            name TEXT PRIMARY KEY,
-            applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );",
-    )?;
-
+    // On a brand-new file `_migrations` does not exist yet, so this query
+    // errors and reads as "not initialized" — which is exactly right.
     let already_initialized: bool = conn
         .query_row(
             "SELECT 1 FROM _migrations WHERE name = '0001_init'",
@@ -94,7 +89,19 @@ pub fn apply(conn: &Connection) -> AppResult<bool> {
         .unwrap_or(false);
     let fresh_db = !already_initialized;
 
-    for (name, sql) in MIGRATIONS {
+    run(conn, MIGRATIONS)?;
+    Ok(fresh_db)
+}
+
+fn run(conn: &Connection, migrations: &[(&str, &str)]) -> AppResult<()> {
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS _migrations (
+            name TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );",
+    )?;
+
+    for (name, sql) in migrations {
         let already: bool = conn
             .query_row(
                 "SELECT 1 FROM _migrations WHERE name = ?1",
@@ -104,12 +111,16 @@ pub fn apply(conn: &Connection) -> AppResult<bool> {
             .unwrap_or(false);
 
         if !already {
-            conn.execute_batch(sql)?;
-            conn.execute("INSERT INTO _migrations (name) VALUES (?1)", [name])?;
+            // The migration and its `_migrations` row commit together: a crash
+            // between them would otherwise re-run a half-applied migration on
+            // every launch and keep the app from ever opening again.
+            let tx = conn.unchecked_transaction()?;
+            tx.execute_batch(sql)?;
+            tx.execute("INSERT INTO _migrations (name) VALUES (?1)", [name])?;
+            tx.commit()?;
         }
     }
-
-    Ok(fresh_db)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -145,6 +156,23 @@ mod tests {
             }
         }
         panic!("migration {up_to} not found");
+    }
+
+    /// A migration that dies halfway (full disk, force quit) must leave no
+    /// trace, or the next launch re-runs it into "already exists" forever.
+    #[test]
+    fn a_migration_that_fails_halfway_can_run_again() {
+        let conn = Connection::open_in_memory().unwrap();
+        let broken = [(
+            "0001_x",
+            "CREATE TABLE a (id INTEGER); INSERT INTO missing VALUES (1);",
+        )];
+        assert!(run(&conn, &broken).is_err());
+        assert!(!table_exists(&conn, "a"), "the half-applied table survived");
+
+        let fixed = [("0001_x", "CREATE TABLE a (id INTEGER);")];
+        run(&conn, &fixed).unwrap();
+        assert!(table_exists(&conn, "a"));
     }
 
     /// 0017 moves `rules.pattern` into `rule_patterns`. Existing rules must

@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+use rusqlite::types::Value;
 use rusqlite::{params, Connection};
 use tauri::{AppHandle, Manager};
 
@@ -38,6 +39,11 @@ fn copy_legacy_dir(legacy: &Path, dir: &Path) -> AppResult<()> {
         return Ok(());
     }
     std::fs::create_dir_all(dir)?;
+    // With no DB here, any sidecar is left over from an interrupted copy and
+    // may be older than the legacy DB; SQLite would replay it on open.
+    for ext in ["-wal", "-shm"] {
+        let _ = std::fs::remove_file(dir.join(format!("{DB_FILE}{ext}")));
+    }
     for entry in std::fs::read_dir(legacy)? {
         let entry = entry?;
         let name = entry.file_name().to_string_lossy().into_owned();
@@ -129,25 +135,44 @@ pub fn seed_from_pack(conn: &Connection, pack: &LocalePack) -> AppResult<()> {
     Ok(())
 }
 
-/// True when the user has never imported anything and never created their own
-/// category. All three must hold: an account with no transactions still means
-/// an import was attempted, and migration `0014` makes a NULL `key` the exact
-/// signature of a user-created category — a pack-seeded one always has one.
-pub fn is_pristine(conn: &Connection) -> AppResult<bool> {
-    let accounts: i64 = conn.query_row("SELECT COUNT(*) FROM accounts", [], |r| r.get(0))?;
-    if accounts > 0 {
-        return Ok(false);
+/// True when the database is still exactly what `seeded_from` put there:
+/// nothing imported, no bill marked paid, and every category and rule as the
+/// pack seeded it. Anything the user set up before their first import — a
+/// renamed category, a rule with a due day — makes it not pristine, so a
+/// language switch never reseeds over it.
+pub fn is_pristine(conn: &Connection, seeded_from: &LocalePack) -> AppResult<bool> {
+    for table in ["accounts", "transactions", "bill_settlements"] {
+        let rows: i64 = conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))?;
+        if rows > 0 {
+            return Ok(false);
+        }
     }
-    let transactions: i64 = conn.query_row("SELECT COUNT(*) FROM transactions", [], |r| r.get(0))?;
-    if transactions > 0 {
-        return Ok(false);
+    let expected = Connection::open_in_memory()?;
+    migrations::apply(&expected)?;
+    seed_from_pack(&expected, seeded_from)?;
+    Ok(seed_snapshot(conn)? == seed_snapshot(&expected)?)
+}
+
+/// Categories and rules without their row ids, which differ between two
+/// databases seeded from the same pack.
+fn seed_snapshot(conn: &Connection) -> AppResult<Vec<Vec<Value>>> {
+    let mut rows = Vec::new();
+    for sql in [
+        "SELECT key, name, color_token, kind, is_investment FROM categories ORDER BY key, name",
+        "SELECT c.key, r.priority, r.due_day, r.display_name, r.pay_lead_months,
+                (SELECT group_concat(pattern, char(31))
+                   FROM (SELECT pattern FROM rule_patterns WHERE rule_id = r.id ORDER BY pattern))
+           FROM rules r JOIN categories c ON c.id = r.category_id
+          ORDER BY 1, 6, 2, 3, 4, 5",
+    ] {
+        let mut stmt = conn.prepare(sql)?;
+        let width = stmt.column_count();
+        let mut q = stmt.query([])?;
+        while let Some(row) = q.next()? {
+            rows.push((0..width).map(|i| row.get(i)).collect::<rusqlite::Result<_>>()?);
+        }
     }
-    let user_categories: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM categories WHERE key IS NULL",
-        [],
-        |r| r.get(0),
-    )?;
-    Ok(user_categories == 0)
+    Ok(rows)
 }
 
 /// Replace pack-seeded data wholesale. Safe ONLY on a pristine DB — the caller
@@ -222,6 +247,26 @@ mod tests {
         assert_eq!(std::fs::read_to_string(dir.join("finoinc.db")).unwrap(), "current");
     }
 
+    /// An interrupted earlier copy can leave a WAL behind; if the old app then
+    /// checkpointed it away, replaying the stale one over the newer DB would
+    /// roll changes back.
+    #[test]
+    fn copy_legacy_dir_drops_sidecars_left_by_an_interrupted_copy() {
+        let root = tmpdir("stale");
+        let legacy = root.join("app.finan");
+        let dir = root.join("app.finoinc");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(legacy.join("finan.db"), "db").unwrap();
+        std::fs::write(dir.join("finoinc.db-wal"), "stale").unwrap();
+        std::fs::write(dir.join("finoinc.db-shm"), "stale").unwrap();
+
+        copy_legacy_dir(&legacy, &dir).unwrap();
+
+        assert!(!dir.join("finoinc.db-wal").exists());
+        assert!(!dir.join("finoinc.db-shm").exists());
+    }
+
     #[test]
     fn copy_legacy_dir_is_a_no_op_without_legacy_data() {
         let root = tmpdir("none");
@@ -241,7 +286,7 @@ mod tests {
     fn is_pristine_true_on_fresh_seeded_db() {
         let conn = fresh_conn();
         seed_from_pack(&conn, &LocalePack::embedded_pt_br()).unwrap();
-        assert!(is_pristine(&conn).unwrap());
+        assert!(is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
     }
 
     #[test]
@@ -249,7 +294,7 @@ mod tests {
         let conn = fresh_conn();
         conn.execute("INSERT INTO accounts (name) VALUES ('Checking')", [])
             .unwrap();
-        assert!(!is_pristine(&conn).unwrap());
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
     }
 
     #[test]
@@ -264,7 +309,7 @@ mod tests {
             params![account_id],
         )
         .unwrap();
-        assert!(!is_pristine(&conn).unwrap());
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
     }
 
     #[test]
@@ -278,7 +323,40 @@ mod tests {
         )
         .unwrap();
 
-        assert!(!is_pristine(&conn).unwrap());
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
+    }
+
+    /// Before any import a user can already have set things up; a language
+    /// switch reseeding over that would silently wipe it.
+    #[test]
+    fn is_pristine_false_once_a_seeded_category_is_renamed() {
+        let conn = fresh_conn();
+        seed_from_pack(&conn, &LocalePack::embedded_pt_br()).unwrap();
+        conn.execute("UPDATE categories SET name = 'Feira' WHERE key = 'market'", [])
+            .unwrap();
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
+    }
+
+    #[test]
+    fn is_pristine_false_once_a_seeded_rule_gets_a_due_day() {
+        let conn = fresh_conn();
+        seed_from_pack(&conn, &LocalePack::embedded_pt_br()).unwrap();
+        conn.execute("UPDATE rules SET due_day = 10 WHERE id = (SELECT MIN(id) FROM rules)", [])
+            .unwrap();
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
+    }
+
+    #[test]
+    fn is_pristine_false_once_a_bill_is_marked_paid() {
+        let conn = fresh_conn();
+        seed_from_pack(&conn, &LocalePack::embedded_pt_br()).unwrap();
+        conn.execute(
+            "INSERT INTO bill_settlements (rule_id, due_month, transaction_id)
+             VALUES ((SELECT MIN(id) FROM rules), '2026-10', NULL)",
+            [],
+        )
+        .unwrap();
+        assert!(!is_pristine(&conn, &LocalePack::embedded_pt_br()).unwrap());
     }
 
     #[test]

@@ -213,7 +213,12 @@ function createLocale() {
      *  run (nothing stored yet), pre-select from the OS language instead of
      *  always landing on the default. Never overrides a stored choice. */
     async init(): Promise<void> {
-      const firstRun = storageGet() === null;
+      // Webview storage alone is not enough: it starts empty again whenever
+      // the app identifier changes, while the database keeps the choice.
+      const chosen = await commands
+        .getAppSetting(LOCALE_CHOSEN_KEY)
+        .then((r) => r.status === "ok" && r.data === "1", () => false);
+      const firstRun = storageGet() === null && !chosen;
 
       try {
         const active = await commands.getActiveLocale();

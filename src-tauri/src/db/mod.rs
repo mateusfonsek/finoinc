@@ -39,6 +39,11 @@ fn copy_legacy_dir(legacy: &Path, dir: &Path) -> AppResult<()> {
         return Ok(());
     }
     std::fs::create_dir_all(dir)?;
+    // With no DB here, any sidecar is left over from an interrupted copy and
+    // may be older than the legacy DB; SQLite would replay it on open.
+    for ext in ["-wal", "-shm"] {
+        let _ = std::fs::remove_file(dir.join(format!("{DB_FILE}{ext}")));
+    }
     for entry in std::fs::read_dir(legacy)? {
         let entry = entry?;
         let name = entry.file_name().to_string_lossy().into_owned();
@@ -240,6 +245,26 @@ mod tests {
         copy_legacy_dir(&legacy, &dir).unwrap();
 
         assert_eq!(std::fs::read_to_string(dir.join("finoinc.db")).unwrap(), "current");
+    }
+
+    /// An interrupted earlier copy can leave a WAL behind; if the old app then
+    /// checkpointed it away, replaying the stale one over the newer DB would
+    /// roll changes back.
+    #[test]
+    fn copy_legacy_dir_drops_sidecars_left_by_an_interrupted_copy() {
+        let root = tmpdir("stale");
+        let legacy = root.join("app.finan");
+        let dir = root.join("app.finoinc");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(legacy.join("finan.db"), "db").unwrap();
+        std::fs::write(dir.join("finoinc.db-wal"), "stale").unwrap();
+        std::fs::write(dir.join("finoinc.db-shm"), "stale").unwrap();
+
+        copy_legacy_dir(&legacy, &dir).unwrap();
+
+        assert!(!dir.join("finoinc.db-wal").exists());
+        assert!(!dir.join("finoinc.db-shm").exists());
     }
 
     #[test]

@@ -141,3 +141,94 @@ NEWFILEUID:NONE
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+function cardStatement(stmttrns: string): string {
+  return `OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+<OFX>
+<CREDITCARDMSGSRSV1>
+<CCSTMTTRNRS>
+<CCSTMTRS>
+<CURDEF>BRL</CURDEF>
+<CCACCTFROM>
+<ACCTID>00000000-0000-4000-8000-000000000002</ACCTID>
+</CCACCTFROM>
+<BANKTRANLIST>
+<DTSTART>20260301000000[-3:BRT]</DTSTART>
+<DTEND>20260331000000[-3:BRT]</DTEND>
+${stmttrns}
+</BANKTRANLIST>
+</CCSTMTRS>
+</CCSTMTTRNRS>
+</CREDITCARDMSGSRSV1>
+</OFX>`;
+}
+
+function stmttrn(fitid: string, date: string, amount: string, memoLine: string): string {
+  return `<STMTTRN>
+<TRNTYPE>DEBIT</TRNTYPE>
+<DTPOSTED>${date.replaceAll("-", "")}000000[-3:BRT]</DTPOSTED>
+<TRNAMT>${amount}</TRNAMT>
+<FITID>${fitid}</FITID>
+${memoLine}
+</STMTTRN>`;
+}
+
+/** A card statement whose rows all carry the same FITID, as some banks emit. */
+function constantFitidStatement(rows: [string, string][]): string {
+  return cardStatement(rows.map(([date, amount]) => stmttrn("0", date, amount, "<MEMO>PADARIA</MEMO>")).join("\n"));
+}
+
+describe("parseOfx — FITID reused across days", () => {
+  // The same row must get the same FITID in any statement that contains it,
+  // or re-importing an overlapping statement inserts it twice.
+  it("gives a row the same FITID in two overlapping statements", () => {
+    const a = parseOfx(constantFitidStatement([["2026-03-03", "-10.00"], ["2026-03-09", "-20.00"]]));
+    const b = parseOfx(constantFitidStatement([["2026-03-09", "-20.00"], ["2026-03-12", "-30.00"]]));
+    const inA = a.transactions.find((t) => t.date === "2026-03-09")!.fitid;
+    const inB = b.transactions.find((t) => t.date === "2026-03-09")!.fitid;
+    expect(inA).toBe(inB);
+  });
+
+  it("still keeps every FITID in the file unique", () => {
+    const r = parseOfx(constantFitidStatement([
+      ["2026-03-03", "-10.00"], ["2026-03-09", "-20.00"], ["2026-03-09", "-20.00"],
+    ]));
+    const ids = r.transactions.map((t) => t.fitid);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("parseOfx — statements that used to fail", () => {
+  it("reads a row with an empty MEMO", () => {
+    const r = parseOfx(cardStatement([
+      stmttrn("A", "2026-03-03", "-10.00", "<MEMO>"),
+      stmttrn("B", "2026-03-04", "-20.00", "<MEMO>PADARIA</MEMO>"),
+    ].join("\n")));
+    expect(r.transactions.map((t) => [t.fitid, t.description])).toEqual([["A", ""], ["B", "PADARIA"]]);
+  });
+
+  it("reads a MEMO containing < and decodes entities", () => {
+    const r = parseOfx(cardStatement([
+      stmttrn("A", "2026-03-03", "-10.00", "<MEMO>A < B</MEMO>"),
+      stmttrn("B", "2026-03-04", "-20.00", "<MEMO>C&amp;A MODAS</MEMO>"),
+    ].join("\n")));
+    expect(r.transactions.map((t) => t.description)).toEqual(["A < B", "C&A MODAS"]);
+  });
+
+  it("reads a card statement with no transactions", () => {
+    expect(parseOfx(cardStatement("")).transactions).toEqual([]);
+  });
+
+  it("reads a checking statement with no transactions", () => {
+    const empty = itauFixture.replace(/<STMTTRN>[\s\S]*<\/STMTTRN>\s*/, "");
+    expect(parseOfx(empty).transactions).toEqual([]);
+  });
+});

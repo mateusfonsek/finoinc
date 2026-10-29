@@ -16,15 +16,16 @@
   import ImportPreview from "$lib/components/import/ImportPreview.svelte";
   import { formatMoney } from "$lib/format/money";
   import { createOrGetAccount } from "$lib/api/accounts";
-  import { checkExistingTxKeys, insertTransactions, txKeyString } from "$lib/api/transactions";
+  import { checkExistingTxKeys, insertTransactions } from "$lib/api/transactions";
   import { listCategories } from "$lib/api/categories";
   import { createRule, deleteRuleWithCleanup, updateRule } from "$lib/api/rules";
   import type { ParsedOfx } from "$lib/ofx/types";
-  import { takeStashed } from "$lib/ofx/open";
+  import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
   import { loadOfxFromPath } from "$lib/ofx/load";
-  import { detectReversalPairs, type ReversalInfo } from "$lib/ofx/reversals";
+  import type { ReversalInfo } from "$lib/ofx/reversals";
+  import { planImport } from "$lib/ofx/selection";
   import type {
     Account,
     Category,
@@ -68,13 +69,27 @@
 
   onMount(() => {
     void listCategories().then((c) => (categories = c));
-    const stash = takeStashed();
-    if (stash) {
-      pending = { file: stash.file, parsed: stash.parsed };
-      watchHash = stash.watchHash;
-      void prepareImport(stash.parsed);
-    }
+    serveStashed();
+    window.addEventListener(STASHED_EVENT, serveStashed);
+    return () => window.removeEventListener(STASHED_EVENT, serveStashed);
   });
+
+  /** Takes the next statement opened from Finder, unless one is still under
+   *  review — that one is finished or cancelled first, then `reset` calls in.
+   *  A finished import's result screen gives way right away. */
+  function serveStashed() {
+    if (busy || (pending && !importResult)) return;
+    if (importResult) return reset();
+    const stash = takeStashed();
+    if (!stash) return;
+    if ("error" in stash) {
+      error = stash.error;
+      return;
+    }
+    pending = { file: stash.file, parsed: stash.parsed };
+    watchHash = stash.watchHash;
+    void prepareImport(stash.parsed);
+  }
 
   // "Review" in the toast only asks; this screen opens. That covers both a
   // fresh mount (arriving from another route) and already being here — in the
@@ -100,18 +115,9 @@
         .filter((t): t is typeof t & { fitid: string } => !!t.fitid)
         .map((t) => ({ ofx_fitid: t.fitid, date: t.date, amount: t.amount }));
       duplicateKeys = await checkExistingTxKeys(account.id, candidates);
-      reversalMap = detectReversalPairs(parsed.transactions, locale.reversals);
-      // Default: import everything EXCEPT duplicates and reversal pairs.
-      // Duplicates key on the (fitid, date, amount) triple; reversals on fitid.
-      selected = new Set(
-        parsed.transactions
-          .filter((t) => {
-            if (!t.fitid) return false;
-            const key = txKeyString({ ofx_fitid: t.fitid, date: t.date, amount: t.amount });
-            return !duplicateKeys.has(key) && !reversalMap.has(t.fitid);
-          })
-          .map((t) => t.fitid as string),
-      );
+      const plan = planImport(parsed.transactions, duplicateKeys, locale.reversals);
+      reversalMap = plan.reversals;
+      selected = plan.selected;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -302,6 +308,7 @@
     // Without this, "import another" with a loose file (DropZone) would inherit
     // the previous statement's hash coming from the watched folder.
     watchHash = undefined;
+    serveStashed();
   }
 
   /** Loads the next discovered statement straight into the preview, reusing the

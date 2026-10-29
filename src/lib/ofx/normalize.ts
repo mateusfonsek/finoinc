@@ -22,6 +22,15 @@ export function detectEncoding(header: string): string {
   const charset = charsetMatch?.[1]?.toLowerCase();
   const encoding = encodingMatch?.[1]?.toLowerCase();
 
+  // OFX 2.x is XML: its declaration carries the encoding, and XML defaults
+  // to UTF-8 when it says nothing.
+  const xml = header.match(/<\?xml[^>]*>/i);
+  if (xml) {
+    const declared = xml[0].match(/encoding\s*=\s*["']([^"']+)["']/i)?.[1]?.toLowerCase();
+    if (!declared || declared === "utf-8") return "utf-8";
+    if (declared === "windows-1252" || declared === "iso-8859-1") return declared;
+  }
+
   if (charset === "utf-8" || encoding === "utf-8") return "utf-8";
   if (charset === "1252" || charset === "windows-1252") return "windows-1252";
   if (charset === "8859-1" || charset === "iso-8859-1") return "iso-8859-1";

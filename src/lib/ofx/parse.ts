@@ -19,7 +19,7 @@ import type {
  *   - `.getCreditCardTransferList()`  — credit-card transactions
  */
 export function parseOfx(content: string): ParsedOfx {
-  const ofx = new Ofx(content);
+  const ofx = new Ofx(escapeTextLeaves(content));
   const structure = ofx.getContent();
 
   const ofxNode = structure?.OFX ?? {};
@@ -52,7 +52,7 @@ export function parseOfx(content: string): ParsedOfx {
     acctid = (ccAcct["ACCTID"] as string | undefined) ?? null;
     // A card has neither branchid nor bankid in CCACCTFROM.
     try {
-      rawTxs = ofx.getCreditCardTransferList() as Array<Record<string, unknown>>;
+      rawTxs = (ofx.getCreditCardTransferList() as Array<Record<string, unknown>> | undefined) ?? [];
     } catch {
       rawTxs = [];
     }
@@ -61,7 +61,8 @@ export function parseOfx(content: string): ParsedOfx {
     branchid = (bankAcct["BRANCHID"] as string | undefined) ?? null;
     bankid = (bankAcct["BANKID"] as string | undefined) ?? null;
     acctid = (bankAcct["ACCTID"] as string | undefined) ?? null;
-    rawTxs = ofx.getBankTransferList() as Array<Record<string, unknown>>;
+    // An empty <BANKTRANLIST> comes back as undefined, not [].
+    rawTxs = (ofx.getBankTransferList() as Array<Record<string, unknown>> | undefined) ?? [];
   }
 
   const bank = detectBank({ fid, org, bankid });
@@ -77,30 +78,39 @@ export function parseOfx(content: string): ParsedOfx {
     type,
   };
 
-  // Nubank (and other Brazilian banks) reuse one FITID across distinct
-  // transactions in the same statement — real case: the IOF fee and the main
-  // purchase share a FITID, as do their two refunds. The original FITID is kept
-  // on the first occurrence and "#2", "#3", ... are appended to the rest so
-  // that: (a) the keyed `{#each ... (fitid)}` does not break, (b) the DB's
-  // UNIQUE(account_id, ofx_fitid) is not violated, (c) each can be selected
-  // individually. Ordering follows the OFX file and is stable across
-  // re-imports.
-  const seenFitid = new Map<string, number>();
-  const transactions: ParsedTransaction[] = rawTxs.map((t) => {
+  // Some banks reuse one FITID across distinct transactions. Nubank does it
+  // within a day (the IOF fee and its purchase); others repeat a constant
+  // FITID on every row. Each row still needs an id unique in the file (the
+  // keyed `{#each}`, the selection) and the SAME id in every statement that
+  // contains it, or re-importing an overlapping statement inserts it twice.
+  // So repeats are numbered within their day ("#2", "#3" — what Nubank rows
+  // have always been stored as), and a FITID that recurs on other days also
+  // carries its date.
+  const dated = rawTxs.map((t) => {
     const rawDate = (t.DTPOSTED as string | undefined) ?? "";
-    const date = isIsoDate(rawDate) ? rawDate : parseOfxDate(rawDate);
+    return { t, date: isIsoDate(rawDate) ? rawDate : parseOfxDate(rawDate) };
+  });
+  const daysOf = new Map<string, Set<string>>();
+  for (const { t, date } of dated) {
+    const raw = t.FITID as string | undefined;
+    if (raw) daysOf.set(raw, (daysOf.get(raw) ?? new Set()).add(date));
+  }
+  const seenThatDay = new Map<string, number>();
+  const transactions: ParsedTransaction[] = dated.map(({ t, date }) => {
     const rawFitid = (t.FITID as string | undefined) ?? null;
     let fitid = rawFitid;
     if (rawFitid) {
-      const count = seenFitid.get(rawFitid) ?? 0;
-      if (count > 0) fitid = `${rawFitid}#${count + 1}`;
-      seenFitid.set(rawFitid, count + 1);
+      if (daysOf.get(rawFitid)!.size > 1) fitid = `${rawFitid}#${date}`;
+      const dayKey = `${rawFitid}|${date}`;
+      const count = seenThatDay.get(dayKey) ?? 0;
+      if (count > 0) fitid = `${fitid}#${count + 1}`;
+      seenThatDay.set(dayKey, count + 1);
     }
     return {
       fitid,
       date,
       amount: String(t.TRNAMT ?? "0"),
-      description: String(t.MEMO ?? t.NAME ?? ""),
+      description: decodeEntities(String(t.MEMO ?? t.NAME ?? "")),
     };
   });
 
@@ -186,4 +196,27 @@ function computeSummary(txs: ParsedTransaction[]): ParsedSummary {
     earliest,
     latest,
   };
+}
+
+/** Free-text fields the bank fills in, one per line in SGML. */
+const TEXT_LEAF = /^(\s*)<(MEMO|NAME)>(.*?)(?:<\/\2>)?\s*$/gm;
+
+/** `ofx-data-extractor` turns SGML into JSON by string rewriting, so a text
+ *  leaf with no value (`<MEMO>` alone) or a raw `<` inside one breaks the
+ *  whole statement. Empty leaves are dropped and `<` is escaped; the
+ *  description is decoded again afterwards. */
+function escapeTextLeaves(content: string): string {
+  return content.replace(TEXT_LEAF, (_, indent: string, tag: string, value: string) =>
+    value.trim() === "" ? "" : `${indent}<${tag}>${value.replaceAll("<", "&lt;")}</${tag}>`,
+  );
+}
+
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (whole, name: string) => {
+    if (name[0] !== "#") return ENTITIES[name.toLowerCase()] ?? whole;
+    const code = name[1] === "x" || name[1] === "X" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
+  });
 }

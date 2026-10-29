@@ -36,22 +36,22 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - name: Instalar dependências
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Tipos (svelte-check)
+      - name: Types (svelte-check)
         run: pnpm check
 
-      - name: Testes do frontend
+      - name: Frontend tests
         run: pnpm test
 
-      - name: Build do frontend
+      - name: Frontend build
         run: pnpm build
 
-      - name: Testes do Rust
+      - name: Rust tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
-      - name: Testes dos scripts de CI
+      - name: CI script tests
         run: |
           .github/scripts/next-version.test.sh
           .github/scripts/check-commit-format.test.sh

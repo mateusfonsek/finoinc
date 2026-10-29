@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/MateusFonseK/finoinc/security/advisories/new
+    about: Private report. Never open a public issue for a security problem.
+  - name: Add your country (locale pack)
+    url: https://github.com/MateusFonseK/finoinc/blob/main/locales/README.md
+    about: Plain JSON, no code. Open a pull request directly.

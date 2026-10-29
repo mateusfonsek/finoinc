@@ -1,8 +1,9 @@
 //! The local MCP server: a socket the owner opens on purpose.
 //!
-//! Bound to 127.0.0.1 and nothing else. There is no token — the deliberate
-//! trade is documented in the spec — so the Origin check in `protocol` carries
-//! the defense, and the bind address is what keeps the port off the network.
+//! Bound to 127.0.0.1 and nothing else. There is no token — with no remote
+//! surface there is nothing for one to protect — so the Origin check in
+//! `protocol` carries the defense against browser pages, and the bind address
+//! is what keeps the port off the network.
 //!
 //! `tiny_http` 0.12 gives a request's reader no read timeout. A client that
 //! declares a `Content-Length` and then sends less than it promised — or

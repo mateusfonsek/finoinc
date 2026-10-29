@@ -32,7 +32,7 @@ jobs:
           # Needs the history to compare base..head.
           fetch-depth: 0
 
-      - name: Validar título da PR e commits
+      - name: Validate PR title and commits
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

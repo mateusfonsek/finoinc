@@ -32,10 +32,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Testar o build do site
+      - name: Test the site build
         run: node --test site/build.test.mjs
 
-      - name: Gerar o site
+      - name: Build the site
         run: node site/build.mjs
 
       - uses: actions/configure-pages@v5

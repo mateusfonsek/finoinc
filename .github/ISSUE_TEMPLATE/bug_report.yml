@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste real statement lines, amounts or account numbers here — this issue is public.
+        Replace them with made-up values. Security problems go to the [private report](https://github.com/MateusFonseK/finoinc/security/advisories/new) instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Import a statement from …
+        2. Open …
+        3. See …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Finoinc version
+      description: Finoinc menu → About Finoinc.
+      placeholder: "0.11.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and chip
+      placeholder: "macOS 15.2, Apple Silicon"
+    validations:
+      required: true
+  - type: input
+    id: bank
+    attributes:
+      label: Bank (for import problems)
+      description: Which bank the `.ofx` came from, and whether it is a checking account or a card.
+  - type: dropdown
+    id: locale
+    attributes:
+      label: Language pack
+      options:
+        - pt-BR
+        - en-US

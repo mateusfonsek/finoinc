@@ -31,3 +31,6 @@ src-tauri/icons/StoreLogo.png
 
 # Website build output
 site/_site/
+
+# Local agent instructions (per-user)
+CLAUDE.md

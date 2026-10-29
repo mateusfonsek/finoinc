@@ -27,7 +27,7 @@ jobs:
           # Full history: `git describe` needs the tags.
           fetch-depth: 0
 
-      - name: Calcular a próxima versão
+      - name: Compute the next version
         id: version
         run: |
           # `pipefail`: the Actions default shell is `bash -e {0}`, and without
@@ -50,18 +50,18 @@ jobs:
           echo "range=$range" >> "$GITHUB_OUTPUT"
 
           if [ -z "$next" ]; then
-            echo "Nenhum commit releasável desde ${last_tag:-o início do repo}."
-            echo "Encerrando sem release — é o comportamento esperado para merges"
-            echo "de docs/chore/test/ci/refactor."
+            echo "No releasable commit since ${last_tag:-the start of the repo}."
+            echo "Ending without a release — the expected behavior for"
+            echo "docs/chore/test/ci/refactor merges."
           else
-            echo "Versão: $current → $next"
+            echo "Version: $current → $next"
           fi
 
-      - name: Conferir que a tag ainda não existe
+      - name: Check the tag does not exist yet
         if: steps.version.outputs.next != ''
         run: |
           if git rev-parse "v${{ steps.version.outputs.next }}" >/dev/null 2>&1; then
-            echo "::error::a tag v${{ steps.version.outputs.next }} já existe"
+            echo "::error::tag v${{ steps.version.outputs.next }} already exists"
             exit 1
           fi
 
@@ -86,7 +86,7 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - name: Instalar dependências
+      - name: Install dependencies
         if: steps.version.outputs.next != ''
         run: pnpm install --frozen-lockfile
 
@@ -95,7 +95,7 @@ jobs:
       # would produce a .dmg stamped with the old version. And committing before
       # the build would leave main with a version that never became a release if
       # the build broke. Bump the working tree → build → only then commit.
-      - name: Escrever a versão nos arquivos
+      - name: Write the version into the files
         if: steps.version.outputs.next != ''
         run: .github/scripts/set-version.sh "${{ steps.version.outputs.next }}"
 
@@ -103,7 +103,7 @@ jobs:
         if: steps.version.outputs.next != ''
         run: pnpm tauri build --target universal-apple-darwin
 
-      - name: Commit, tag e push
+      - name: Commit, tag and push
         if: steps.version.outputs.next != ''
         run: |
           set -euo pipefail
@@ -137,7 +137,7 @@ jobs:
           git tag -a "v${{ steps.version.outputs.next }}" -m "v${{ steps.version.outputs.next }}"
           git push --atomic origin HEAD:main "refs/tags/v${{ steps.version.outputs.next }}"
 
-      - name: Publicar a release
+      - name: Publish the release
         if: steps.version.outputs.next != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -163,16 +163,16 @@ jobs:
           shopt -s nullglob
           dmgs=(src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg)
           if [ ${#dmgs[@]} -eq 0 ]; then
-            echo "::error::nenhum .dmg encontrado em src-tauri/target/universal-apple-darwin/release/bundle/dmg/ — o build do Tauri não produziu o bundle esperado"
+            echo "::error::no .dmg found in src-tauri/target/universal-apple-darwin/release/bundle/dmg/ — the Tauri build did not produce the expected bundle"
             exit 1
           fi
           if [ ${#dmgs[@]} -gt 1 ]; then
             # Unexpected (Tauri's bundler produces a single universal .dmg):
             # warn instead of choosing silently.
-            echo "aviso: ${#dmgs[@]} arquivos .dmg encontrados, usando o primeiro: ${dmgs[0]}"
+            echo "warning: ${#dmgs[@]} .dmg files found, using the first: ${dmgs[0]}"
           fi
           dmg="${dmgs[0]}"
-          echo "Anexando: $dmg"
+          echo "Attaching: $dmg"
 
           # The .dmg only. The .tar.gz the tauri-action used to attach (and
           # which was deleted by hand) is simply never uploaded.

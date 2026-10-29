@@ -46,7 +46,7 @@ impl TaxIdProvider for FakeProvider {
             }),
             // Absent = "can't know right now", which is the trait's contract.
             None => Err(AppError::Invalid(format!(
-                "fake: sem resposta para {tax_id_digits}"
+                "fake: no answer for {tax_id_digits}"
             ))),
         }
     }

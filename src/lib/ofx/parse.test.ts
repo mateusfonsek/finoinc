@@ -53,7 +53,7 @@ describe("parseOfx — Itaú minimal fixture", () => {
   });
 });
 
-describe("parseOfx — FITID duplicado dentro do mesmo arquivo (Nubank CC)", () => {
+describe("parseOfx — FITID duplicated within one file (Nubank card)", () => {
   const ofx = `OFXHEADER:100
 DATA:OFXSGML
 VERSION:102

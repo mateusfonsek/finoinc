@@ -24,7 +24,7 @@ function tx(
   return { fitid, date, amount, description };
 }
 
-describe("detectReversalPairs — estornos", () => {
+describe("detectReversalPairs — reversals", () => {
   it("matches a single estorno with its original tx (same day, opposite amount)", () => {
     const a = tx("A", "2026-01-20", "-1385.43", "Transferência enviada pelo Pix - Ana");
     const b = tx("B", "2026-01-20", "1385.43", "Estorno - Transferência enviada pelo Pix - Ana");
@@ -34,7 +34,7 @@ describe("detectReversalPairs — estornos", () => {
     expect(map.get("B")).toEqual({ role: "reversal", pairFitid: "A" });
   });
 
-  it("pairs N estornos with N of N+1 originals (FIFO), leaving one original unpaired", () => {
+  it("pairs N reversals with N of N+1 originals (FIFO), leaving one original unpaired", () => {
     const o1 = tx("O1", "2026-01-20", "-1385.43", "Pix - Ana");
     const o2 = tx("O2", "2026-01-20", "-1385.43", "Pix - Ana");
     const o3 = tx("O3", "2026-01-20", "-1385.43", "Pix - Ana");
@@ -83,7 +83,7 @@ describe("detectReversalPairs — estornos", () => {
   });
 });
 
-describe("detectReversalPairs — reembolsos", () => {
+describe("detectReversalPairs — refunds", () => {
   const ENVIADO = "Transferência enviada pelo Pix - AMAZON.COM.BR - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1234567890-1";
   const REEMBOLSO = "Reembolso recebido pelo Pix - AMAZON SERVICOS DE VAREJO DO BRASIL LTDA. - 15.436.940/0001-03 - EBANX IP LTDA. (0383) Agência: 1 Conta: 1234567890-1";
 
@@ -97,7 +97,7 @@ describe("detectReversalPairs — reembolsos", () => {
     expect(map.get("S")?.pairFitid).toBe("R");
   });
 
-  it("pairs FIFO when there are 6 sent + 6 reembolsos (real Amazon Feb case)", () => {
+  it("pairs FIFO when there are 6 sent + 6 refunds (real Amazon Feb case)", () => {
     const sents = [];
     const refunds = [];
     for (let i = 0; i < 6; i++) {
@@ -139,7 +139,7 @@ describe("detectReversalPairs — reembolsos", () => {
 });
 
 describe("detectReversalPairs — combined", () => {
-  it("handles a mix of estornos and reembolsos in the same batch", () => {
+  it("handles a mix of reversals and refunds in the same batch", () => {
     const eOrig = tx("EO", "2026-01-20", "-100", "Pix - João");
     const e = tx("E", "2026-01-20", "100", "Estorno - Pix - João");
     const rOrig = tx("RO", "2026-02-10", "-50",
@@ -161,7 +161,7 @@ describe("detectReversalPairs — combined", () => {
   });
 });
 
-describe("detectReversalPairs — estornos CC (Nubank)", () => {
+describe("detectReversalPairs — card reversals (Nubank)", () => {
   it("pairs CC estorno with original CC purchase (same merchant in quotes)", () => {
     const purchase = tx("P", "2026-03-15", "-108.14", "Acme.Ai");
     const estorno = tx("E", "2026-03-18", "108.14", `Estorno de "Acme.Ai" (Acme.Ai)`);

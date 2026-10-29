@@ -516,14 +516,14 @@ mod tests {
         let a = add_folder(&conn, dir.to_str().unwrap()).unwrap();
         let b = add_folder(&conn, dir.to_str().unwrap()).unwrap();
 
-        assert_eq!(a.id, b.id, "readicionar devolve a mesma linha");
+        assert_eq!(a.id, b.id, "re-adding returns the same row");
         assert_eq!(list_folders(&conn).unwrap().len(), 1);
     }
 
     #[test]
     fn add_folder_rejects_missing_path() {
         let conn = fresh_conn();
-        let result = add_folder(&conn, "/caminho/que/nao/existe/mesmo");
+        let result = add_folder(&conn, "/path/that/really/does/not/exist");
         assert!(result.is_err());
     }
 
@@ -611,10 +611,10 @@ mod tests {
     #[test]
     fn dir_exists_distinguishes_directories_from_files() {
         let dir = tmpdir("dir-exists");
-        assert!(dir_exists(dir.to_string_lossy().to_string()), "pasta existente");
+        assert!(dir_exists(dir.to_string_lossy().to_string()), "existing folder");
 
         let nonexistent = dir.join("nonexistent");
-        assert!(!dir_exists(nonexistent.to_string_lossy().to_string()), "caminho inexistente");
+        assert!(!dir_exists(nonexistent.to_string_lossy().to_string()), "missing path");
 
         let file = dir.join("test.txt");
         std::fs::write(&file, b"test").unwrap();
@@ -660,8 +660,8 @@ mod tests {
     #[test]
     fn scan_hashes_content_so_renames_collide() {
         let dir = tmpdir("scan-hash");
-        write_old(&dir, "a.ofx", "MESMO CONTEUDO");
-        write_old(&dir, "b.ofx", "MESMO CONTEUDO");
+        write_old(&dir, "a.ofx", "SAME CONTENT");
+        write_old(&dir, "b.ofx", "SAME CONTENT");
 
         let outcome = scan_dir(&dir, later());
         assert_eq!(outcome.candidates.len(), 2);
@@ -680,7 +680,7 @@ mod tests {
         let outcome = scan_dir(&dir, SystemTime::now());
         assert!(
             outcome.candidates.is_empty(),
-            "arquivo ainda sendo escrito (AirDrop/download) deve ser adiado"
+            "a file still being written (AirDrop/download) must be deferred"
         );
     }
 

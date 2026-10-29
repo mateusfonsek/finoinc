@@ -147,19 +147,30 @@ pub fn summary_by_category(
     by_category(&conn, month.as_deref())
 }
 
+const MAX_MONTHS_BACK: u32 = 1200;
+
+/// One entry per month from `months_back` months ago through the current one,
+/// empty months included, so a chart can give each month its own column.
 pub fn by_month(conn: &Connection, months_back: u32) -> AppResult<Vec<MonthSummary>> {
-    let cutoff = compute_cutoff(months_back);
+    let today = chrono::Local::now().date_naive();
+    let (year, month) = (chrono::Datelike::year(&today), chrono::Datelike::month(&today));
+    // A series is built month by month, so an absurd request (an agent asking
+    // for u32::MAX) is capped at a century instead of allocating forever.
+    let back = months_back.min(MAX_MONTHS_BACK) as i32;
+    let first = shift_month(year, month, -back);
+    let cutoff = format!("{first}-01");
+    let end = format!("{}-01", shift_month(year, month, 1));
 
     let mut stmt = conn.prepare(
         "SELECT substr(t.date, 1, 7) AS month, t.amount, c.kind
          FROM transactions t
          LEFT JOIN categories c ON c.id = t.category_id
-         WHERE t.date >= ?1
+         WHERE t.date >= ?1 AND t.date < ?2
            AND COALESCE(c.kind, '') != 'transfer'
          ORDER BY t.date ASC",
     )?;
     let rows: Vec<(String, String, Option<String>)> = stmt
-        .query_map(params![cutoff], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .query_map(params![cutoff, end], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
         .collect::<rusqlite::Result<Vec<_>>>()?;
 
     let mut by_month: HashMap<String, (Decimal, Decimal)> = HashMap::new();
@@ -172,16 +183,17 @@ pub fn by_month(conn: &Connection, months_back: u32) -> AppResult<Vec<MonthSumma
         entry.1 += e;
     }
 
-    let mut out: Vec<MonthSummary> = by_month
-        .into_iter()
-        .map(|(month, (income, expense))| MonthSummary {
-            month,
-            income: income.to_string(),
-            expense: expense.to_string(),
+    Ok((-back..=0)
+        .map(|delta| {
+            let month = shift_month(year, month, delta);
+            let (income, expense) = by_month.get(&month).copied().unwrap_or_default();
+            MonthSummary {
+                month,
+                income: income.to_string(),
+                expense: expense.to_string(),
+            }
         })
-        .collect();
-    out.sort_by(|a, b| a.month.cmp(&b.month));
-    Ok(out)
+        .collect())
 }
 
 #[tauri::command]
@@ -412,16 +424,6 @@ pub fn income_sources(
     income(&conn, &pack, month.as_deref())
 }
 
-fn compute_cutoff(months_back: u32) -> String {
-    let now = chrono::Utc::now().naive_utc().date();
-    let total_months =
-        (chrono::Datelike::year(&now)) * 12 + (chrono::Datelike::month(&now) as i32 - 1);
-    let target = total_months - (months_back as i32);
-    let y = target.div_euclid(12);
-    let m = target.rem_euclid(12) + 1;
-    format!("{:04}-{:02}-01", y, m)
-}
-
 /// Shifts a year/month by `delta` months, handling year rollover. Returns
 /// "YYYY-MM".
 fn shift_month(year: i32, month: u32, delta: i32) -> String {
@@ -501,6 +503,26 @@ mod tests {
             |r| r.get(0),
         )
         .unwrap()
+    }
+
+    /// The dashboard draws one column per month: the series has to be exactly
+    /// as long as asked, end at the current month and keep empty months.
+    #[test]
+    fn by_month_is_a_dense_series_ending_this_month() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let today = chrono::Local::now().date_naive();
+        let this_month = today.format("%Y-%m").to_string();
+        let next_year = format!("{}-01-15", chrono::Datelike::year(&today) + 1);
+        insert_tx(&conn, acc, &format!("{this_month}-01"), "-10.00", None);
+        insert_tx(&conn, acc, &next_year, "-99.00", None);
+
+        let months = by_month(&conn, 11).unwrap();
+
+        assert_eq!(months.len(), 12);
+        assert_eq!(months.last().unwrap().month, this_month);
+        assert_eq!(months.last().unwrap().expense, "10.00");
+        assert_eq!(months[0].expense, "0");
     }
 
     /// A refund filed under an expense category gives back what the purchase
@@ -694,14 +716,6 @@ mod tests {
         assert!(is_recurring(&s, None));
         assert!(is_recurring(&s, Some("2026")));
         assert!(!is_recurring(&seen(&["2026-01"]), None));
-    }
-
-    #[test]
-    fn cutoff_computation_returns_iso_date() {
-        let s = compute_cutoff(12);
-        assert_eq!(s.len(), 10);
-        assert_eq!(&s[4..5], "-");
-        assert_eq!(&s[7..10], "-01");
     }
 
     // Compared as an exact key set, not by substring: a substring check still

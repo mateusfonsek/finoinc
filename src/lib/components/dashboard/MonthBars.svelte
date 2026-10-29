@@ -43,7 +43,7 @@
   }
 </script>
 
-{#if months.length === 0}
+{#if maxValue <= 0}
   <EmptyState icon="trendingUp" title={t("dashboard.no_data_12m")} compact />
 {:else}
   <div class="flex flex-col gap-2">

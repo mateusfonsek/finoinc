@@ -146,15 +146,8 @@ pub fn get_trend(conn: &Connection, cfg: &McpConfig, args: &Value) -> AppResult<
         return Ok(serde_json::to_value(summary::by_month(conn, months_back)?)?);
     };
 
-    // `summary::by_month` (shared with the Dashboard, not to be touched here)
-    // subtracts `months_back` from a Utc "now", while the window's own cutoff
-    // subtracts `months_back - 1` from a Local "now". No padding is needed to
-    // cover that gap: `compute_cutoff`'s Utc month is never more than one
-    // month ahead of the window's Local month, so `compute_cutoff(months_back)`
-    // is already at or before `oldest` in the worst-case skew — the `retain`
-    // below is enough on its own. Padding the query here would answer more
-    // rows than `months_back` asked for, which is `by_month`'s own contract
-    // to keep, not something this window guard should widen.
+    // `by_month` and the window both count months from the local "now", so
+    // dropping what falls before `oldest` is all the guard has to do.
     let mut rows = summary::by_month(conn, months_back)?;
     rows.retain(|r| r.month.as_str() >= oldest.as_str());
     Ok(serde_json::to_value(rows)?)

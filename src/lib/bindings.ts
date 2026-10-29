@@ -67,7 +67,8 @@ async updateCategory(categoryId: number, input: UpdateCategory) : Promise<Result
 }
 },
 /**
- * Deletes a category. Transactions referencing it get category_id=NULL.
+ * Deletes a category and its rules. Transactions referencing it get
+ * category_id=NULL.
  */
 async deleteCategory(categoryId: number) : Promise<Result<null, string>> {
     try {
@@ -510,8 +511,7 @@ async takePendingOfx() : Promise<string[]> {
     return await TAURI_INVOKE("take_pending_ofx");
 },
 /**
- * Copy the active DB file to `destination`. Issues a WAL checkpoint first
- * so the .db file is consistent on disk before copying.
+ * Write a consistent copy of the active DB to `destination`.
  */
 async exportBackup(destination: string) : Promise<Result<string, string>> {
     try {
@@ -522,9 +522,8 @@ async exportBackup(destination: string) : Promise<Result<string, string>> {
 }
 },
 /**
- * Validate that `source` is a SQLite 3 file (header magic + size > 16),
- * then overwrite the active DB. Frontend should prompt the user to restart
- * the app after this call.
+ * Replace the active DB's contents with the backup at `source`. Frontend
+ * should prompt the user to restart the app after this call.
  */
 async restoreBackup(source: string) : Promise<Result<null, string>> {
     try {

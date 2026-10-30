@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Not every distribution's shared-mime-info knows OFX; without a type the
+     .desktop file's MimeType has nothing to match and "Open with" never lists
+     Finoinc. Merges with an existing definition where there is one. -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-ofx">
+    <comment>OFX bank statement</comment>
+    <!-- Globs match case-insensitively, so this also takes EXTRATO.OFX. -->
+    <glob pattern="*.ofx" />
+  </mime-type>
+</mime-info>

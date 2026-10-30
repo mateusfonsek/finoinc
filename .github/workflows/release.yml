@@ -167,14 +167,19 @@ jobs:
           cp "${files[@]}" out/
           ls -l out
 
-      - name: Show the desktop entry (Linux)
+      - name: Check "Open with Finoinc" in the .deb
         if: runner.os == 'Linux'
         run: |
-          # "Open with Finoinc" needs a file placeholder (%F/%U) on the Exec line
-          # and the OFX MIME type; printed so a release log answers it.
+          set -euo pipefail
+          # Tauri's stock desktop entry has neither a file placeholder nor a
+          # MIME type, and then the file manager never offers Finoinc for an
+          # .ofx (src-tauri/linux/ has the template and the type).
           dir=$(mktemp -d)
           dpkg-deb -x out/*.deb "$dir"
           cat "$dir"/usr/share/applications/*.desktop
+          grep -q '^Exec=.* %F$' "$dir"/usr/share/applications/*.desktop
+          grep -q '^MimeType=application/x-ofx' "$dir"/usr/share/applications/*.desktop
+          test -f "$dir"/usr/share/mime/packages/finoinc.xml
 
       - uses: actions/upload-artifact@v4
         with:

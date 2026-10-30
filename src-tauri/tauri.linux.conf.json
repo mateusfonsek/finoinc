@@ -15,6 +15,23 @@
     ]
   },
   "bundle": {
-    "targets": ["appimage", "deb"]
+    "targets": ["appimage", "deb"],
+    "fileAssociations": [
+      {
+        "ext": ["ofx"],
+        "name": "OFX Statement",
+        "description": "OFX bank statement",
+        "role": "Viewer",
+        "mimeType": "application/x-ofx"
+      }
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/finoinc.desktop",
+        "files": {
+          "/usr/share/mime/packages/finoinc.xml": "linux/finoinc-mime.xml"
+        }
+      }
+    }
   }
 }

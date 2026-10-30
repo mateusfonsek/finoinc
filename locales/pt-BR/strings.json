@@ -660,6 +660,6 @@
     "file_manager_linux": "gerenciador de arquivos",
     "quit_mac": "Cmd+Q",
     "quit_windows": "Alt+F4",
-    "quit_linux": "Ctrl+Q"
+    "quit_linux": "feche a janela"
   }
 }

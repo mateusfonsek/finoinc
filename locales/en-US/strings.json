@@ -657,9 +657,9 @@
   "os": {
     "file_manager_mac": "Finder",
     "file_manager_windows": "File Explorer",
-    "file_manager_linux": "file manager",
+    "file_manager_linux": "the file manager",
     "quit_mac": "Cmd+Q",
     "quit_windows": "Alt+F4",
-    "quit_linux": "Ctrl+Q"
+    "quit_linux": "close the window"
   }
 }

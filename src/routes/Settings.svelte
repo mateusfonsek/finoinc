@@ -515,7 +515,7 @@
             class="material-pop absolute z-10 mt-1.5 w-72 p-1 text-callout"
             role="menu"
           >
-            {#each [...(platform === "mac" ? [{ icon: "cloud" as const, label: t("watch.preset_icloud"), hint: "", fn: addICloud }] : []), { icon: "download" as const, label: t("watch.preset_downloads"), hint: t("watch.preset_downloads_hint"), fn: addDownloads }, { icon: "monitor" as const, label: t("watch.preset_desktop"), hint: "", fn: addDesktop }] as item}
+            {#each [...(platform === "mac" ? [{ icon: "cloud" as const, label: t("watch.preset_icloud"), hint: "", fn: addICloud }] : []), { icon: "download" as const, label: t("watch.preset_downloads"), hint: platform === "mac" ? t("watch.preset_downloads_hint") : "", fn: addDownloads }, { icon: "monitor" as const, label: t("watch.preset_desktop"), hint: "", fn: addDesktop }] as item}
               <button
                 type="button"
                 role="menuitem"

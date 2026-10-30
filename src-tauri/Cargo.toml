@@ -37,3 +37,7 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
+
+# Windows and Linux only: macOS keeps one instance through Launch Services.
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+tauri-plugin-single-instance = "2"

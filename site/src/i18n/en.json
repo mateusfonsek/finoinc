@@ -107,7 +107,7 @@
     "kicker": "Under the hood",
     "title": "Small, native, yours.",
     "size_value": "5–14 MB",
-    "size": "to download, no Electron",
+    "size": "macOS, Windows and .deb downloads, no Electron",
     "chips_value": "Universal",
     "chips": "Apple Silicon + Intel on the Mac",
     "langs_value": "2",

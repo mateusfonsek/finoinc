@@ -63,7 +63,7 @@ Everything stays **100% local**, in one SQLite file on your computer.
 
 ### Linux
 
-- **AppImage** (any distribution): download the `.AppImage` below, then
+- **AppImage** (distributions with glibc 2.35 or newer, such as Ubuntu 22.04+ and Debian 12+): download the `.AppImage` below, then
 
   ```sh
   chmod +x Finoinc_*.AppImage

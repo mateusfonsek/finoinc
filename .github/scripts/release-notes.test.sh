@@ -68,6 +68,8 @@ contains "SmartScreen step"          must-contain "More info → Run anyway" 'fi
 contains "Linux install steps"       must-contain "### Linux"              'fix: a\n'
 contains "AppImage made executable"  must-contain "chmod +x"               'fix: a\n'
 contains ".deb installed with apt"   must-contain "sudo apt install ./"    'fix: a\n'
+contains "AppImage glibc floor named" must-contain "glibc 2.35"           'fix: a\n'
+contains "AppImage not promised everywhere" must-not-contain "any distribution" 'fix: a\n'
 
 # The line's final shape, character by character: the type goes away, the scope
 # becomes a `scope: ` prefix, and the item gains the markdown hyphen.

@@ -15,9 +15,11 @@ if [[ ! $v =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-mac="Finoinc_${v}_universal.app.tar.gz"
-win="Finoinc_${v}_x64-setup.exe"
-linux="Finoinc_${v}_amd64.AppImage"
+# Stable names (no version): the website and README link to
+# releases/latest/download/<name>. The version lives in the release URL.
+mac="Finoinc_universal.app.tar.gz"
+win="Finoinc_x64-setup.exe"
+linux="Finoinc_amd64.AppImage"
 
 for f in "$mac" "$win" "$linux"; do
   for g in "$f" "$f.sig"; do

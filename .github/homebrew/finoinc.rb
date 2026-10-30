@@ -2,7 +2,7 @@ cask "finoinc" do
   version "@VERSION@"
   sha256 "@SHA256@"
 
-  url "https://github.com/MateusFonseK/finoinc/releases/download/v#{version}/Finoinc_#{version}_universal.dmg"
+  url "https://github.com/MateusFonseK/finoinc/releases/download/v#{version}/Finoinc_universal.dmg"
   name "Finoinc"
   desc "Personal finance that never leaves your computer"
   homepage "https://github.com/MateusFonseK/finoinc"

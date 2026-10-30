@@ -6,6 +6,7 @@ mod error;
 mod locale;
 mod mcp;
 
+#[cfg(target_os = "macos")]
 use tauri::menu::{MenuBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 use tauri_specta::{collect_commands, Builder};
@@ -100,7 +101,22 @@ pub fn run() {
         }
     }
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Windows and Linux start a second process for every file opened from the
+    // file manager. Registered first so that process hands its arguments to
+    // the running one and exits before any other plugin starts. macOS needs
+    // none of this: Launch Services keeps one instance and sends `Opened`.
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+        commands::openfile::queue_and_announce(app, commands::openfile::ofx_paths(argv));
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }));
+
+    builder
         // Managed on the builder, not in `setup`: on a cold start macOS can
         // deliver `RunEvent::Opened` before `setup` runs, and with no state to
         // queue into, the files that launched the app were dropped.
@@ -125,6 +141,13 @@ pub fn run() {
             db::adopt_legacy_data(app.handle()).expect("failed to copy pre-rename data");
             let locale_state = locale::LocaleState::init(app.handle());
 
+            // Outside macOS a cold start receives the opened files as arguments.
+            #[cfg(not(target_os = "macos"))]
+            commands::openfile::queue_and_announce(
+                app.handle(),
+                commands::openfile::ofx_paths_os(std::env::args_os()),
+            );
+
             // Native menu, localized from the active pack. The literals below are
             // last-resort fallbacks for a pack missing the key — Portuguese UI
             // text lives in locales/pt-BR/strings.json, never here.
@@ -133,6 +156,10 @@ pub fn run() {
             // load the pack isn't ready until setup. The event handler is
             // registered on the builder above and fires regardless of when the
             // menu is created.
+            //
+            // macOS only: on Windows and Linux `set_menu` would draw a menu bar
+            // inside the window, and everything in it is already in the app.
+            #[cfg(target_os = "macos")]
             {
                 let handle = app.handle().clone();
                 let pack = locale_state.pack.lock().expect("locale mutex poisoned");
@@ -213,25 +240,18 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app_handle, event| {
+        .run(|_app_handle, _event| {
             // An .ofx opened via Finder. May arrive during cold start, before
-            // the frontend exists, so it is queued and announced.
-            if let tauri::RunEvent::Opened { urls } = event {
+            // the frontend exists, so it is queued and announced. The event
+            // exists only on Apple platforms.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = _event {
                 let paths: Vec<String> = urls
                     .iter()
                     .filter_map(|u| u.to_file_path().ok())
                     .map(|p| p.to_string_lossy().into_owned())
                     .collect();
-                if !paths.is_empty() {
-                    if let Some(pending) = app_handle.try_state::<commands::openfile::PendingOpen>() {
-                        pending
-                            .0
-                            .lock()
-                            .expect("pending mutex poisoned")
-                            .extend(paths);
-                    }
-                    let _ = app_handle.emit("open-ofx", ());
-                }
+                commands::openfile::queue_and_announce(_app_handle, paths);
             }
         });
 }

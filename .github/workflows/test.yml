@@ -14,9 +14,9 @@ permissions:
 
 jobs:
   test:
-    # macOS rather than Linux: the `tauri` crate pulls system dependencies on
-    # Linux (webkit2gtk and friends) and the app is macOS-only — testing on the
-    # target platform is truer. Public repo, so the minutes are free.
+    # The full suite, CI scripts included, runs on macOS; `portability` below
+    # repeats the app's own tests on Windows and Linux. Public repo, so the
+    # minutes are free.
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,3 +57,55 @@ jobs:
           .github/scripts/check-commit-format.test.sh
           .github/scripts/release-notes.test.sh
           .github/scripts/set-version.test.sh
+
+  # The app ships for Windows and Linux too. Paths (`\\?\` prefixes, drive
+  # letters, separators) and cfg-gated code only break there, so the app's
+  # tests run on each. Linux is 22.04 to match the release build's glibc.
+  portability:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Types (svelte-check)
+        run: pnpm check
+
+      - name: Frontend tests
+        run: pnpm test
+
+      - name: Frontend build
+        run: pnpm build
+
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml

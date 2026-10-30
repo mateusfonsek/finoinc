@@ -30,6 +30,7 @@ ureq = { version = "2", default-features = false, features = ["tls", "json"] }
 regex = "1"
 sha2 = "0.10"
 tauri-plugin-window-state = "2"
+dunce = "1"
 
 [profile.release]
 panic = "abort"
@@ -37,3 +38,7 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
+
+# Windows and Linux only: macOS keeps one instance through Launch Services.
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+tauri-plugin-single-instance = "2"

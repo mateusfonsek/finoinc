@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "app": {
+    "windows": [
+      {
+        "title": "Finoinc",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 880,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true
+      }
+    ]
+  },
+  "bundle": {
+    "targets": ["appimage", "deb"],
+    "fileAssociations": [
+      {
+        "ext": ["ofx"],
+        "name": "OFX Statement",
+        "description": "OFX bank statement",
+        "role": "Viewer",
+        "mimeType": "application/x-ofx"
+      }
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/finoinc.desktop",
+        "files": {
+          "/usr/share/mime/packages/finoinc.xml": "linux/finoinc-mime.xml"
+        }
+      }
+    }
+  }
+}

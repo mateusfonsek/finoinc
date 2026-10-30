@@ -15,8 +15,9 @@
     save as saveDialog,
     message,
   } from "@tauri-apps/plugin-dialog";
-  import { revealItemInDir } from "@tauri-apps/plugin-opener";
-  import { homeDir, join } from "@tauri-apps/api/path";
+  import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
+  import { desktopDir, downloadDir, homeDir, join } from "@tauri-apps/api/path";
+  import { modKeyLabel, platform } from "$lib/platform";
   import { dbPath, exportBackup, restoreBackup } from "$lib/api/backup";
   import { locale } from "$lib/i18n/locale.svelte";
   import { watch } from "$lib/stores/watch.svelte";
@@ -36,6 +37,10 @@
   import type { EnrichmentStatus, WatchedFolder } from "$lib/bindings";
 
   const t = locale.t;
+  const GITHUB_URL = "https://github.com/MateusFonseK/finoinc";
+  // OS-specific names, read through literal prefixes so every key stays visible.
+  const fm = $derived(t(`os.file_manager_${platform}`));
+  const mod = modKeyLabel();
 
   let path = $state<string | null>(null);
   let busy = $state(false);
@@ -95,13 +100,17 @@
    *  which can reach the screen raw. This turns it into translated text, and the
    *  case users actually hit (pointing at a folder already in the list) gets its
    *  own sentence instead of "UNIQUE constraint failed". */
-  function folderError(e: unknown, fallbackKey: string): string {
+  function folderError(
+    e: unknown,
+    fallbackKey: string,
+    params?: Record<string, string | number>,
+  ): string {
     const raw = e instanceof Error ? e.message : String(e);
     if (raw.includes("watched_folders.path")) return t("watch.error_duplicate");
     if (raw.includes("failed to resolve path") || raw.includes("is not a directory")) {
       return t("watch.error_unreachable");
     }
-    return t(fallbackKey);
+    return t(fallbackKey, params);
   }
 
   onMount(async () => {
@@ -199,11 +208,11 @@
   }
 
   // The presets `await` `addFrom` (as the iCloud one already did): without it, a
-  // failure before the picker — `homeDir`/`join` — would become an unhandled
+  // failure before the picker — resolving the folder — would become an unhandled
   // rejection and the screen would show nothing.
   async function addDownloads() {
     try {
-      await addFrom(await join(await homeDir(), "Downloads"));
+      await addFrom(await downloadDir());
     } catch (e) {
       error = folderError(e, "watch.error_add");
     }
@@ -211,7 +220,7 @@
 
   async function addDesktop() {
     try {
-      await addFrom(await join(await homeDir(), "Desktop"));
+      await addFrom(await desktopDir());
     } catch (e) {
       error = folderError(e, "watch.error_add");
     }
@@ -262,14 +271,14 @@
     }
   }
 
-  /** Revealing in Finder can fail (folder unmounted between render and click) —
+  /** Revealing in the file manager can fail (folder unmounted between render and click) —
    *  same care the database button already had. */
   async function revealFolder(folder: WatchedFolder) {
     error = null;
     try {
       await revealItemInDir(folder.path);
     } catch (e) {
-      error = folderError(e, "watch.error_reveal");
+      error = folderError(e, "watch.error_reveal", { fm });
     }
   }
 
@@ -329,7 +338,7 @@
     busy = true;
     try {
       await restoreBackup(picked);
-      await message(t("settings.restore_done_msg"), {
+      await message(t("settings.restore_done_msg", { quit: t(`os.quit_${platform}`) }), {
         title: t("settings.restore_done_title"),
         kind: "info",
       });
@@ -344,7 +353,9 @@
 <Page title={t("settings.title")} width="narrow">
   <!-- ── Idioma ─────────────────────────────────────────────────────────── -->
   <Card title={t("settings.language")}>
-    <p class="text-sub text-fg-muted leading-relaxed">{t("settings.language_desc")}</p>
+    <p class="text-sub text-fg-muted leading-relaxed">{t("settings.language_desc")}
+      {#if platform === "mac"}{t("settings.language_menu_note")}{/if}
+    </p>
     <LocalePicker />
   </Card>
 
@@ -469,8 +480,8 @@
                 <button
                   type="button"
                   onclick={() => revealFolder(f)}
-                  title={t("watch.folder_menu_reveal")}
-                  aria-label={t("watch.folder_menu_reveal")}
+                  title={t("watch.folder_menu_reveal", { fm })}
+                  aria-label={t("watch.folder_menu_reveal", { fm })}
                   class="press w-6 h-6 grid place-items-center rounded-[var(--radius-sm)] text-fg-muted
                          hover:bg-hover hover:text-fg transition-colors duration-[var(--dur-fast)]"
                 >
@@ -504,7 +515,7 @@
             class="material-pop absolute z-10 mt-1.5 w-72 p-1 text-callout"
             role="menu"
           >
-            {#each [{ icon: "cloud" as const, label: t("watch.preset_icloud"), hint: "", fn: addICloud }, { icon: "download" as const, label: t("watch.preset_downloads"), hint: t("watch.preset_downloads_hint"), fn: addDownloads }, { icon: "monitor" as const, label: t("watch.preset_desktop"), hint: "", fn: addDesktop }] as item}
+            {#each [...(platform === "mac" ? [{ icon: "cloud" as const, label: t("watch.preset_icloud"), hint: "", fn: addICloud }] : []), { icon: "download" as const, label: t("watch.preset_downloads"), hint: platform === "mac" ? t("watch.preset_downloads_hint") : "", fn: addDownloads }, { icon: "monitor" as const, label: t("watch.preset_desktop"), hint: "", fn: addDesktop }] as item}
               <button
                 type="button"
                 role="menuitem"
@@ -570,7 +581,7 @@
     <div>
       <Button variant="outline" onclick={reveal} disabled={!path}>
         <Icon name="externalLink" size={12} />
-        {t("settings.open_in_finder")}
+        {t("settings.open_in_folder", { fm })}
       </Button>
     </div>
   </Card>
@@ -603,10 +614,21 @@
       <span class="tabular">{version ? `v${version}` : ""}</span>
       — {t("settings.about_line")}
     </div>
+    <!-- The Help menu's GitHub link, for Windows and Linux, which have no
+         native menu. Same inline link as the About window. -->
+    <button
+      type="button"
+      onclick={() => void openUrl(GITHUB_URL)}
+      class="self-start inline-flex items-center gap-1 text-sub text-accent hover:text-accent-hi
+             underline-offset-4 hover:underline transition-colors duration-[var(--dur-fast)]"
+    >
+      {t("menu.github")}
+      <Icon name="arrowUpRight" size={11} stroke={2} />
+    </button>
 
     <!-- Shortcuts in a grid: hunting one inside running prose is work. -->
     <div class="grid grid-cols-3 gap-x-5 gap-y-1.5 pt-1">
-      {#each [["⌘1", t("nav.dashboard")], ["⌘2", t("nav.transactions")], ["⌘3", t("nav.calendar")], ["⌘4", t("sidebar.import")], ["⌘5", t("nav.categories")], ["⌘6", t("nav.rules")], ["⌘7", t("nav.suggestions")], ["⌘8", t("nav.mcp")], ["⌘F", t("settings.shortcut_search")], ["⌘O", t("settings.shortcut_open_ofx")]] as [key, label]}
+      {#each [[`${mod}1`, t("nav.dashboard")], [`${mod}2`, t("nav.transactions")], [`${mod}3`, t("nav.calendar")], [`${mod}4`, t("sidebar.import")], [`${mod}5`, t("nav.categories")], [`${mod}6`, t("nav.rules")], [`${mod}7`, t("nav.suggestions")], [`${mod}8`, t("nav.mcp")], [`${mod}F`, t("settings.shortcut_search")], [`${mod}O`, t("settings.shortcut_open_ofx")]] as [key, label]}
         <div class="flex items-center gap-2 min-w-0">
           <kbd
             class="shrink-0 min-w-[26px] h-5 px-1.5 grid place-items-center rounded-[5px] border border-border

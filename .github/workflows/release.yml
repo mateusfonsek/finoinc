@@ -12,15 +12,22 @@ concurrency:
   group: release-main
   cancel-in-progress: false
 
+# Read only by default; only `publish` writes (commit, tag, release).
+permissions:
+  contents: read
+
 jobs:
   test:
     uses: ./.github/workflows/test.yml
 
-  release:
+  # Decides whether this merge releases, and as what. Runs once, so every
+  # platform build below stamps the same version.
+  version:
     needs: test
-    runs-on: macos-latest
-    permissions:
-      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.version.outputs.next }}
+      range: ${{ steps.version.outputs.range }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,62 +82,145 @@ jobs:
             exit 1
           fi
 
+  # One build per OS. Each writes the version into ITS working tree only:
+  # Tauri bakes the tauri.conf.json version into the bundle, so building before
+  # the bump would stamp the old version. Nothing is committed here — if any
+  # platform fails, `publish` never runs and main keeps no version that never
+  # became a release.
+  build:
+    needs: version
+    if: needs.version.outputs.next != ''
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            name: macos
+            args: --target universal-apple-darwin
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - os: windows-latest
+            name: windows
+            args: ""
+            rust_targets: ""
+          # 22.04, not latest: an AppImage only runs on distributions whose
+          # glibc is at least as new as the one it was built against.
+          - os: ubuntu-22.04
+            name: linux
+            args: ""
+            rust_targets: ""
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
       - uses: pnpm/action-setup@v4
-        if: steps.version.outputs.next != ''
         with:
           version: 11
 
       - uses: actions/setup-node@v4
-        if: steps.version.outputs.next != ''
         with:
           node-version: 22
           cache: pnpm
 
       - uses: dtolnay/rust-toolchain@stable
-        if: steps.version.outputs.next != ''
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.rust_targets }}
 
       - uses: Swatinem/rust-cache@v2
-        if: steps.version.outputs.next != ''
         with:
           workspaces: src-tauri
 
       - name: Install dependencies
-        if: steps.version.outputs.next != ''
         run: pnpm install --frozen-lockfile
 
-      # The ORDER from here down is not interchangeable: Tauri bakes the
-      # tauri.conf.json version into the bundle, so building before the bump
-      # would produce a .dmg stamped with the old version. And committing before
-      # the build would leave main with a version that never became a release if
-      # the build broke. Bump the working tree → build → only then commit.
       - name: Write the version into the files
-        if: steps.version.outputs.next != ''
-        run: .github/scripts/set-version.sh "${{ steps.version.outputs.next }}"
+        run: .github/scripts/set-version.sh "${{ needs.version.outputs.next }}"
 
-      - name: Build universal (Apple Silicon + Intel)
-        if: steps.version.outputs.next != ''
-        run: pnpm tauri build --target universal-apple-darwin
+      - name: Build
+        run: pnpm tauri build ${{ matrix.args }}
+
+      - name: Collect the packages
+        run: |
+          set -euo pipefail
+          # A glob array, not `ls | head`: with `nullglob` an empty match is an
+          # empty array, testable without a subshell or a pipe that could fail
+          # on its own (see the publish job).
+          shopt -s nullglob
+          case "${{ matrix.name }}" in
+            macos) files=(src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg) ;;
+            windows) files=(src-tauri/target/release/bundle/nsis/*.exe) ;;
+            linux) files=(src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/deb/*.deb) ;;
+          esac
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::the ${{ matrix.name }} build produced no package"
+            exit 1
+          fi
+          mkdir -p out
+          cp "${files[@]}" out/
+          ls -l out
+
+      - name: Show the desktop entry (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          # "Open with Finoinc" needs a file placeholder (%F/%U) on the Exec line
+          # and the OFX MIME type; printed so a release log answers it.
+          dir=$(mktemp -d)
+          dpkg-deb -x out/*.deb "$dir"
+          cat "$dir"/usr/share/applications/*.desktop
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finoinc-${{ matrix.name }}
+          path: out/
+          if-no-files-found: error
+
+  # Runs only when EVERY platform built: this is where the version becomes
+  # real (commit + tag) and the release is created with all packages.
+  publish:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          pattern: finoinc-*
+          merge-multiple: true
 
       - name: Commit, tag and push
         id: push
-        if: steps.version.outputs.next != ''
         run: |
           set -euo pipefail
 
-          # Same reason as the check before the build: main can move during the
-          # ~10 minutes of it, and then the newer run takes over.
+          # Same reason as the check in `version`: main can move during the
+          # builds, and then the newer run takes over.
           latest=$(git ls-remote origin refs/heads/main | cut -f1)
           if [ "$latest" != "$GITHUB_SHA" ]; then
             echo "::notice::main moved on to ${latest:0:7} during the build; its own run releases these commits."
             exit 0
           fi
 
+          # Rewrites the same files each build did (Cargo.lock included, via
+          # cargo metadata), so the commit matches what was shipped.
+          .github/scripts/set-version.sh "${{ needs.version.outputs.next }}"
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
-          git commit -m "chore(release): v${{ steps.version.outputs.next }} [skip ci]"
+          git commit -m "chore(release): v${{ needs.version.outputs.next }} [skip ci]"
 
           # Two invariants protect this block, and both must hold if anyone
           # touches it:
@@ -147,15 +237,15 @@ jobs:
           #    missing tag, but at the default branch's tip, not on this commit.
           #    And if `gh` fails too, main is left with a `chore(release):` and
           #    no tag at all: the next run recomputes the SAME version, builds
-          #    again (~10min of macOS runner) and dies at `git commit` (nothing
+          #    every platform again and dies at `git commit` (nothing
           #    staged to commit), requiring a manual fix. `--atomic` makes both
           #    refs move together or neither move — with no intermediate
           #    "commit landed, tag did not" state. Everything else in the flow —
           #    the `git describe` in the version calculation, the "tag already
           #    exists" guard, the loop prevention — assumes the tag was created
           #    HERE, alongside the commit.
-          git tag -a "v${{ steps.version.outputs.next }}" -m "v${{ steps.version.outputs.next }}"
-          git push --atomic origin HEAD:main "refs/tags/v${{ steps.version.outputs.next }}"
+          git tag -a "v${{ needs.version.outputs.next }}" -m "v${{ needs.version.outputs.next }}"
+          git push --atomic origin HEAD:main "refs/tags/v${{ needs.version.outputs.next }}"
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Publish the release
@@ -182,25 +272,23 @@ jobs:
           # would linger as a "file"), testable in pure shell, with no subshell
           # and no pipe.
           shopt -s nullglob
-          dmgs=(src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg)
-          if [ ${#dmgs[@]} -eq 0 ]; then
-            echo "::error::no .dmg found in src-tauri/target/universal-apple-darwin/release/bundle/dmg/ — the Tauri build did not produce the expected bundle"
-            exit 1
-          fi
-          if [ ${#dmgs[@]} -gt 1 ]; then
-            # Unexpected (Tauri's bundler produces a single universal .dmg):
-            # warn instead of choosing silently.
-            echo "warning: ${#dmgs[@]} .dmg files found, using the first: ${dmgs[0]}"
-          fi
-          dmg="${dmgs[0]}"
-          echo "Attaching: $dmg"
+          # One package per kind is expected; a missing kind means a build
+          # changed its output, so the release stops instead of shipping less.
+          files=()
+          for kind in dmg exe AppImage deb; do
+            found=(packages/*."$kind")
+            if [ ${#found[@]} -eq 0 ]; then
+              echo "::error::no .$kind among the built packages"
+              exit 1
+            fi
+            files+=("${found[@]}")
+          done
+          printf 'Attaching: %s\n' "${files[@]}"
 
-          # The .dmg only. The .tar.gz the tauri-action used to attach (and
-          # which was deleted by hand) is simply never uploaded.
-          git log --format=%s "${{ steps.version.outputs.range }}" \
-            | .github/scripts/release-notes.sh > /tmp/notes.md
+          git log --format=%s "${{ needs.version.outputs.range }}" \
+            | .github/scripts/release-notes.sh > "$RUNNER_TEMP/notes.md"
 
-          gh release create "v${{ steps.version.outputs.next }}" \
-            --title "Finoinc v${{ steps.version.outputs.next }}" \
-            --notes-file /tmp/notes.md \
-            "$dmg"
+          gh release create "v${{ needs.version.outputs.next }}" \
+            --title "Finoinc v${{ needs.version.outputs.next }}" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            "${files[@]}"

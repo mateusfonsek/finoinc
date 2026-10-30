@@ -170,6 +170,12 @@
   accent-color: var(--color-accent);
 }
 
+/* Windows and Linux draw a native title bar above the webview, so there are
+   no traffic lights to clear: keep only the breathing room a header needs. */
+:root:not(.platform-mac) {
+  --titlebar-h: 16px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Light theme — surfaces, borders, text and elevation only. The categorical
    and semantic colours are mid-luminance and work in both.

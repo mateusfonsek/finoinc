@@ -37,8 +37,8 @@
     "copyright": "© 2026 Mateus Fonseca",
     "publisher": "Mateus Fonseca",
     "homepage": "https://github.com/MateusFonseK/finoinc",
-    "shortDescription": "Your money, only on your Mac.",
-    "longDescription": "Personal finance that stays on your Mac: import OFX statements, categorize them with rules and read your month, in an app that never sends your data anywhere.",
+    "shortDescription": "Your money, only on your computer.",
+    "longDescription": "Personal finance that stays on your computer: import OFX statements, categorize them with rules and read your month, in an app that never sends your data anywhere.",
     "fileAssociations": [
       {
         "ext": ["ofx"],

@@ -172,6 +172,7 @@ Sendo específico sobre rede, porque "local-first" é palavra que muita gente us
 | Pacote **pt-BR**, consulta de CNPJ **desligada** (o padrão) | **Nunca** |
 | Pacote **pt-BR**, consulta de CNPJ **ligada** (você que liga) | Manda só os **dígitos do CNPJ** — dado público de registro — pra [BrasilAPI](https://brasilapi.com.br), pra descobrir o nome da empresa e sugerir categoria. Nunca valores, nunca descrições, nunca nada pessoal. |
 | Servidor MCP **ligado** | O servidor em si continua **nunca** discando pra fora. Ele escuta. Veja abaixo. |
+| Verificar atualizações | **Nunca**, a não ser que você clique em **Verificar agora** ou ligue a verificação automática. Aí ele lê um arquivo do GitHub e envia só o que qualquer download envia (IP, user agent). |
 
 <br>
 

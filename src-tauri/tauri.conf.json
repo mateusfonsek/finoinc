@@ -31,6 +31,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["app", "dmg"],
     "resources": { "../locales": "locales" },
     "category": "Finance",
@@ -57,6 +58,15 @@
     "macOS": {
       "minimumSystemVersion": "12.0",
       "signingIdentity": "-"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFEMkI1Mzg1NzA4MDE0OUUKUldTZUZJQndoVk1ySFc1M2lXaXNjcVE4QnB2aFcrUzhDRnpGbkdGMUJpY090ZFRoTFRDcmY3M0wK",
+      "endpoints": [
+        "https://github.com/MateusFonseK/finoinc/releases/latest/download/latest.json"
+      ],
+      "windows": { "installMode": "passive" }
     }
   }
 }

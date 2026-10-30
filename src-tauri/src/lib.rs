@@ -64,6 +64,8 @@ pub fn run() {
         commands::backup::db_path,
         commands::backup::read_file_bytes,
         commands::openfile::take_pending_ofx,
+        commands::update::update_install_kind,
+        commands::update::prepare_for_update,
         commands::backup::export_backup,
         commands::backup::restore_backup,
         commands::app_settings::get_app_setting,
@@ -124,6 +126,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .on_menu_event(|app, event| {
             let id = event.id();
             if id == "about" {

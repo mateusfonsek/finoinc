@@ -510,6 +510,17 @@ async readFileBytes(path: string) : Promise<Result<number[], string>> {
 async takePendingOfx() : Promise<string[]> {
     return await TAURI_INVOKE("take_pending_ofx");
 },
+async updateInstallKind() : Promise<UpdateInstallKind> {
+    return await TAURI_INVOKE("update_install_kind");
+},
+/**
+ * Stops the MCP server before the installer replaces the app, so no agent
+ * write is cut mid-way. Its setting is untouched: it comes back after the
+ * relaunch exactly as the user left it.
+ */
+async prepareForUpdate() : Promise<void> {
+    await TAURI_INVOKE("prepare_for_update");
+},
 /**
  * Write a consistent copy of the active DB to `destination`.
  */
@@ -948,6 +959,15 @@ export type TransferSummary = { total_out: string; total_in: string; count: numb
  */
 export type TxKey = { ofx_fitid: string; date: string; amount: string }
 export type UpdateCategory = { name: string; color_token: string | null; kind: string }
+/**
+ * Whether the updater can replace this install in place.
+ */
+export type UpdateInstallKind = "installable" | 
+/**
+ * A `.deb` install: the updater only knows how to replace an AppImage on
+ * Linux, so the app links to the release instead.
+ */
+"download_only"
 export type UpdateRule = { patterns: string[]; category_id: number; priority: number; due_day: number | null; 
 /**
  * Which month this bill's payment lands in, relative to the due date.

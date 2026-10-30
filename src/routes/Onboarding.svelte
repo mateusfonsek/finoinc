@@ -8,8 +8,19 @@
   import logoUrl from "$lib/assets/logo.png";
   import type { ParsedOfx } from "$lib/ofx/types";
   import { push } from "svelte-spa-router";
+  import { onMount } from "svelte";
+  import { dbPath } from "$lib/api/backup";
 
   let error = $state<string | null>(null);
+  // The real file, which lives somewhere different on each OS.
+  let path = $state<string | null>(null);
+
+  onMount(() => {
+    dbPath().then(
+      (p) => (path = p),
+      () => {},
+    );
+  });
 
   function onparsed(detail: { file: File; parsed: ParsedOfx }) {
     // Hand off to /import via window. Svelte stores would be cleaner;
@@ -50,11 +61,11 @@
     <ErrorNote message={t("onboarding.read_error", { msg: error })} />
   {/if}
 
-  <p class="text-foot text-fg-subtle text-center flex items-center justify-center gap-1.5 flex-wrap">
-    <Icon name="lock" size={11} />
-    {t("onboarding.data_location")}
-    <span class="font-mono text-fg-subtle selectable">
-      ~/Library/Application Support/app.finoinc/finoinc.db
-    </span>
-  </p>
+  {#if path}
+    <p class="text-foot text-fg-subtle text-center flex items-center justify-center gap-1.5 flex-wrap">
+      <Icon name="lock" size={11} />
+      {t("onboarding.data_location")}
+      <span class="font-mono text-fg-subtle selectable break-all">{path}</span>
+    </p>
+  {/if}
 </section>

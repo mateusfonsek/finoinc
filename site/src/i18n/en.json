@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Finoinc — Personal finance that stays with you",
-    "description": "Free, open-source personal finance for macOS. Import your bank's OFX statement, categorize it with rules, and keep everything in one SQLite file you own.",
+    "description": "Free, open-source personal finance for macOS, Windows and Linux. Import your bank's OFX statement, categorize it with rules, and keep everything in one SQLite file you own.",
     "og_locale": "en_US"
   },
   "nav": {
@@ -19,16 +19,20 @@
     "title": "Your money.<br>Your data too.",
     "subtitle": "Personal finance that stays with you. No cloud, no account.",
     "cta": "Download for free",
-    "cta_note": "Available for macOS 12+ · ~20 MB",
-    "secondary": "View on GitHub"
+    "secondary": "View on GitHub",
+    "cta_mac": "Download for macOS",
+    "cta_windows": "Download for Windows",
+    "cta_linux": "Download for Linux",
+    "also": "Free for",
+    "deb": ".deb"
   },
   "proof": {
     "network": "network calls by default",
     "file": "SQLite file you own",
     "license_value": "MIT",
     "license": "open-source license",
-    "universal_value": "Universal",
-    "universal": "Apple Silicon + Intel"
+    "universal_value": "3",
+    "universal": "systems: macOS, Windows, Linux"
   },
   "product": {
     "kicker": "How it feels",
@@ -37,7 +41,7 @@
     "steps": {
       "import": {
         "title": "Review before anything is saved",
-        "body": "Drag the .ofx in, open it from Finder, or let the app watch a folder. Duplicates are flagged and left unchecked, refunds are paired with their charges, and nothing is written until you say so.",
+        "body": "Drag the .ofx in, open it from your file manager, or let the app watch a folder. Duplicates are flagged and left unchecked, refunds are paired with their charges, and nothing is written until you say so.",
         "alt": "The import review, with duplicate rows flagged and a refund paired with its charge"
       },
       "rules": {
@@ -102,16 +106,16 @@
   "specs": {
     "kicker": "Under the hood",
     "title": "Small, native, yours.",
-    "size_value": "~20 MB",
-    "size": "installed, no Electron",
+    "size_value": "5–14 MB",
+    "size": "to download, no Electron",
     "chips_value": "Universal",
-    "chips": "Apple Silicon + Intel",
+    "chips": "Apple Silicon + Intel on the Mac",
     "langs_value": "2",
     "langs": "languages built in",
-    "macos_value": "12+",
-    "macos": "macOS",
+    "systems_value": "3",
+    "systems": "macOS 12+, Windows 10+, Linux",
     "stack_value": "Rust + Svelte",
-    "stack": "on the WebKit macOS already ships",
+    "stack": "on the web view your system already ships",
     "license_value": "MIT",
     "license": "read every line"
   },
@@ -122,9 +126,18 @@
     "s3": "Open it normally. That's it.",
     "copy": "Copy",
     "copied": "Copied",
-    "copy_fail": "Selected, press ⌘C",
-    "cta": "Download for free",
-    "cta_note": "Available for macOS 12+ · ~20 MB"
+    "copy_fail": "Selected, press ⌘C or Ctrl+C",
+    "tabs": "Choose your system",
+    "os_mac": "macOS",
+    "os_windows": "Windows",
+    "os_linux": "Linux",
+    "brew": "With Homebrew:",
+    "by_hand": "Or by hand:",
+    "w1": "Download Finoinc_x64-setup.exe and run it. It installs for your user only, no administrator needed.",
+    "w2": "The installer isn't code-signed, so SmartScreen may say “Windows protected your PC”. Click More info → Run anyway.",
+    "w3": "Open Finoinc from the Start menu. That's it.",
+    "l1": "AppImage, for any distribution with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+):",
+    "l2": "Or, on Debian and Ubuntu, the .deb:"
   },
   "footer": {
     "releases": "Releases",

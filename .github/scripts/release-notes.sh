@@ -38,7 +38,11 @@ section "Translations" "$i18ns"
 cat <<'EOF'
 ---
 
-## Install (macOS)
+## Install
+
+Everything stays **100% local**, in one SQLite file on your computer.
+
+### macOS
 
 1. Download the `.dmg` below, open it and drag **Finoinc** into **Applications**.
 2. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
@@ -49,5 +53,28 @@ cat <<'EOF'
 
    Prefer not to use the Terminal? **System Settings → Privacy & Security → "Open Anyway"**, right after trying to open the app.
 
-3. Open it normally. Everything stays **100% local**, in `~/Library/Application Support/app.finoinc/finoinc.db`.
+3. Open it normally. Your data lives in `~/Library/Application Support/app.finoinc/finoinc.db`.
+
+### Windows
+
+1. Download the `_x64-setup.exe` below and run it. It installs for your user only, no administrator needed.
+2. **First launch.** The installer is not code-signed, so SmartScreen may say *"Windows protected your PC"*. Click **More info → Run anyway**.
+3. Your data lives in `%APPDATA%\app.finoinc\finoinc.db`.
+
+### Linux
+
+- **AppImage** (any distribution): download the `.AppImage` below, then
+
+  ```sh
+  chmod +x Finoinc_*.AppImage
+  ./Finoinc_*.AppImage
+  ```
+
+- **Debian / Ubuntu**: download the `.deb` below, then
+
+  ```sh
+  sudo apt install ./Finoinc_*.deb
+  ```
+
+Your data lives in `~/.local/share/app.finoinc/finoinc.db`.
 EOF

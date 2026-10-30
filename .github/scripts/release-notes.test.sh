@@ -61,7 +61,13 @@ contains "docs does not show"        must-not-contain "tweak README"     'docs: 
 contains "empty section is not printed" must-not-contain "### Fixes"     'feat: a\n'
 contains "scope is preserved"        must-contain     "watch"            'feat(watch): watched folder\n'
 contains "Gatekeeper block always included" must-contain "xattr -dr com.apple.quarantine" 'feat: a\n'
-contains "install section always included"  must-contain "## Install (macOS)" 'fix: a\n'
+contains "install section always included"  must-contain "## Install" 'fix: a\n'
+contains "macOS install steps"       must-contain "### macOS"              'fix: a\n'
+contains "Windows install steps"     must-contain "### Windows"            'fix: a\n'
+contains "SmartScreen step"          must-contain "More info → Run anyway" 'fix: a\n'
+contains "Linux install steps"       must-contain "### Linux"              'fix: a\n'
+contains "AppImage made executable"  must-contain "chmod +x"               'fix: a\n'
+contains ".deb installed with apt"   must-contain "sudo apt install ./"    'fix: a\n'
 
 # The line's final shape, character by character: the type goes away, the scope
 # becomes a `scope: ` prefix, and the item gains the markdown hyphen.

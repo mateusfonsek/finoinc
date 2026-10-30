@@ -42,6 +42,10 @@ function osTabs(initial) {
   const tabs = [...document.querySelectorAll(".os-tabs [role=tab]")];
   const panels = [...document.querySelectorAll(".install__os")];
   if (!tabs.length) return;
+  for (const panel of panels) {
+    panel.setAttribute("role", "tabpanel");
+    panel.setAttribute("aria-labelledby", `tab-${panel.dataset.os}`);
+  }
   const select = (os, focus) => {
     for (const tab of tabs) {
       const on = tab.dataset.os === os;
@@ -56,11 +60,11 @@ function osTabs(initial) {
     tab.addEventListener("pointerdown", () => select(tab.dataset.os));
     tab.addEventListener("click", () => select(tab.dataset.os));
     tab.addEventListener("keydown", (e) => {
-      const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (!step) return;
+      const i = tabs.indexOf(tab);
+      const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (to === undefined) return;
       e.preventDefault();
-      const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
-      select(next.dataset.os, true);
+      select(tabs[(to + tabs.length) % tabs.length].dataset.os, true);
     });
   }
   select(initial || "mac");

@@ -115,6 +115,10 @@ test("phones_get_no_desktop_package", () => {
   assert.equal(pickPackage("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15", "MacIntel", 5), null);
   assert.equal(pickPackage("Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/120 Mobile", "Linux armv8l", 5), null);
   assert.equal(pickPackage("Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) Chrome/120", "Linux x86_64", 0), null);
+  // Android's "desktop site" mode sends a plain X11 Linux user agent; the platform
+  // still names the ARM CPU, and there is no ARM Linux package anyway.
+  assert.equal(pickPackage("Mozilla/5.0 (X11; Linux x86_64) Chrome/120", "Linux armv8l", 5), null);
+  assert.equal(pickPackage("Mozilla/5.0 (X11; Linux aarch64) Firefox/120", "Linux aarch64", 0), null);
 });
 
 test("the download button works without JavaScript and every OS is linked", () => {
@@ -127,4 +131,7 @@ test("the download button works without JavaScript and every OS is linked", () =
     assert.match(html, new RegExp(`href="https://github\\.com/MateusFonseK/finoinc/releases/latest/download/${file.replace(".", "\\.")}"`));
   }
   assert.doesNotMatch(html, /your Mac/i);
+  // Tab roles only exist once the script builds the tabs; without it the panels are
+  // plain sections and a screen reader hears no tabs that are not there.
+  assert.doesNotMatch(html, /role="tabpanel"/);
 });

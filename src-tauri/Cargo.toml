@@ -30,6 +30,7 @@ ureq = { version = "2", default-features = false, features = ["tls", "json"] }
 regex = "1"
 sha2 = "0.10"
 tauri-plugin-window-state = "2"
+dunce = "1"
 
 [profile.release]
 panic = "abort"

@@ -44,13 +44,15 @@ fn label_for(path: &str) -> String {
 
 /// Resolves symlinks and normalizes (`/tmp` → `/private/tmp` on macOS) so the
 /// table's UNIQUE actually rejects the same folder added twice.
+/// `dunce` because Windows' own canonicalize returns a verbatim `\\?\C:\…`
+/// path, which Settings would show and no picker ever hands back.
 ///
 /// Error messages below are developer-facing and in English, like the rest of
 /// the commands: they reach the UI via `e.message`, and the UI is what turns
 /// them into user text (`t("watch.error_*")`). Localizing them here would leak
 /// one language into every future locale pack.
 fn canonical(path: &str) -> AppResult<String> {
-    let p = std::fs::canonicalize(path)
+    let p = dunce::canonicalize(path)
         .map_err(|e| AppError::Path(format!("failed to resolve path '{path}': {e}")))?;
     if !p.is_dir() {
         return Err(AppError::Invalid(format!("'{path}' is not a directory")));
@@ -549,7 +551,7 @@ mod tests {
         assert_eq!(folder.imported_count, 0);
         assert_eq!(folder.last_imported_at, None);
         // canonicalize resolves /var to /private/var on macOS
-        assert_eq!(folder.path, std::fs::canonicalize(&dir).unwrap().to_string_lossy());
+        assert_eq!(folder.path, dunce::canonicalize(&dir).unwrap().to_string_lossy());
     }
 
     /// Windows `canonicalize` returns verbatim paths (`\\?\C:\…`): shown in

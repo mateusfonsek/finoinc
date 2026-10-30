@@ -1091,6 +1091,7 @@ name = "finoinc"
 version = "0.11.4"
 dependencies = [
  "chrono",
+ "dunce",
  "regex",
  "rusqlite",
  "rust_decimal",

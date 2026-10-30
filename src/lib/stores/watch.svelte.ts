@@ -30,6 +30,9 @@ export function createWatchStore() {
   let suppressToast = $state(false);
   let lastScan = 0;
   let scanning = false;
+  /** Set while an update installs: the installer replaces the app, and a scan
+   *  writing file marks at that moment would be cut mid-way. */
+  let paused = false;
   /** Callers are not required to call `loadEnabled()` before the first
    *  `refresh()`. Loading on demand here keeps the `enabled` gate from running
    *  against a value that was never read — assuming enabled until the read
@@ -49,7 +52,7 @@ export function createWatchStore() {
 
   async function refresh(opts: { force?: boolean } = {}) {
     if (!settingsLoaded) await loadEnabled();
-    if (!enabled) return;
+    if (!enabled || paused) return;
     const now = Date.now();
     if (!opts.force && now - lastScan < THROTTLE_MS) return;
     if (scanning) return;
@@ -178,6 +181,12 @@ export function createWatchStore() {
     noteLoadFailure,
     requestOpen,
     takeOpenRequest,
+    pause() {
+      paused = true;
+    },
+    resume() {
+      paused = false;
+    },
   };
 }
 

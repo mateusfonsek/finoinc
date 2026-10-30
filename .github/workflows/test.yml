@@ -58,6 +58,7 @@ jobs:
           .github/scripts/release-notes.test.sh
           .github/scripts/set-version.test.sh
           .github/scripts/latest-json.test.sh
+          .github/scripts/render-cask.test.sh
 
   # The app ships for Windows and Linux too. Paths (`\\?\` prefixes, drive
   # letters, separators) and cfg-gated code only break there, so the app's

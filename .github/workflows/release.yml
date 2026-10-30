@@ -212,6 +212,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      released: ${{ steps.push.outputs.pushed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -319,3 +321,65 @@ jobs:
             --title "Finoinc v${{ needs.version.outputs.next }}" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             "${files[@]}"
+
+  # Points the Homebrew cask at the new .dmg. A separate job so a tap problem
+  # never touches the release, which is already out by now; with no token it
+  # only warns.
+  homebrew:
+    needs: [version, publish]
+    if: needs.publish.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HAS_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+      NEXT: ${{ needs.version.outputs.next }}
+    steps:
+      - name: No token
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::HOMEBREW_TAP_TOKEN is not set; the Homebrew cask was not updated."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          sparse-checkout: .github
+          path: finoinc
+
+      - uses: actions/download-artifact@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          name: finoinc-macos
+          path: mac
+
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          repository: mateusfonsek/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Update the cask
+        if: env.HAS_TOKEN == 'true'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=(mac/*.dmg)
+          if [ ${#dmgs[@]} -ne 1 ]; then
+            echo "::error::expected one .dmg in the macOS artifact, found ${#dmgs[@]}"
+            exit 1
+          fi
+          sha=$(sha256sum "${dmgs[0]}" | cut -d' ' -f1)
+          mkdir -p tap/Casks
+          finoinc/.github/scripts/render-cask.sh "$NEXT" "$sha" finoinc/.github/homebrew/finoinc.rb \
+            > tap/Casks/finoinc.rb
+
+          cd tap
+          git add Casks/finoinc.rb
+          if git diff --cached --quiet; then
+            echo "The cask is already at $NEXT."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "finoinc $NEXT"
+          git push

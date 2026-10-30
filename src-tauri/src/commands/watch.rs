@@ -552,6 +552,17 @@ mod tests {
         assert_eq!(folder.path, std::fs::canonicalize(&dir).unwrap().to_string_lossy());
     }
 
+    /// Windows `canonicalize` returns verbatim paths (`\\?\C:\…`): shown in
+    /// Settings as-is and unlike the `C:\…` every other API hands back.
+    #[cfg(windows)]
+    #[test]
+    fn add_folder_stores_a_plain_windows_path() {
+        let conn = fresh_conn();
+        let dir = tmpdir("plain");
+        let folder = add_folder(&conn, dir.to_str().unwrap()).unwrap();
+        assert!(!folder.path.starts_with(r"\\?\"), "{}", folder.path);
+    }
+
     #[test]
     fn add_folder_twice_is_idempotent() {
         let conn = fresh_conn();

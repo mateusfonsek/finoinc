@@ -34,6 +34,8 @@
   } from "$lib/api/watch";
   import { enrichmentStatus, setEnrichmentEnabled } from "$lib/api/enrichment";
   import { freshnessEnabled, setFreshnessEnabled } from "$lib/api/freshness";
+  import { update } from "$lib/stores/update.svelte";
+  import { releaseUrl } from "$lib/update/state";
   import type { EnrichmentStatus, WatchedFolder } from "$lib/bindings";
 
   const t = locale.t;
@@ -357,6 +359,101 @@
       {#if platform === "mac"}{t("settings.language_menu_note")}{/if}
     </p>
     <LocalePicker />
+  </Card>
+
+  <!-- ── Updates ───────────────────────────────────────────────────────── -->
+  <!-- Checking is the one request the user starts by hand; the automatic
+       switch is off until they turn it on, and says who it talks to. -->
+  <Card title={t("update.title")}>
+    {@const v = update.view}
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col gap-0.5 min-w-0">
+        <span class="text-body text-fg tabular">
+          {t("update.version", { v: version ?? "—" })}
+        </span>
+        <span class="text-sub text-fg-muted flex items-center gap-1.5 flex-wrap" role="status">
+          {#if v.kind === "checking"}
+            {t("update.checking")}
+          {:else if v.kind === "up_to_date"}
+            <Icon name="circleCheck" size={12} class="text-pos" />
+            {t("update.up_to_date")}
+          {:else if v.kind === "available" || v.kind === "downloading"}
+            {t("update.available", { v: v.version })}
+            <button
+              type="button"
+              onclick={() => void openUrl(releaseUrl(v.version))}
+              class="inline-flex items-center gap-0.5 text-accent hover:text-accent-hi
+                     underline-offset-4 hover:underline transition-colors duration-[var(--dur-fast)]"
+            >
+              {t("update.whats_new")}
+              <Icon name="arrowUpRight" size={11} stroke={2} />
+            </button>
+          {:else if v.kind === "error"}
+            {t("update.error")}
+          {/if}
+        </span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        {#if v.kind === "available" && v.installable}
+          <Button onclick={() => void update.install()}>
+            <Icon name="download" size={12} />
+            {t("update.install")}
+          </Button>
+        {:else if v.kind === "available"}
+          <Button onclick={() => void openUrl(releaseUrl(v.version))}>
+            <Icon name="externalLink" size={12} />
+            {t("update.download")}
+          </Button>
+        {/if}
+        <Button
+          variant="outline"
+          onclick={() => void update.check()}
+          disabled={v.kind === "checking" || v.kind === "downloading"}
+        >
+          <Icon name="rotateCw" size={12} />
+          {t("update.check_now")}
+        </Button>
+      </div>
+    </div>
+
+    {#if v.kind === "downloading"}
+      <div class="flex flex-col gap-1.5">
+        <!-- Without a known length the bar holds still instead of inventing
+             progress; the label says it is downloading. `scaleX` keeps every
+             chunk event on the compositor. -->
+        <div class="h-1 rounded-full bg-surface-2 overflow-hidden">
+          <div
+            class="h-full origin-left rounded-full bg-accent
+                   transition-transform duration-[var(--dur)] ease-[var(--ease-snap)]"
+            style="transform: scaleX({v.progress ?? 0})"
+          ></div>
+        </div>
+        <span class="text-foot text-fg-subtle tabular">
+          {v.progress === null
+            ? t("update.downloading_plain")
+            : t("update.downloading", { pct: Math.round(v.progress * 100) })}
+        </span>
+      </div>
+    {/if}
+
+    {#if v.kind === "available" && v.error}
+      <ErrorNote message={t("update.install_error", { msg: v.error })} />
+    {/if}
+
+    <div class="flex items-start justify-between gap-4 border-t border-border-subtle pt-3">
+      <div class="flex flex-col gap-1 min-w-0">
+        <span class="text-sub text-fg">{t("update.auto")}</span>
+        <p class="text-foot text-fg-subtle flex items-start gap-1.5">
+          <span class="mt-px"><Icon name="cloud" size={11.5} /></span>
+          <span>{t("update.auto_desc")}</span>
+        </p>
+      </div>
+      <Switch
+        checked={update.autoCheck}
+        onChange={(on: boolean) => void update.setAutoCheck(on)}
+        label={t("update.auto")}
+      />
+    </div>
   </Card>
 
   <!-- ── Tax-id company lookup ──────────────────────────────────────────── -->

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Finoinc — Finanças pessoais que ficam com você",
-    "description": "Finanças pessoais grátis e open source pro macOS. Importe o extrato OFX do seu banco, categorize com regras e guarde tudo num arquivo SQLite que é seu.",
+    "description": "Finanças pessoais grátis e open source pro macOS, Windows e Linux. Importe o extrato OFX do seu banco, categorize com regras e guarde tudo num arquivo SQLite que é seu.",
     "og_locale": "pt_BR"
   },
   "nav": {
@@ -19,16 +19,20 @@
     "title": "O dinheiro é seu.<br>Os dados também.",
     "subtitle": "Finanças pessoais que ficam com você. Sem nuvem, sem conta.",
     "cta": "Baixar grátis",
-    "cta_note": "Disponível pro macOS 12+ · ~20 MB",
-    "secondary": "Ver no GitHub"
+    "secondary": "Ver no GitHub",
+    "cta_mac": "Baixar pro macOS",
+    "cta_windows": "Baixar pro Windows",
+    "cta_linux": "Baixar pro Linux",
+    "also": "Grátis pra",
+    "deb": ".deb"
   },
   "proof": {
     "network": "chamadas de rede por padrão",
     "file": "arquivo SQLite que é seu",
     "license_value": "MIT",
     "license": "licença open source",
-    "universal_value": "Universal",
-    "universal": "Apple Silicon + Intel"
+    "universal_value": "3",
+    "universal": "sistemas: macOS, Windows, Linux"
   },
   "product": {
     "kicker": "Como é usar",
@@ -37,7 +41,7 @@
     "steps": {
       "import": {
         "title": "Você revisa antes de salvar",
-        "body": "Arraste o .ofx, abra pelo Finder ou deixe o app observando uma pasta. Duplicatas vêm marcadas e desmarcadas, estornos aparecem junto da compra, e nada é gravado até você confirmar.",
+        "body": "Arraste o .ofx, abra pelo gerenciador de arquivos ou deixe o app observando uma pasta. Duplicatas vêm marcadas e desmarcadas, estornos aparecem junto da compra, e nada é gravado até você confirmar.",
         "alt": "A revisão da importação, com linhas duplicadas marcadas e um estorno pareado com a compra"
       },
       "rules": {
@@ -102,16 +106,16 @@
   "specs": {
     "kicker": "Por dentro",
     "title": "Pequeno, nativo, seu.",
-    "size_value": "~20 MB",
-    "size": "instalado, sem Electron",
+    "size_value": "5–14 MB",
+    "size": "downloads do macOS, Windows e .deb, sem Electron",
     "chips_value": "Universal",
-    "chips": "Apple Silicon + Intel",
+    "chips": "Apple Silicon + Intel no Mac",
     "langs_value": "2",
     "langs": "idiomas inclusos",
-    "macos_value": "12+",
-    "macos": "macOS",
+    "systems_value": "3",
+    "systems": "macOS 12+, Windows 10+, Linux",
     "stack_value": "Rust + Svelte",
-    "stack": "no WebKit que já vem no macOS",
+    "stack": "na web view que o seu sistema já tem",
     "license_value": "MIT",
     "license": "leia cada linha"
   },
@@ -122,9 +126,18 @@
     "s3": "Abra normalmente. Pronto.",
     "copy": "Copiar",
     "copied": "Copiado",
-    "copy_fail": "Selecionado, aperte ⌘C",
-    "cta": "Baixar grátis",
-    "cta_note": "Disponível pro macOS 12+ · ~20 MB"
+    "copy_fail": "Selecionado, aperte ⌘C ou Ctrl+C",
+    "tabs": "Escolha o seu sistema",
+    "os_mac": "macOS",
+    "os_windows": "Windows",
+    "os_linux": "Linux",
+    "brew": "Com Homebrew:",
+    "by_hand": "Ou na mão:",
+    "w1": "Baixe o Finoinc_x64-setup.exe e rode. Ele instala só pro seu usuário, sem precisar de administrador.",
+    "w2": "O instalador não é assinado, então o SmartScreen pode dizer “O Windows protegeu o computador”. Clique em Mais informações → Executar assim mesmo.",
+    "w3": "Abra o Finoinc pelo menu Iniciar. Pronto.",
+    "l1": "AppImage, pra qualquer distribuição com glibc 2.35 ou mais nova (Ubuntu 22.04+, Debian 12+):",
+    "l2": "Ou, no Debian e no Ubuntu, o .deb:"
   },
   "footer": {
     "releases": "Versões",

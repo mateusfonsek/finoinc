@@ -42,7 +42,7 @@ export function build(outDir = join(ROOT, "_site")) {
   const notFound = { en: strings.en, pt: strings.pt, base_path: BASE_PATH };
   writeFileSync(join(outDir, "404.html"), render(read("src/404.html"), notFound, "404"));
   for (const dir of ["assets", "vendor"]) cpSync(join(ROOT, dir), join(outDir, dir), { recursive: true });
-  for (const file of ["style.css", "main.js"]) cpSync(join(ROOT, "src", file), join(outDir, file));
+  for (const file of ["style.css", "main.js", "download.js"]) cpSync(join(ROOT, "src", file), join(outDir, file));
 }
 
 function walk(dir) {

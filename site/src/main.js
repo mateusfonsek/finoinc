@@ -5,6 +5,8 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 document.addEventListener("DOMContentLoaded", () => {
   navMaterial();
+  const os = downloadButton();
+  osTabs(os);
   copyButtons();
   videos();
   productStage();
@@ -19,6 +21,49 @@ function navMaterial() {
   const update = () => nav.classList.toggle("is-scrolled", scrollY > 8);
   addEventListener("scroll", update, { passive: true });
   update();
+}
+
+/** Points the hero button at the visitor's own package and returns which one it is.
+ *  Without a desktop match (a phone, a tablet) it keeps linking to the releases page. */
+function downloadButton() {
+  const pick = window.finoincDownload;
+  if (!pick) return null;
+  const os = pick.pickPackage(navigator.userAgent, navigator.userAgentData?.platform || navigator.platform || "", navigator.maxTouchPoints || 0);
+  if (!os) return null;
+  for (const link of document.querySelectorAll("[data-download]")) {
+    link.href = pick.PACKAGES[os];
+    link.querySelector("span").textContent = link.dataset[`label${os[0].toUpperCase()}${os.slice(1)}`];
+  }
+  return os;
+}
+
+/** The install steps as a segmented control, opened on the visitor's system. */
+function osTabs(initial) {
+  const tabs = [...document.querySelectorAll(".os-tabs [role=tab]")];
+  const panels = [...document.querySelectorAll(".install__os")];
+  if (!tabs.length) return;
+  const select = (os, focus) => {
+    for (const tab of tabs) {
+      const on = tab.dataset.os === os;
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+      if (on && focus) tab.focus();
+    }
+    for (const panel of panels) panel.classList.toggle("is-active", panel.dataset.os === os);
+  };
+  // Selection on pointer-down, as a native segmented control answers.
+  for (const tab of tabs) {
+    tab.addEventListener("pointerdown", () => select(tab.dataset.os));
+    tab.addEventListener("click", () => select(tab.dataset.os));
+    tab.addEventListener("keydown", (e) => {
+      const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
+      select(next.dataset.os, true);
+    });
+  }
+  select(initial || "mac");
 }
 
 function copyButtons() {
@@ -54,15 +99,17 @@ function videos() {
   // The pig hops while the CTA is hovered or focused. On leave it finishes the hop in
   // progress instead of snapping back: each cycle starts and ends at rest.
   for (const pig of document.querySelectorAll("[data-trigger]")) {
-    const trigger = document.querySelector(pig.dataset.trigger);
+    const triggers = document.querySelectorAll(pig.dataset.trigger);
     let leaving = false;
     const start = () => { leaving = false; pig.classList.add("is-hopping"); };
     const stop = () => { leaving = true; };
     pig.addEventListener("animationiteration", () => { if (leaving) pig.classList.remove("is-hopping"); });
-    trigger.addEventListener("pointerenter", start);
-    trigger.addEventListener("focus", start);
-    trigger.addEventListener("pointerleave", stop);
-    trigger.addEventListener("blur", stop);
+    for (const trigger of triggers) {
+      trigger.addEventListener("pointerenter", start);
+      trigger.addEventListener("focus", start);
+      trigger.addEventListener("pointerleave", stop);
+      trigger.addEventListener("blur", stop);
+    }
   }
 }
 

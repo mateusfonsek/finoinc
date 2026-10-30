@@ -57,7 +57,7 @@ Everything stays **100% local**, in one SQLite file on your computer.
 
 ### Windows
 
-1. Download the `_x64-setup.exe` below and run it. It installs for your user only, no administrator needed.
+1. Download `Finoinc_x64-setup.exe` below and run it. It installs for your user only, no administrator needed.
 2. **First launch.** The installer is not code-signed, so SmartScreen may say *"Windows protected your PC"*. Click **More info → Run anyway**.
 3. Your data lives in `%APPDATA%\app.finoinc\finoinc.db`.
 
@@ -66,14 +66,14 @@ Everything stays **100% local**, in one SQLite file on your computer.
 - **AppImage** (distributions with glibc 2.35 or newer, such as Ubuntu 22.04+ and Debian 12+): download the `.AppImage` below, then
 
   ```sh
-  chmod +x Finoinc_*.AppImage
-  ./Finoinc_*.AppImage
+  chmod +x Finoinc_amd64.AppImage
+  ./Finoinc_amd64.AppImage
   ```
 
 - **Debian / Ubuntu**: download the `.deb` below, then
 
   ```sh
-  sudo apt install ./Finoinc_*.deb
+  sudo apt install ./Finoinc_amd64.deb
   ```
 
 Your data lives in `~/.local/share/app.finoinc/finoinc.db`.

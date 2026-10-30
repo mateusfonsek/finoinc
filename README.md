@@ -8,15 +8,17 @@
 
 ### Your money. Your data too.
 
-**Personal finance that never leaves your Mac.**
+**Personal finance that never leaves your computer.**
 No cloud. No account. No telemetry. One SQLite file you own.
 
 <br>
 
 <div>
-<a href="https://github.com/MateusFonseK/finoinc/releases/latest"><img src="https://img.shields.io/badge/⬇%20Download-.dmg-3fa34d?logo=apple&logoColor=white" alt="Download for macOS" /></a>
-<img src="https://img.shields.io/badge/macOS-12%2B%20·%20Apple%20Silicon%20%2B%20Intel-111111?logo=apple&logoColor=white" alt="macOS 12+" />
-<img src="https://img.shields.io/badge/size-~20%20MB-3fa34d" alt="~20 MB" />
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_universal.dmg"><img src="https://img.shields.io/badge/⬇%20macOS-.dmg-3fa34d?logo=apple&logoColor=white" alt="Download for macOS" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_x64-setup.exe"><img src="https://img.shields.io/badge/⬇%20Windows-.exe-3fa34d?logo=windows&logoColor=white" alt="Download for Windows" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.AppImage"><img src="https://img.shields.io/badge/⬇%20Linux-.AppImage%20·%20.deb-3fa34d?logo=linux&logoColor=white" alt="Download for Linux" /></a>
+<br>
+<img src="https://img.shields.io/badge/macOS%2012%2B%20·%20Windows%2010%2B%20·%20Linux-111111" alt="macOS 12+, Windows 10+, Linux" />
 <img src="https://img.shields.io/badge/network%20calls-0%20by%20default-3fa34d" alt="Zero network calls by default" />
 <img src="https://img.shields.io/badge/license-MIT-3fa34d" alt="MIT license" />
 <img src="https://img.shields.io/badge/built%20with-Tauri%20%2B%20Svelte%20%2B%20Rust-ff3e00" alt="Tauri + Svelte + Rust" />
@@ -41,8 +43,8 @@ rest: it deduplicates what you already have, spots reversals, applies your rules
 the month out on a dashboard that answers *where did the money go* without you building a
 single spreadsheet formula.
 
-Everything lives in one file on your Mac. You know exactly where it is, you can copy it
-anywhere, and any SQLite client can open it.
+Everything lives in one file on your computer. You know exactly where it is, you can copy
+it anywhere, and any SQLite client can open it.
 
 <br>
 
@@ -52,9 +54,18 @@ anywhere, and any SQLite client can open it.
 
 ## 📥 Install
 
-1. Download the latest `.dmg` from **[Releases](https://github.com/MateusFonseK/finoinc/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 or newer.
-2. Open it and drag **Finoinc** into **Applications**.
-3. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
+### macOS 12+ (Apple Silicon and Intel)
+
+**With Homebrew:**
+
+```sh
+brew install --cask mateusfonsek/tap/finoinc
+```
+
+**Or by hand:**
+
+1. Download **[Finoinc_universal.dmg](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_universal.dmg)**, open it and drag **Finoinc** into **Applications**.
+2. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
 
    ```sh
    xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
@@ -71,7 +82,33 @@ anywhere, and any SQLite client can open it.
 
 > Your browser tags every download with a `quarantine` flag. Without Apple notarization —
 > which needs a paid developer account — Gatekeeper asks for this one manual confirmation.
-> The source is right here: audit it, or build it yourself in two commands.
+> Homebrew removes the flag for you. The source is right here: audit it, or build it yourself.
+
+### Windows 10+
+
+1. Download **[Finoinc_x64-setup.exe](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_x64-setup.exe)** and run it. It installs for your user only — no administrator needed.
+2. **First launch.** The installer is not code-signed, so SmartScreen may say *"Windows protected your PC"*. Click **More info → Run anyway**.
+
+### Linux (x86-64)
+
+- **AppImage**, any distribution with glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+): download **[Finoinc_amd64.AppImage](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.AppImage)**, then
+
+  ```sh
+  chmod +x Finoinc_amd64.AppImage
+  ./Finoinc_amd64.AppImage
+  ```
+
+- **Debian / Ubuntu**: download **[Finoinc_amd64.deb](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.deb)**, then
+
+  ```sh
+  sudo apt install ./Finoinc_amd64.deb
+  ```
+
+### Staying up to date
+
+**Settings → Updates → Check now** tells you whether a newer version exists and installs it
+in place (macOS, Windows and the AppImage; a `.deb` install gets a link to the download).
+Turn on **Check automatically** to have it ask once a day — it is off until you do.
 
 <br>
 
@@ -79,7 +116,7 @@ anywhere, and any SQLite client can open it.
 
 ### Import a statement, review before anything is saved
 
-Drag the `.ofx` in, open it with Finoinc from Finder, or point the app at a folder and
+Drag the `.ofx` in, open it with Finoinc from your file manager, or point the app at a folder and
 let it find new statements on its own. Nothing is written until you say so.
 
 Re-importing an overlapping statement is safe and expected: every row you already have is
@@ -159,10 +196,16 @@ Deleting a category leaves its transactions intact and uncategorized, and remove
 
 ## 🔒 Privacy — the actual claim
 
-No account. No login. No telemetry. No ads. No analytics SDK. Everything lives in
-`~/Library/Application Support/app.finoinc/finoinc.db`, and **Settings → Open in Finder** takes
-you straight to it. Back it up, copy it to another Mac, open it with any SQLite client. It
-is yours.
+No account. No login. No telemetry. No ads. No analytics SDK. Everything lives in one file:
+
+| | Your data |
+|---|---|
+| macOS | `~/Library/Application Support/app.finoinc/finoinc.db` |
+| Windows | `%APPDATA%\app.finoinc\finoinc.db` |
+| Linux | `~/.local/share/app.finoinc/finoinc.db` |
+
+**Settings → Database** takes you straight to it. Back it up, copy it to another computer,
+open it with any SQLite client. It is yours.
 
 Specific about the network, because "local-first" is a word people abuse:
 
@@ -179,7 +222,7 @@ Specific about the network, because "local-first" is a word people abuse:
 
 ## 🔌 Ask an AI agent about your money
 
-Turn on the **MCP server** and an AI agent running on this same Mac can query your finances
+Turn on the **MCP server** and an AI agent running on this same computer can query your finances
 in plain language — *how much did I spend on dining last month, and is it going up?*
 
 It binds to `127.0.0.1` only. A cloud-hosted agent cannot reach it; the port is not on the
@@ -222,12 +265,20 @@ folder and translating JSON. Pull requests welcome.
 
 ## 🪶 Why it's this small
 
-**~20 MB installed.** No Electron, no bundled Chromium: the interface
-is [Svelte 5](https://svelte.dev) running in the WebKit view macOS already ships, and
-everything underneath is Rust. Of those ~20 MB, 18 are the binary — and it is universal, so
-that single file carries both Apple Silicon and Intel. The interface code, both locale
-packs and every icon come to about 120 KB compressed — only the logo image weighs more: 55
-hand-picked icons embedded as data rather than a library of ~1,500.
+No Electron, no bundled Chromium: the interface is [Svelte 5](https://svelte.dev) running in
+the web view your system already ships, and everything underneath is Rust.
+
+| | Download | Web view |
+|---|---|---|
+| macOS `.dmg` | 14 MB | WebKit, built into macOS |
+| Windows `.exe` | 5 MB | WebView2, built into Windows 10 and 11 |
+| Linux `.deb` | 6 MB | WebKitGTK, installed as a dependency |
+| Linux `.AppImage` | 84 MB | WebKitGTK, carried inside so it runs anywhere |
+
+The macOS binary is universal, so that single file carries both Apple Silicon and Intel. The
+interface code, both locale packs and every icon come to about 120 KB compressed — only the
+logo image weighs more: 55 hand-picked icons embedded as data rather than a library of
+~1,500.
 
 <br>
 
@@ -259,7 +310,7 @@ hand-picked icons embedded as data rather than a library of ~1,500.
 │  mcp/       — server, tools, audit log  │
 └───────────────┬─────────────────────────┘
                 │
-        ~/Library/Application Support/app.finoinc/finoinc.db
+        finoinc.db, in the OS's app data folder
 ```
 
 A few decisions worth knowing about:
@@ -283,17 +334,25 @@ A few decisions worth knowing about:
 ### Build it yourself
 
 Prerequisites: [Rust](https://rustup.rs), [Node 22+](https://nodejs.org),
-[pnpm](https://pnpm.io).
+[pnpm](https://pnpm.io), plus each OS's [Tauri prerequisites](https://tauri.app/start/prerequisites/):
+
+- **macOS:** Xcode Command Line Tools (`xcode-select --install`).
+- **Windows:** Microsoft C++ Build Tools and WebView2 (already on Windows 10 and 11).
+- **Linux (Debian/Ubuntu):**
+  ```sh
+  sudo apt install libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev \
+    libayatana-appindicator3-dev librsvg2-dev
+  ```
 
 ```sh
 pnpm install
-pnpm tauri dev                                   # development
+pnpm tauri dev      # development
+pnpm tauri build    # this OS's packages, in src-tauri/target/release/bundle/
 
+# macOS universal build (Apple Silicon + Intel):
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
-pnpm tauri build --target universal-apple-darwin # universal release
+pnpm tauri build --target universal-apple-darwin
 ```
-
-The `.app` and `.dmg` land in `src-tauri/target/universal-apple-darwin/release/bundle/`.
 
 ```sh
 pnpm test        # frontend (vitest)

@@ -41,7 +41,11 @@ export function createUpdateStore() {
     if (inFlight) return inFlight;
     if (view.kind === "downloading") return Promise.resolve();
     inFlight = (async () => {
-      view = { kind: "checking" };
+      // A background check never takes a known update off the screen: it
+      // runs out of sight, and failing overnight offline must not replace
+      // "version N is available" with "couldn't check".
+      const known = automatic && view.kind === "available" ? view : null;
+      if (!known) view = { kind: "checking" };
       try {
         const [update, kind] = await Promise.all([checkForUpdate(), installKind()]);
         pending = update;
@@ -49,7 +53,7 @@ export function createUpdateStore() {
         if (!update) found = null;
         else if (automatic) found = update.version;
       } catch (e) {
-        view = { kind: "error", message: message(e) };
+        view = known ?? { kind: "error", message: message(e) };
       } finally {
         inFlight = null;
       }
@@ -124,7 +128,8 @@ export function createUpdateStore() {
       autoCheck = on;
       if (on) {
         arm();
-        void run(true);
+        // The user is in Settings looking at the answer: no reminder needed.
+        void run(false);
       } else {
         disarm();
       }

@@ -125,6 +125,30 @@ describe("update store", () => {
     expect(manual.found).toBeNull();
   });
 
+  it("failed_automatic_check_keeps_a_known_update", async () => {
+    api.readAutoCheck.mockResolvedValue(true);
+    api.checkForUpdate
+      .mockResolvedValueOnce(fakeUpdate("0.13.0"))
+      .mockRejectedValueOnce(new Error("offline"));
+    const store = createUpdateStore();
+    await store.start();
+    await flush();
+    expect(store.view.kind).toBe("available");
+    vi.advanceTimersByTime(DAY);
+    await flush();
+    expect(api.checkForUpdate).toHaveBeenCalledTimes(2);
+    expect(store.view).toMatchObject({ kind: "available", version: "0.13.0" });
+  });
+
+  it("turning_auto_check_on_answers_in_settings_not_the_activity_center", async () => {
+    api.checkForUpdate.mockResolvedValue(fakeUpdate("0.13.0"));
+    const store = createUpdateStore();
+    await store.setAutoCheck(true);
+    await flush();
+    expect(store.view.kind).toBe("available");
+    expect(store.found).toBeNull();
+  });
+
   it("install_failure_returns_to_available_with_error", async () => {
     const u = fakeUpdate("0.13.0", {
       download: vi.fn().mockRejectedValue(new Error("signature mismatch")),

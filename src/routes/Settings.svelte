@@ -15,7 +15,7 @@
     save as saveDialog,
     message,
   } from "@tauri-apps/plugin-dialog";
-  import { revealItemInDir } from "@tauri-apps/plugin-opener";
+  import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
   import { desktopDir, downloadDir, homeDir, join } from "@tauri-apps/api/path";
   import { modKeyLabel, platform } from "$lib/platform";
   import { dbPath, exportBackup, restoreBackup } from "$lib/api/backup";
@@ -37,6 +37,7 @@
   import type { EnrichmentStatus, WatchedFolder } from "$lib/bindings";
 
   const t = locale.t;
+  const GITHUB_URL = "https://github.com/MateusFonseK/finoinc";
   // OS-specific names, read through literal prefixes so every key stays visible.
   const fm = $derived(t(`os.file_manager_${platform}`));
   const mod = modKeyLabel();
@@ -613,6 +614,17 @@
       <span class="tabular">{version ? `v${version}` : ""}</span>
       — {t("settings.about_line")}
     </div>
+    <!-- The Help menu's GitHub link, for Windows and Linux, which have no
+         native menu. Same inline link as the About window. -->
+    <button
+      type="button"
+      onclick={() => void openUrl(GITHUB_URL)}
+      class="self-start inline-flex items-center gap-1 text-sub text-accent hover:text-accent-hi
+             underline-offset-4 hover:underline transition-colors duration-[var(--dur-fast)]"
+    >
+      {t("menu.github")}
+      <Icon name="arrowUpRight" size={11} stroke={2} />
+    </button>
 
     <!-- Shortcuts in a grid: hunting one inside running prose is work. -->
     <div class="grid grid-cols-3 gap-x-5 gap-y-1.5 pt-1">

@@ -145,7 +145,7 @@ pub fn run() {
             #[cfg(not(target_os = "macos"))]
             commands::openfile::queue_and_announce(
                 app.handle(),
-                commands::openfile::ofx_paths(std::env::args()),
+                commands::openfile::ofx_paths_os(std::env::args_os()),
             );
 
             // Native menu, localized from the active pack. The literals below are

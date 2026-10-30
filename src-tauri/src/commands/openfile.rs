@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::path::Path;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -35,6 +36,15 @@ pub fn ofx_paths<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
         .collect()
 }
 
+/// [`ofx_paths`] over the process's raw arguments. A name that is not valid
+/// UTF-8 is skipped: `std::env::args()` would panic on it at launch. It
+/// becomes an empty string rather than vanishing, so the executable keeps its
+/// place as the first argument.
+#[cfg_attr(target_os = "macos", allow(dead_code))]
+pub fn ofx_paths_os<I: IntoIterator<Item = OsString>>(args: I) -> Vec<String> {
+    ofx_paths(args.into_iter().map(|a| a.into_string().unwrap_or_default()))
+}
+
 /// Queues the paths and tells the frontend to drain them. Nothing is emitted
 /// for an empty list, so relaunching the app without a file only focuses it.
 pub fn queue_and_announce(app: &AppHandle, paths: Vec<String>) {
@@ -69,6 +79,33 @@ mod tests {
             "/x/notes.txt",
         ]));
         assert_eq!(got, args(&["C:\\a b\\Extrato.OFX", "/x/y.ofx"]));
+    }
+
+    /// Linux file names are bytes; one in a legacy encoding must be skipped,
+    /// not crash the launch the way `std::env::args()` would.
+    #[cfg(unix)]
+    #[test]
+    fn non_utf8_args_are_skipped() {
+        use std::ffi::OsString;
+        use std::os::unix::ffi::OsStringExt;
+        let got = ofx_paths_os(vec![
+            OsString::from("finoinc"),
+            OsString::from_vec(b"/x/extr\xe9to.ofx".to_vec()),
+            OsString::from("/x/y.ofx"),
+        ]);
+        assert_eq!(got, args(&["/x/y.ofx"]));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn non_utf8_executable_path_still_skips_only_itself() {
+        use std::ffi::OsString;
+        use std::os::unix::ffi::OsStringExt;
+        let got = ofx_paths_os(vec![
+            OsString::from_vec(b"/opt/f\xe9/finoinc".to_vec()),
+            OsString::from("/x/y.ofx"),
+        ]);
+        assert_eq!(got, args(&["/x/y.ofx"]));
     }
 
     #[test]

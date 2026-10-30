@@ -60,6 +60,18 @@
 
   let freshness = $state(true);
 
+  /** Saving the switch can fail (the database is busy or gone); say so in the
+   *  card instead of leaving a switch that silently did nothing. */
+  let autoError = $state<string | null>(null);
+  async function toggleAutoCheck(on: boolean) {
+    autoError = null;
+    try {
+      await update.setAutoCheck(on);
+    } catch {
+      autoError = t("update.auto_error");
+    }
+  }
+
   async function toggleFreshness(value: boolean) {
     await setFreshnessEnabled(value);
     freshness = value;
@@ -448,12 +460,16 @@
           <span>{t("update.auto_desc")}</span>
         </p>
       </div>
-      <Switch
-        checked={update.autoCheck}
-        onChange={(on: boolean) => void update.setAutoCheck(on)}
-        label={t("update.auto")}
-      />
+      <div class="flex items-center gap-2.5 shrink-0">
+        <span class="text-foot text-fg-subtle">
+          {update.autoCheck ? t("update.on") : t("update.off")}
+        </span>
+        <Switch checked={update.autoCheck} onChange={toggleAutoCheck} label={t("update.auto")} />
+      </div>
     </div>
+    {#if autoError}
+      <ErrorNote message={autoError} />
+    {/if}
   </Card>
 
   <!-- ── Tax-id company lookup ──────────────────────────────────────────── -->

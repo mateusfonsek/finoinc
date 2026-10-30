@@ -31,7 +31,6 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": true,
     "targets": ["app", "dmg"],
     "resources": { "../locales": "locales" },
     "category": "Finance",

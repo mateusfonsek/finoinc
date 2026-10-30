@@ -14,4 +14,5 @@ pub mod suggestions;
 pub mod summary;
 pub mod tax_id;
 pub mod transactions;
+pub mod update;
 pub mod watch;

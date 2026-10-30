@@ -661,5 +661,25 @@
     "quit_mac": "Cmd+Q",
     "quit_windows": "Alt+F4",
     "quit_linux": "close the window"
+  },
+  "update": {
+    "title": "Updates",
+    "version": "Version {v}",
+    "up_to_date": "You're up to date.",
+    "checking": "Checking…",
+    "available": "Version {v} is available.",
+    "error": "Couldn't check right now.",
+    "check_now": "Check now",
+    "install": "Update and restart",
+    "download": "Download on GitHub",
+    "whats_new": "What's new",
+    "downloading": "Downloading… {pct}%",
+    "downloading_plain": "Downloading…",
+    "install_error": "The update failed: {msg}",
+    "auto": "Check automatically",
+    "auto_desc": "Once a day, Finoinc asks GitHub whether there is a new version. Nothing else is sent.",
+    "item_title": "Finoinc {v} is available",
+    "item_view": "View",
+    "item_dismiss": "Dismiss"
   }
 }

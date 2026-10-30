@@ -144,8 +144,16 @@ jobs:
       - name: Write the version into the files
         run: .github/scripts/set-version.sh "${{ needs.version.outputs.next }}"
 
+      # Every release build signs its updater package; an installed app
+      # refuses any update its public key does not verify. Turned on here, not
+      # in tauri.conf.json, so a contributor's `pnpm tauri build` works without
+      # the private key. Without the secrets the build fails here, before
+      # anything is committed or published.
       - name: Build
-        run: pnpm tauri build ${{ matrix.args }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build ${{ matrix.args }} --config '{"bundle":{"createUpdaterArtifacts":true}}'
 
       - name: Collect the packages
         run: |
@@ -154,17 +162,34 @@ jobs:
           # empty array, testable without a subshell or a pipe that could fail
           # on its own (see the publish job).
           shopt -s nullglob
+          v="${{ needs.version.outputs.next }}"
+          mkdir -p out
           case "${{ matrix.name }}" in
-            macos) files=(src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg) ;;
-            windows) files=(src-tauri/target/release/bundle/nsis/*.exe) ;;
-            linux) files=(src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/deb/*.deb) ;;
+            macos)
+              bundle=src-tauri/target/universal-apple-darwin/release/bundle
+              files=("$bundle"/dmg/*.dmg)
+              # The updater's package for macOS is the zipped .app, named
+              # Finoinc.app.tar.gz by Tauri; versioned here so release assets
+              # never collide and latest-json.sh can find it by name.
+              cp "$bundle/macos/Finoinc.app.tar.gz" "out/Finoinc_${v}_universal.app.tar.gz"
+              cp "$bundle/macos/Finoinc.app.tar.gz.sig" "out/Finoinc_${v}_universal.app.tar.gz.sig"
+              ;;
+            windows) files=(src-tauri/target/release/bundle/nsis/*.exe src-tauri/target/release/bundle/nsis/*.exe.sig) ;;
+            linux) files=(src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/appimage/*.AppImage.sig src-tauri/target/release/bundle/deb/*.deb) ;;
           esac
           if [ ${#files[@]} -eq 0 ]; then
             echo "::error::the ${{ matrix.name }} build produced no package"
             exit 1
           fi
-          mkdir -p out
           cp "${files[@]}" out/
+          # Every updater package needs its signature next to it; a missing one
+          # fails this OS's build, before publish could tag anything.
+          for pkg in out/*.app.tar.gz out/*.exe out/*.AppImage; do
+            if [ ! -f "$pkg.sig" ]; then
+              echo "::error::$pkg has no signature"
+              exit 1
+            fi
+          done
           ls -l out
 
       - name: Check "Open with Finoinc" in the .deb
@@ -194,6 +219,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      released: ${{ steps.push.outputs.pushed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -204,6 +231,11 @@ jobs:
           path: packages
           pattern: finoinc-*
           merge-multiple: true
+
+      # Before the tag: a release missing any platform's package or signature
+      # must stop while main and the tags are still untouched.
+      - name: Write the update manifest
+        run: .github/scripts/latest-json.sh "${{ needs.version.outputs.next }}" packages > packages/latest.json
 
       - name: Commit, tag and push
         id: push
@@ -280,7 +312,7 @@ jobs:
           # One package per kind is expected; a missing kind means a build
           # changed its output, so the release stops instead of shipping less.
           files=()
-          for kind in dmg exe AppImage deb; do
+          for kind in dmg exe AppImage deb app.tar.gz sig json; do
             found=(packages/*."$kind")
             if [ ${#found[@]} -eq 0 ]; then
               echo "::error::no .$kind among the built packages"
@@ -297,3 +329,65 @@ jobs:
             --title "Finoinc v${{ needs.version.outputs.next }}" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             "${files[@]}"
+
+  # Points the Homebrew cask at the new .dmg. A separate job so a tap problem
+  # never touches the release, which is already out by now; with no token it
+  # only warns.
+  homebrew:
+    needs: [version, publish]
+    if: needs.publish.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HAS_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+      NEXT: ${{ needs.version.outputs.next }}
+    steps:
+      - name: No token
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::HOMEBREW_TAP_TOKEN is not set; the Homebrew cask was not updated."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          sparse-checkout: .github
+          path: finoinc
+
+      - uses: actions/download-artifact@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          name: finoinc-macos
+          path: mac
+
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          repository: mateusfonsek/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Update the cask
+        if: env.HAS_TOKEN == 'true'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=(mac/*.dmg)
+          if [ ${#dmgs[@]} -ne 1 ]; then
+            echo "::error::expected one .dmg in the macOS artifact, found ${#dmgs[@]}"
+            exit 1
+          fi
+          sha=$(sha256sum "${dmgs[0]}" | cut -d' ' -f1)
+          mkdir -p tap/Casks
+          finoinc/.github/scripts/render-cask.sh "$NEXT" "$sha" finoinc/.github/homebrew/finoinc.rb \
+            > tap/Casks/finoinc.rb
+
+          cd tap
+          git add Casks/finoinc.rb
+          if git diff --cached --quiet; then
+            echo "The cask is already at $NEXT."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "finoinc $NEXT"
+          git push

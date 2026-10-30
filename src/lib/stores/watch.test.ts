@@ -47,6 +47,17 @@ describe("watch store", () => {
     api.getAppSetting.mockResolvedValue("1");
   });
 
+  it("paused_store_does_not_scan", async () => {
+    api.scanWatchedFolders.mockResolvedValue([]);
+    const store = createWatchStore();
+    store.pause();
+    await store.refresh({ force: true });
+    expect(api.scanWatchedFolders).not.toHaveBeenCalled();
+    store.resume();
+    await store.refresh({ force: true });
+    expect(api.scanWatchedFolders).toHaveBeenCalledTimes(1);
+  });
+
   it("exposes discoveries that parse, with their count and date range", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h1", "extrato.ofx")]);
     loadOfxFromPath.mockResolvedValue(parsed(87));

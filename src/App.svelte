@@ -11,6 +11,7 @@
   import { takePendingOfx } from "$lib/api/files";
   import { locale, LOCALE_CHOSEN_KEY } from "$lib/i18n/locale.svelte";
   import { getAppSetting } from "$lib/api/watch";
+  import { update } from "$lib/stores/update.svelte";
   import { watch } from "$lib/stores/watch.svelte";
   import { routes } from "./routes/routes";
 
@@ -41,6 +42,8 @@
     if (!localeChosen) return;
     void handleOpenedOfx();
     void watch.loadEnabled().then(() => watch.refresh({ force: true }));
+    // Off by default: reads one setting and, unless the user opted in, stops.
+    void update.start();
   });
 
   // Scroll state of the content pane. Each screen's header is translucent

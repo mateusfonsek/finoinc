@@ -173,6 +173,7 @@ Specific about the network, because "local-first" is a word people abuse:
 | **pt-BR** pack, tax-id lookup **off** (the default) | **Never** |
 | **pt-BR** pack, tax-id lookup **on** (you turn it on) | Sends only the **CNPJ digits** — public registry data — to [BrasilAPI](https://brasilapi.com.br), to resolve a company name and suggest a category. Never amounts, never descriptions, never anything personal. |
 | MCP server **on** | The server itself still dials out **never**. It listens. See below. |
+| Checking for updates | **Never**, unless you click **Check now** or turn on automatic checks. Then it reads one file from GitHub and sends only what any download sends (IP, user agent). |
 
 <br>
 

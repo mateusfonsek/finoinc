@@ -680,6 +680,9 @@
     "auto_desc": "Uma vez por dia o Finoinc pergunta ao GitHub se há versão nova. Nada mais é enviado.",
     "item_title": "Finoinc {v} disponível",
     "item_view": "Ver",
-    "item_dismiss": "Dispensar"
+    "item_dismiss": "Dispensar",
+    "on": "Ativado",
+    "off": "Desativado",
+    "auto_error": "Não deu pra salvar essa opção. Tente de novo."
   }
 }

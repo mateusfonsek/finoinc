@@ -206,15 +206,16 @@
     </div>
     <div class="install__copy">
       <h2 class="title" data-reveal>{{install.title}}</h2>
-      <!-- Without JS every system's steps show, one after another; with JS a
-           segmented control shows the visitor's own and switches between them. -->
+      <!-- Without JS every system's steps show, one after another, as plain
+           sections; with JS a segmented control shows the visitor's own, and the
+           panels get their tab roles then. -->
       <div class="os-tabs" role="tablist" aria-label="{{install.tabs}}">
         <button type="button" role="tab" id="tab-mac" aria-controls="os-mac" aria-selected="true" data-os="mac">{{install.os_mac}}</button>
         <button type="button" role="tab" id="tab-windows" aria-controls="os-windows" aria-selected="false" data-os="windows">{{install.os_windows}}</button>
         <button type="button" role="tab" id="tab-linux" aria-controls="os-linux" aria-selected="false" data-os="linux">{{install.os_linux}}</button>
       </div>
 
-      <div class="install__os is-active" id="os-mac" role="tabpanel" aria-labelledby="tab-mac" data-os="mac">
+      <div class="install__os is-active" id="os-mac" data-os="mac">
         <h3>{{install.os_mac}}</h3>
         <p>{{install.brew}}</p>
         <div class="cmd"><code id="cmd-brew">brew install --cask mateusfonsek/tap/finoinc</code><button type="button" class="cmd__copy" aria-live="polite" data-copy="#cmd-brew" data-done="{{install.copied}}" data-fail="{{install.copy_fail}}">{{install.copy}}</button></div>
@@ -229,7 +230,7 @@
         <a class="btn btn--large" href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_universal.dmg"><svg class="btn__apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>{{hero.cta_mac}}</a>
       </div>
 
-      <div class="install__os" id="os-windows" role="tabpanel" aria-labelledby="tab-windows" data-os="windows">
+      <div class="install__os" id="os-windows" data-os="windows">
         <h3>{{install.os_windows}}</h3>
         <ol class="install__steps">
           <li>{{install.w1}}</li>
@@ -239,7 +240,7 @@
         <a class="btn btn--large" href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_x64-setup.exe"><svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>{{hero.cta_windows}}</a>
       </div>
 
-      <div class="install__os" id="os-linux" role="tabpanel" aria-labelledby="tab-linux" data-os="linux">
+      <div class="install__os" id="os-linux" data-os="linux">
         <h3>{{install.os_linux}}</h3>
         <p>{{install.l1}}</p>
         <div class="cmd"><code id="cmd-appimage">chmod +x Finoinc_amd64.AppImage && ./Finoinc_amd64.AppImage</code><button type="button" class="cmd__copy" aria-live="polite" data-copy="#cmd-appimage" data-done="{{install.copied}}" data-fail="{{install.copy_fail}}">{{install.copy}}</button></div>

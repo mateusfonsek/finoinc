@@ -44,7 +44,7 @@ Everything stays **100% local**, in one SQLite file on your computer.
 
 ### macOS
 
-1. Download the `.dmg` below, open it and drag **Finoinc** into **Applications**.
+1. Download `Finoinc_universal.dmg` below, open it and drag **Finoinc** into **Applications**.
 2. **First launch.** The app is not signed with a paid Apple Developer certificate, so macOS blocks it once with *"Apple could not verify 'Finoinc' is free of malware…"*. Click **OK** — never *Move to Trash* — then run this in Terminal:
 
    ```sh

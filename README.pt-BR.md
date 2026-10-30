@@ -8,15 +8,17 @@
 
 ### O dinheiro é seu. Os dados também.
 
-**Finanças pessoais que nunca saem do seu Mac.**
+**Finanças pessoais que nunca saem do seu computador.**
 Sem nuvem. Sem conta. Sem telemetria. Um arquivo SQLite que é seu.
 
 <br>
 
 <div>
-<a href="https://github.com/MateusFonseK/finoinc/releases/latest"><img src="https://img.shields.io/badge/⬇%20Baixar-.dmg-3fa34d?logo=apple&logoColor=white" alt="Baixar para macOS" /></a>
-<img src="https://img.shields.io/badge/macOS-12%2B%20·%20Apple%20Silicon%20%2B%20Intel-111111?logo=apple&logoColor=white" alt="macOS 12+" />
-<img src="https://img.shields.io/badge/tamanho-~20%20MB-3fa34d" alt="~20 MB" />
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_universal.dmg"><img src="https://img.shields.io/badge/⬇%20macOS-.dmg-3fa34d?logo=apple&logoColor=white" alt="Baixar para macOS" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_x64-setup.exe"><img src="https://img.shields.io/badge/⬇%20Windows-.exe-3fa34d?logo=windows&logoColor=white" alt="Baixar para Windows" /></a>
+<a href="https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.AppImage"><img src="https://img.shields.io/badge/⬇%20Linux-.AppImage%20·%20.deb-3fa34d?logo=linux&logoColor=white" alt="Baixar para Linux" /></a>
+<br>
+<img src="https://img.shields.io/badge/macOS%2012%2B%20·%20Windows%2010%2B%20·%20Linux-111111" alt="macOS 12+, Windows 10+, Linux" />
 <img src="https://img.shields.io/badge/chamadas%20de%20rede-0%20por%20padrão-3fa34d" alt="Zero chamadas de rede por padrão" />
 <img src="https://img.shields.io/badge/licença-MIT-3fa34d" alt="Licença MIT" />
 <img src="https://img.shields.io/badge/feito%20com-Tauri%20%2B%20Svelte%20%2B%20Rust-ff3e00" alt="Tauri + Svelte + Rust" />
@@ -40,8 +42,8 @@ Exporte o extrato `.ofx` que seu banco já oferece, solte no app, e o Finoinc fa
 descarta o que você já tem, identifica estornos, aplica suas regras e monta o mês num painel
 que responde *pra onde foi o dinheiro* sem você escrever uma fórmula de planilha.
 
-Tudo fica num arquivo só, no seu Mac. Você sabe exatamente onde ele está, pode copiar pra
-onde quiser e abrir com qualquer cliente SQLite.
+Tudo fica num arquivo só, no seu computador. Você sabe exatamente onde ele está, pode copiar
+pra onde quiser e abrir com qualquer cliente SQLite.
 
 <br>
 
@@ -51,26 +53,61 @@ onde quiser e abrir com qualquer cliente SQLite.
 
 ## 📥 Instalação
 
-1. Baixe o `.dmg` mais recente em **[Releases](https://github.com/MateusFonseK/finoinc/releases/latest)** — universal (Apple Silicon + Intel), macOS 12 ou superior.
-2. Abra e arraste o **Finoinc** pra pasta **Aplicativos**.
-3. **Primeira abertura.** O app não é assinado com certificado pago da Apple, então o macOS bloqueia uma vez com *"não foi possível verificar se o 'Finoinc' está livre de malware…"*. Clique em **OK** — nunca em *Mover pro Lixo* — e rode no Terminal:
+### macOS 12+ (Apple Silicon e Intel)
+
+**Com Homebrew:**
+
+```sh
+brew install --cask mateusfonsek/tap/finoinc
+```
+
+**Ou na mão:**
+
+1. Baixe o **[Finoinc_universal.dmg](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_universal.dmg)**, abra e arraste o **Finoinc** pra **Aplicativos**.
+2. **Primeira abertura.** O app não é assinado com certificado pago da Apple, então o macOS bloqueia uma vez com *"não foi possível verificar se o 'Finoinc' está livre de malware…"*. Clique em **OK** — nunca em *Mover pro Lixo* — e rode no Terminal:
 
    ```sh
    xattr -dr com.apple.quarantine "/Applications/Finoinc.app"
    ```
 
-   Depois disso é só abrir normalmente.
+   Daí em diante, abra normalmente.
 
    <details>
    <summary>Prefere não usar o Terminal?</summary>
 
-   **Ajustes do Sistema → Privacidade e Segurança → Segurança → "Abrir Assim Mesmo"**. O
-   botão só aparece logo depois de você tentar abrir o app, então tente abrir primeiro.
+   **Ajustes do Sistema → Privacidade e Segurança → Segurança → "Abrir Mesmo Assim"**. O
+   botão só aparece logo depois que você tenta abrir o app, então tente abrir primeiro.
    </details>
 
 > O navegador marca todo download com a flag `quarantine`. Sem a notarização da Apple — que
 > exige conta paga de desenvolvedor — o Gatekeeper pede essa confirmação manual uma vez. O
-> código está aqui: audite, ou builde você mesmo em dois comandos.
+> Homebrew tira a flag por você. O código está aqui: audite, ou builde você mesmo.
+
+### Windows 10+
+
+1. Baixe o **[Finoinc_x64-setup.exe](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_x64-setup.exe)** e rode. Ele instala só pro seu usuário — não precisa de administrador.
+2. **Primeira abertura.** O instalador não é assinado, então o SmartScreen pode dizer *"O Windows protegeu o computador"*. Clique em **Mais informações → Executar assim mesmo**.
+
+### Linux (x86-64)
+
+- **AppImage**, em qualquer distribuição com glibc 2.35 ou mais nova (Ubuntu 22.04+, Debian 12+, Fedora 36+): baixe o **[Finoinc_amd64.AppImage](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.AppImage)** e rode
+
+  ```sh
+  chmod +x Finoinc_amd64.AppImage
+  ./Finoinc_amd64.AppImage
+  ```
+
+- **Debian / Ubuntu**: baixe o **[Finoinc_amd64.deb](https://github.com/MateusFonseK/finoinc/releases/latest/download/Finoinc_amd64.deb)** e rode
+
+  ```sh
+  sudo apt install ./Finoinc_amd64.deb
+  ```
+
+### Sempre atualizado
+
+**Configurações → Atualizações → Verificar agora** diz se há versão nova e instala no lugar
+(macOS, Windows e AppImage; quem instalou pelo `.deb` recebe o link do download). Ligue
+**Verificar automaticamente** pra ele perguntar uma vez por dia — fica desligado até você ligar.
 
 <br>
 
@@ -78,7 +115,7 @@ onde quiser e abrir com qualquer cliente SQLite.
 
 ### Importe o extrato e revise antes de salvar qualquer coisa
 
-Arraste o `.ofx`, abra com o Finoinc pelo Finder, ou aponte uma pasta e deixe o app achar
+Arraste o `.ofx`, abra com o Finoinc pelo gerenciador de arquivos, ou aponte uma pasta e deixe o app achar
 os extratos novos sozinho. Nada é gravado até você mandar.
 
 Reimportar um extrato que se sobrepõe é seguro e esperado: toda linha que você já tem é
@@ -159,9 +196,16 @@ caíam nela.
 
 ## 🔒 Privacidade — a afirmação de verdade
 
-Sem conta. Sem login. Sem telemetria. Sem anúncio. Sem SDK de analytics. Tudo mora em
-`~/Library/Application Support/app.finoinc/finoinc.db`, e **Configurações → Abrir no Finder** te
-leva direto lá. Faça backup, copie pra outro Mac, abra com qualquer cliente SQLite. É seu.
+Sem conta. Sem login. Sem telemetria. Sem anúncio. Sem SDK de analytics. Tudo mora num arquivo só:
+
+| | Seus dados |
+|---|---|
+| macOS | `~/Library/Application Support/app.finoinc/finoinc.db` |
+| Windows | `%APPDATA%\app.finoinc\finoinc.db` |
+| Linux | `~/.local/share/app.finoinc/finoinc.db` |
+
+**Configurações → Banco de dados** te leva direto lá. Faça backup, copie pra outro computador,
+abra com qualquer cliente SQLite. É seu.
 
 Sendo específico sobre rede, porque "local-first" é palavra que muita gente usa mal:
 
@@ -178,7 +222,7 @@ Sendo específico sobre rede, porque "local-first" é palavra que muita gente us
 
 ## 🔌 Pergunte pra uma IA sobre seu dinheiro
 
-Ligue o **servidor MCP** e um agente de IA rodando neste mesmo Mac passa a consultar suas
+Ligue o **servidor MCP** e um agente de IA rodando neste mesmo computador passa a consultar suas
 finanças em português — *quanto gastei com restaurante mês passado, e está subindo?*
 
 Ele escuta só em `127.0.0.1`. Um agente hospedado na nuvem não alcança; a porta não está na
@@ -221,12 +265,20 @@ traduzir JSON. Pull requests são bem-vindos.
 
 ## 🪶 Por que ele é tão pequeno
 
-**~20 MB instalado.** Sem Electron, sem Chromium embutido: a interface é
-[Svelte 5](https://svelte.dev) rodando na WebKit que o macOS já tem, e tudo por baixo é
-Rust. Dos ~20 MB instalados, 18 são o binário — e ele é universal, ou seja, carrega Apple
-Silicon e Intel no mesmo arquivo. O código da interface, os dois pacotes de idioma e todos os
-ícones somam cerca de 120 KB comprimidos — só a imagem do logo pesa mais: são 55 ícones
-escolhidos a dedo e embutidos como dado, em vez de uma biblioteca de ~1.500.
+Sem Electron, sem Chromium embutido: a interface é [Svelte 5](https://svelte.dev) rodando na
+web view que o seu sistema já tem, e tudo por baixo é Rust.
+
+| | Download | Web view |
+|---|---|---|
+| macOS `.dmg` | 14 MB | WebKit, que já vem no macOS |
+| Windows `.exe` | 5 MB | WebView2, que já vem no Windows 10 e 11 |
+| Linux `.deb` | 6 MB | WebKitGTK, instalada como dependência |
+| Linux `.AppImage` | 84 MB | WebKitGTK, levada dentro pra rodar em qualquer lugar |
+
+O binário do macOS é universal, ou seja, carrega Apple Silicon e Intel no mesmo arquivo. O
+código da interface, os dois pacotes de idioma e todos os ícones somam cerca de 120 KB
+comprimidos — só a imagem do logo pesa mais: são 55 ícones escolhidos a dedo e embutidos como
+dado, em vez de uma biblioteca de ~1.500.
 
 <br>
 
@@ -258,7 +310,7 @@ escolhidos a dedo e embutidos como dado, em vez de uma biblioteca de ~1.500.
 │  mcp/       — servidor, tools, log      │
 └───────────────┬─────────────────────────┘
                 │
-        ~/Library/Application Support/app.finoinc/finoinc.db
+        finoinc.db, na pasta de dados de apps do sistema
 ```
 
 Algumas decisões que valem conhecer:
@@ -283,17 +335,25 @@ Algumas decisões que valem conhecer:
 ### Builde você mesmo
 
 Pré-requisitos: [Rust](https://rustup.rs), [Node 22+](https://nodejs.org),
-[pnpm](https://pnpm.io).
+[pnpm](https://pnpm.io) e os [pré-requisitos do Tauri](https://tauri.app/start/prerequisites/) de cada sistema:
+
+- **macOS:** Xcode Command Line Tools (`xcode-select --install`).
+- **Windows:** Microsoft C++ Build Tools e WebView2 (já vem no Windows 10 e 11).
+- **Linux (Debian/Ubuntu):**
+  ```sh
+  sudo apt install libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev \
+    libayatana-appindicator3-dev librsvg2-dev
+  ```
 
 ```sh
 pnpm install
-pnpm tauri dev                                   # desenvolvimento
+pnpm tauri dev      # desenvolvimento
+pnpm tauri build    # os pacotes deste sistema, em src-tauri/target/release/bundle/
 
+# build universal do macOS (Apple Silicon + Intel):
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
-pnpm tauri build --target universal-apple-darwin # release universal
+pnpm tauri build --target universal-apple-darwin
 ```
-
-O `.app` e o `.dmg` saem em `src-tauri/target/universal-apple-darwin/release/bundle/`.
 
 ```sh
 pnpm test        # frontend (vitest)

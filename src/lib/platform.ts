@@ -12,3 +12,9 @@ export function detectPlatform(userAgent: string): Platform {
 export const platform: Platform = detectPlatform(
   typeof navigator === "undefined" ? "" : navigator.userAgent,
 );
+
+/** How shortcut hints name the modifier: the shortcuts accept both ⌘ and Ctrl,
+ *  but each OS should read its own. */
+export function modKeyLabel(p: Platform = platform): string {
+  return p === "mac" ? "⌘" : "Ctrl+";
+}

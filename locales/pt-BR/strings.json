@@ -508,7 +508,7 @@
     "overdue_many": "· {n} vencidas"
   },
   "onboarding": {
-    "title": "Suas finanças, no seu Mac.",
+    "title": "Suas finanças, no seu computador.",
     "subtitle": "Sem nuvem, sem login, sem assinatura. Você arrasta o extrato OFX do seu banco e o Finoinc organiza tudo num arquivo SQLite local.",
     "read_error": "Erro ao ler o arquivo: {msg}",
     "data_location": "Seus dados ficam em",
@@ -534,10 +534,11 @@
   "settings": {
     "title": "Configurações",
     "language": "Idioma",
-    "language_desc": "Escolha o idioma da interface. O menu nativo do macOS muda no próximo início do app.",
+    "language_desc": "Escolha o idioma da interface.",
+    "language_menu_note": "O menu nativo do macOS muda no próximo início do app.",
     "database": "Banco de dados",
-    "database_desc": "Todas as suas transações ficam neste arquivo no seu Mac. Nada é enviado pra nuvem.",
-    "open_in_finder": "Abrir no Finder",
+    "database_desc": "Todas as suas transações ficam neste arquivo no seu computador. Nada é enviado pra nuvem.",
+    "open_in_folder": "Abrir no {fm}",
     "backup": "Backup",
     "backup_desc": "Exporta uma cópia do arquivo pra qualquer pasta. Restaurar SUBSTITUI o banco atual — faça backup antes.",
     "export": "Exportar backup…",
@@ -547,9 +548,9 @@
     "restore_title": "Restaurar backup do Finoinc",
     "restore_confirm": "Isso vai SUBSTITUIR seu banco de dados atual. Você precisa reiniciar o app depois. Continuar?",
     "restore_done_title": "Restauração concluída",
-    "restore_done_msg": "Backup restaurado. Feche e abra o Finoinc de novo (Cmd+Q então abra) pra ver as transações restauradas.",
+    "restore_done_msg": "Backup restaurado. Feche e abra o Finoinc de novo ({quit} e então abra) pra ver as transações restauradas.",
     "about": "Sobre",
-    "about_line": "finanças pessoais 100% locais no Mac.",
+    "about_line": "finanças pessoais 100% locais no seu computador.",
     "shortcuts_label": "Atalhos:",
     "shortcut_search": "Buscar",
     "shortcut_open_ofx": "Abrir OFX",
@@ -566,9 +567,9 @@
   },
   "watch": {
     "section_title": "Importação automática",
-    "pitch_title": "Baixe o extrato no celular. O Mac acha sozinho.",
-    "pitch_body": "Salve o .ofx numa pasta do seu Mac — pelo iCloud, por AirDrop ou baixando direto. O Finoinc avisa quando encontrar um extrato novo e já abre a revisão.",
-    "privacy_note": "O app lê apenas arquivos .ofx, apenas nas pastas que você escolher. Nada sai do seu Mac.",
+    "pitch_title": "Baixe o extrato no celular. O computador acha sozinho.",
+    "pitch_body": "Salve o .ofx numa pasta do seu computador — sincronizada pela nuvem, enviada do celular ou baixando direto. O Finoinc avisa quando encontrar um extrato novo e já abre a revisão.",
+    "privacy_note": "O app lê apenas arquivos .ofx, apenas nas pastas que você escolher. Nada sai do seu computador.",
     "enable_cta": "Ativar e escolher pasta",
     "disable": "Desativar",
     "folders_label": "Pastas observadas",
@@ -580,7 +581,7 @@
     "preset_other": "Escolher outra pasta…",
     "picker_title": "Escolher pasta pra observar",
     "create_icloud_confirm": "A pasta \"Finoinc\" ainda não existe no seu iCloud Drive. Criar agora?",
-    "folder_menu_reveal": "Mostrar no Finder",
+    "folder_menu_reveal": "Mostrar no {fm}",
     "folder_menu_scan": "Verificar agora",
     "folder_menu_remove": "Remover da lista",
     "folder_missing": "pasta não encontrada — foi movida ou removida",
@@ -614,14 +615,14 @@
     "error_remove": "Não consegui remover essa pasta da lista.",
     "error_toggle": "Não consegui mudar a importação automática.",
     "error_create_icloud": "Não consegui criar a pasta no iCloud Drive.",
-    "error_reveal": "Não consegui abrir essa pasta no Finder.",
+    "error_reveal": "Não consegui abrir essa pasta no {fm}.",
     "error_scan": "Não consegui verificar as pastas agora."
   },
   "mcp": {
     "title": "Servidor MCP",
-    "subtitle": "Deixe um agente de IA neste Mac ler — e, se você permitir, alterar — suas finanças.",
+    "subtitle": "Deixe um agente de IA neste computador ler — e, se você permitir, alterar — suas finanças.",
     "connection": "Conexão",
-    "connection_desc": "Liga um servidor neste Mac. Nada é publicado na internet.",
+    "connection_desc": "Liga um servidor neste computador. Nada é publicado na internet.",
     "listening": "Escutando na porta {port}",
     "only_while_open": "Só responde enquanto o Finoinc estiver aberto.",
     "copy": "Copiar",
@@ -652,5 +653,13 @@
     "activity_empty": "Nenhuma chamada ainda",
     "activity_empty_desc": "O que seu agente pedir aparece aqui.",
     "activity_failed": "Falhou"
+  },
+  "os": {
+    "file_manager_mac": "Finder",
+    "file_manager_windows": "Explorador de Arquivos",
+    "file_manager_linux": "gerenciador de arquivos",
+    "quit_mac": "Cmd+Q",
+    "quit_windows": "Alt+F4",
+    "quit_linux": "Ctrl+Q"
   }
 }

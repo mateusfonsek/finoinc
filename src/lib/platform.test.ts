@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectPlatform } from "./platform";
+import { detectPlatform, modKeyLabel } from "./platform";
 
 describe("detectPlatform", () => {
   it("detect_platform_from_user_agent", () => {
@@ -17,5 +17,13 @@ describe("detectPlatform", () => {
       detectPlatform("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko)"),
     ).toBe("linux");
     expect(detectPlatform("something else")).toBe("linux");
+  });
+});
+
+describe("modKeyLabel", () => {
+  it("mod_key_label_per_platform", () => {
+    expect(modKeyLabel("mac")).toBe("⌘");
+    expect(modKeyLabel("windows")).toBe("Ctrl+");
+    expect(modKeyLabel("linux")).toBe("Ctrl+");
   });
 });

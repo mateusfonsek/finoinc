@@ -91,7 +91,7 @@ pub struct Enrichment {
 /// `Ok(None)` — not an error — when the active locale has no provider. That's
 /// a normal condition, not a failure.
 pub fn lookup(
-    conn: &rusqlite::Connection,
+    conn: &std::sync::Mutex<rusqlite::Connection>,
     tax_id: &str,
     pack: &LocalePack,
 ) -> AppResult<Option<Enrichment>> {
@@ -107,14 +107,20 @@ pub fn lookup(
 /// it made it impossible to exercise the enrichment loop without calling the
 /// real external service.
 pub fn lookup_with(
-    conn: &rusqlite::Connection,
+    conn: &std::sync::Mutex<rusqlite::Connection>,
     tax_id: &str,
     pack: &LocalePack,
     provider: &dyn provider::TaxIdProvider,
 ) -> AppResult<Enrichment> {
+    // The network call runs with the database free: it can take seconds (up to
+    // the provider's timeout), and every command waiting on the lock meanwhile
+    // would stall — on Windows, the window with it.
     let company = provider.lookup(&digits_of(tax_id))?;
     let suggested = match company.activity_code.as_deref() {
-        Some(code) => category_for_activity(conn, code, pack)?,
+        Some(code) => {
+            let c = conn.lock().expect("db mutex poisoned");
+            category_for_activity(&c, code, pack)?
+        }
         None => None,
     };
     Ok(Enrichment {
@@ -149,7 +155,7 @@ mod tests {
         // 4711301 = grocery, mapped in the pt-BR pack.
         let fake = FakeProvider::new(&[("33967103000184", "4711301")]);
 
-        let e = lookup_with(&conn, "33.967.103/0001-84", &p, &fake).unwrap();
+        let e = lookup_with(&std::sync::Mutex::new(conn), "33.967.103/0001-84", &p, &fake).unwrap();
 
         assert_eq!(fake.call_count(), 1, "must query the injected provider");
         assert!(
@@ -169,7 +175,7 @@ mod tests {
         // 0111301 = grain farming, outside the cnae_map.
         let fake = FakeProvider::new(&[("33967103000184", "0111301")]);
 
-        let e = lookup_with(&conn, "33.967.103/0001-84", &p, &fake).unwrap();
+        let e = lookup_with(&std::sync::Mutex::new(conn), "33.967.103/0001-84", &p, &fake).unwrap();
 
         assert!(e.suggested_category_id.is_none());
     }
@@ -239,6 +245,6 @@ mod tests {
         let mut p = pack();
         p.manifest.tax_id.provider = "none".into();
         assert!(!is_available(&p));
-        assert!(lookup(&conn, "33.967.103/0001-84", &p).unwrap().is_none());
+        assert!(lookup(&std::sync::Mutex::new(conn), "33.967.103/0001-84", &p).unwrap().is_none());
     }
 }

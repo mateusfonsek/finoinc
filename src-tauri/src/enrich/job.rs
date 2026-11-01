@@ -146,10 +146,7 @@ pub fn run_enrichment(
         }
         consulted += 1;
 
-        let enrichment = {
-            let c = conn.lock().expect("db mutex poisoned");
-            lookup_with(&c, tax_id, pack, provider)
-        };
+        let enrichment = lookup_with(conn, tax_id, pack, provider);
 
         done += 1;
 
@@ -343,6 +340,47 @@ mod tests {
                 EnrichEvent::Aborted { .. } => "aborted",
             })
             .collect()
+    }
+
+    /// Sync commands run on the main thread; on Windows that is the thread
+    /// WebView2 takes keyboard input on. A lookup that keeps the database
+    /// lock across the HTTP call (seconds, up to the timeout) makes any
+    /// screen that queries meanwhile — the transactions search — freeze.
+    struct LockProbe<'a> {
+        db: &'a Mutex<Connection>,
+        inner: FakeProvider,
+        locked_during_lookup: std::sync::atomic::AtomicBool,
+    }
+
+    impl crate::enrich::provider::TaxIdProvider for LockProbe<'_> {
+        fn lookup(&self, digits: &str) -> AppResult<crate::enrich::provider::Company> {
+            if self.db.try_lock().is_err() {
+                self.locked_during_lookup.store(true, Ordering::Relaxed);
+            }
+            self.inner.lookup(digits)
+        }
+
+        fn courtesy_delay_ms(&self) -> u64 {
+            0
+        }
+    }
+
+    #[test]
+    fn network_lookup_runs_without_the_db_lock() {
+        let conn = fresh_conn();
+        let acc = seed_account(&conn);
+        seed_tx(&conn, acc, "Pix - DEMERGE - 33.967.103/0001-84 - BB");
+        let db = Mutex::new(conn);
+        let probe = LockProbe {
+            db: &db,
+            inner: FakeProvider::new(&[("33967103000184", "5611201")]),
+            locked_during_lookup: std::sync::atomic::AtomicBool::new(false),
+        };
+
+        run_enrichment(&db, &pack(), &probe, Some(acc), &AtomicBool::new(false), &mut |_| {}).unwrap();
+
+        assert_eq!(probe.inner.call_count(), 1);
+        assert!(!probe.locked_during_lookup.load(Ordering::Relaxed), "lookup ran with the db lock held");
     }
 
     #[test]

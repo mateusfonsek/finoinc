@@ -113,10 +113,16 @@ export function parseCsv(table: CsvTable, format: CsvFormat): ParsedStatement & 
   table.rows.forEach((row, i) => {
     const line = table.preamble + 2 + i;
     const date = parseDate(row[format.columns.date] ?? "", format.dateFormat);
-    if (!date) return skipped.push({ line, reason: "date" });
+    if (!date) {
+      skipped.push({ line, reason: "date" });
+      return;
+    }
     anyDate = true;
     const amount = rowAmount(row, format);
-    if (amount === null) return skipped.push({ line, reason: "amount" });
+    if (amount === null) {
+      skipped.push({ line, reason: "amount" });
+      return;
+    }
     const bankId = format.columns.bankId !== undefined ? (row[format.columns.bankId] ?? "").trim() : "";
     transactions.push({
       fitid: bankId || null,

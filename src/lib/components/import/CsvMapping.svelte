@@ -13,15 +13,17 @@
   type Props = {
     table: CsvTable;
     fileName: string;
+    /** A known format that read no row of this file; the draft starts from it. */
+    seed?: CsvFormat;
     busy?: boolean;
     onsave: (draft: MappingDraft) => void;
     oncancel: () => void;
   };
 
-  let { table, fileName, busy = false, onsave, oncancel }: Props = $props();
+  let { table, fileName, seed, busy = false, onsave, oncancel }: Props = $props();
 
   // svelte-ignore state_referenced_locally — the file seeds the draft once; edits are the user's.
-  let draft = $state<MappingDraft>(mappingDraft(table, fileName));
+  let draft = $state<MappingDraft>(mappingDraft(table, fileName, seed));
 
   const ROLES: Role[] = ["ignore", "date", "description", "amount", "inflow", "outflow", "bankId"];
   const DATE_FORMATS: CsvFormat["dateFormat"][] = ["dd/mm/yyyy", "yyyy-mm-dd", "mm/dd/yyyy"];
@@ -46,7 +48,9 @@
 <div class="card p-4 flex flex-col gap-4">
   <div class="flex flex-col gap-0.5">
     <h3 class="text-title3 font-semibold text-fg">{t("import.mapping.title")}</h3>
-    <p class="text-sub text-fg-muted leading-relaxed">{t("import.mapping.hint")}</p>
+    <p class="text-sub text-fg-muted leading-relaxed">
+      {seed ? t("import.mapping.seed_failed", { name: seed.name }) : t("import.mapping.hint")}
+    </p>
   </div>
 
   <div class="overflow-x-auto -mx-4 px-4">

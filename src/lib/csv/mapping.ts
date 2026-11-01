@@ -22,16 +22,21 @@ export type DraftError = { column: number; message: string };
  *  cheap enough to run on every change. */
 const SAMPLE = 20;
 
-export function mappingDraft(table: CsvTable, fileName: string): MappingDraft {
-  const guess = guessColumns(table.header);
+/** The mapping screen's starting point: guessed from the header names, or —
+ *  when a known format stopped reading this file — that format's own mapping,
+ *  with only the date format guessed again (usually what the bank changed). */
+export function mappingDraft(table: CsvTable, fileName: string, seed?: CsvFormat): MappingDraft {
+  const columns: Partial<CsvFormat["columns"]> = seed ? seed.columns : guessColumns(table.header);
   const roles: Role[] = table.header.map(() => "ignore");
-  for (const [role, i] of Object.entries(guess) as [ColumnRole, number][]) roles[i] = role;
-  const dateCol = guess.date;
+  for (const [role, i] of Object.entries(columns) as [ColumnRole, number | undefined][]) {
+    if (i !== undefined && i < roles.length) roles[i] = role;
+  }
+  const dateCol = columns.date;
   return {
-    name: fileName.replace(/\.[^.]+$/, ""),
-    kind: "checking",
+    name: seed?.name ?? fileName.replace(/\.[^.]+$/, ""),
+    kind: seed?.kind ?? "checking",
     dateFormat: dateCol === undefined ? "dd/mm/yyyy" : guessDateFormat(table.rows.slice(0, SAMPLE).map((r) => r[dateCol] ?? "")),
-    invertSign: false,
+    invertSign: seed?.invertSign ?? false,
     roles,
   };
 }

@@ -32,7 +32,15 @@ export function readCsv(bytes: Uint8Array): CsvTable {
     }
   }
   if (!best) throw new CsvEmptyError();
-  const headerAt = best.records.findIndex((r) => r.fields.length === best.width);
+  // Some exports close every data row with a delimiter the header lacks; the
+  // empty trailing fields every full-width row shares don't count against it.
+  const { width } = best;
+  const trailing = Math.min(
+    ...best.records.filter((r) => r.fields.length === width).map((r) => trailingEmpty(r.fields)),
+  );
+  const headerAt = best.records.findIndex(
+    (r) => r.fields.length <= width && r.fields.length >= Math.max(2, width - trailing),
+  );
   const header = best.records[headerAt];
   const rows = best.records.slice(headerAt + 1).map((r) => r.fields);
   if (rows.length === 0) throw new CsvEmptyError();
@@ -47,6 +55,12 @@ function decode(bytes: Uint8Array): string {
     text = new TextDecoder("windows-1252").decode(bytes);
   }
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
+function trailingEmpty(fields: string[]): number {
+  let n = 0;
+  while (n < fields.length && fields[fields.length - 1 - n].trim() === "") n++;
+  return n;
 }
 
 function isBlank(fields: string[]): boolean {

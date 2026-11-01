@@ -82,19 +82,33 @@ function negate(amount: string): string {
   return /[1-9]/.test(amount) ? `-${amount}` : amount;
 }
 
+/** A split column's value: `null` when the cell says nothing (empty, `-`,
+ *  zero), so the other column decides. */
+function sideAmount(raw: string): string | null {
+  const v = parseAmount(raw);
+  return v === null || !/[1-9]/.test(v) ? null : v.replace(/^-/, "");
+}
+
 function rowAmount(row: string[], f: CsvFormat): string | null {
   const c = f.columns;
   let amount: string | null;
   if (c.amount !== undefined) {
     amount = parseAmount(row[c.amount] ?? "");
   } else {
-    const inflow = c.inflow !== undefined ? (row[c.inflow] ?? "").trim() : "";
-    const outflow = c.outflow !== undefined ? (row[c.outflow] ?? "").trim() : "";
-    if (inflow) amount = parseAmount(inflow);
-    else if (outflow) {
-      const out = parseAmount(outflow);
-      amount = out === null ? null : out.startsWith("-") ? out : negate(out);
-    } else amount = null;
+    // Banks with Crédito/Débito columns fill the unused side with "", "-" or
+    // "0,00". Whatever is left is inflow minus outflow.
+    const cell = (i: number | undefined) => (i === undefined ? "" : (row[i] ?? "").trim());
+    const inflow = sideAmount(cell(c.inflow));
+    const outflow = sideAmount(cell(c.outflow));
+    if (inflow === null && outflow === null) {
+      const zero = [cell(c.inflow), cell(c.outflow)].some((v) => parseAmount(v) !== null);
+      amount = zero ? "0.00" : null;
+    } else if (outflow === null) amount = inflow;
+    else if (inflow === null) amount = negate(outflow);
+    else {
+      const cents = Math.round(Number(inflow) * 100) - Math.round(Number(outflow) * 100);
+      amount = (cents / 100).toFixed(2);
+    }
   }
   if (amount !== null && f.invertSign) amount = negate(amount);
   return amount;

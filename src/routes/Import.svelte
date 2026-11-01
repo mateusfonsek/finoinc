@@ -27,6 +27,7 @@
   import { getFormatAccount, listCsvFormats, saveCsvFormat, setFormatAccount } from "$lib/api/csvFormats";
   import { draftToFormat, type MappingDraft } from "$lib/csv/mapping";
   import type { CsvTable } from "$lib/csv/read";
+  import type { CsvFormat } from "$lib/csv/formats";
   import CsvMapping from "$lib/components/import/CsvMapping.svelte";
   import { resolveAccount, type AccountChoice } from "$lib/import/account";
   import AccountPicker from "$lib/components/import/AccountPicker.svelte";
@@ -60,7 +61,7 @@
   let askAccount = $state<{ kind: string; remembered: number | null } | null>(null);
   let accounts = $state<Account[]>([]);
   /** A CSV whose layout no format knows, waiting on the mapping screen. */
-  let mapping = $state<{ file: File; table: CsvTable } | null>(null);
+  let mapping = $state<{ file: File; table: CsvTable; seed?: CsvFormat } | null>(null);
   let busy = $state(false);
   let busyMsg = $state("");
   let error = $state<string | null>(null);
@@ -209,7 +210,7 @@
   async function accept(result: LoadResult): Promise<void> {
     if (result.kind === "needs_mapping") {
       error = null;
-      mapping = { file: result.file, table: result.table };
+      mapping = { file: result.file, table: result.table, seed: result.seed };
       return;
     }
     pending = { file: result.file, parsed: result.parsed, formatId: result.formatId };
@@ -220,11 +221,16 @@
    *  the same path any later CSV in this layout takes. */
   async function saveMapping(draft: MappingDraft) {
     if (!mapping) return;
-    const { file, table } = mapping;
+    const { file, table, seed } = mapping;
     busy = true;
     error = null;
     try {
-      await saveCsvFormat(draftToFormat(draft, table));
+      const saved = await saveCsvFormat(draftToFormat(draft, table));
+      // Replacing a format that stopped working keeps the account it imported into.
+      if (seed && seed.id !== saved.id) {
+        const remembered = await getFormatAccount(seed.id);
+        if (remembered !== null) await setFormatAccount(saved.id, remembered);
+      }
       const result = await loadStatement(file, await listCsvFormats());
       mapping = null;
       busy = false;
@@ -479,6 +485,7 @@
       <CsvMapping
         table={mapping.table}
         fileName={mapping.file.name}
+        seed={mapping.seed}
         {busy}
         onsave={saveMapping}
         oncancel={() => {

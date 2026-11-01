@@ -39,6 +39,17 @@ describe("loadStatement", () => {
     expect(r.table.rows).toHaveLength(1);
   });
 
+  // The bank changed its date layout but kept the header: the built-in format
+  // can't read a single row, and can't be deleted either. The user gets the
+  // mapping screen, seeded from that format, pointing at the failing column.
+  it("matched_format_failing_every_row_returns_mapping", async () => {
+    const r = await loadStatement(file("Nubank.csv", "date,title,amount\n01/10/2026,Uber,10.00\n"), []);
+    expect(r.kind).toBe("needs_mapping");
+    if (r.kind !== "needs_mapping") return;
+    expect(r.seed?.id).toBe("nubank-card");
+    expect(r.failed).toBe("date");
+  });
+
   it("extension_is_case_insensitive", async () => {
     const r = await loadStatement(file("EXTRATO.CSV", bytes("csv/__fixtures__/nubank-checking.csv")), []);
     expect(r.kind).toBe("parsed");

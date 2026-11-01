@@ -116,4 +116,18 @@ describe("parseCsv", () => {
     const p = parseCsv({ header: ["Data", "D", "V", "Id"], preamble: 0, rows: [["01/10/2026", "PIX", "1,00", "abc-1"]] }, f);
     expect(p.transactions[0].fitid).toBe("abc-1");
   });
+
+  it("split_columns_ignore_zero_and_dash", () => {
+    const f = format({ columns: { date: 0, description: 1, inflow: 2, outflow: 3 } });
+    const p = parseCsv(
+      { header: ["Data", "Desc", "Crédito", "Débito"], preamble: 0, rows: [
+        ["01/10/2026", "A", "0,00", "50,00"],
+        ["02/10/2026", "B", "-", "50,00"],
+        ["03/10/2026", "C", "10,00", "3,00"],
+        ["04/10/2026", "D", "20,00", "0,00"],
+      ] },
+      f,
+    );
+    expect(p.transactions.map((t) => t.amount)).toEqual(["-50.00", "-50.00", "7.00", "20.00"]);
+  });
 });

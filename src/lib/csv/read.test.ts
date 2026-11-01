@@ -52,4 +52,12 @@ describe("readCsv", () => {
     expect(() => readCsv(utf8(""))).toThrow(CsvEmptyError);
     expect(() => readCsv(utf8("a,b\n"))).toThrow(CsvEmptyError);
   });
+
+  // Some exports end every data row with the delimiter but not the header.
+  it("header_without_trailing_delimiter_of_data_rows", () => {
+    const t = readCsv(utf8("Data;Valor\r\n01/01/2026;-10,50;\r\n02/01/2026;5,00;\r\n"));
+    expect(t.header).toEqual(["Data", "Valor"]);
+    expect(t.rows).toHaveLength(2);
+    expect(t.rows[0][0]).toBe("01/01/2026");
+  });
 });

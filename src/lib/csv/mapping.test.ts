@@ -80,3 +80,16 @@ describe("draftToFormat", () => {
     expect(f.id).toMatch(/[0-9a-f-]{36}/);
   });
 });
+
+describe("mappingDraft from a format", () => {
+  it("draft_from_seed_keeps_its_settings", () => {
+    const seed = draftToFormat(
+      { name: "Inter", kind: "credit_card", dateFormat: "yyyy-mm-dd", invertSign: true, roles: ["date", "description", "amount", "ignore"] },
+      table,
+    );
+    const d = mappingDraft(table, "x.csv", seed);
+    expect(d).toMatchObject({ name: "Inter", kind: "credit_card", invertSign: true, roles: ["date", "description", "amount", "ignore"] });
+    // The date format is re-guessed from the file: that is usually what broke.
+    expect(d.dateFormat).toBe("dd/mm/yyyy");
+  });
+});

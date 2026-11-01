@@ -80,6 +80,17 @@ describe("matchFormat", () => {
     expect(f?.columns).toMatchObject({ date: 1, amount: 2, description: 0 });
   });
 
+  // "Valor (R$)" and "Valor (US$)" both normalize to "valor": the saved
+  // index is the only thing that tells them apart.
+  it("ambiguous_names_keep_stored_index", () => {
+    const header = ["Data", "Descrição", "Valor (R$)", "Valor (US$)"];
+    const mine = saved(header, {
+      columns: { date: 0, description: 1, amount: 3 },
+      columnNames: { date: "Data", description: "Descrição", amount: "Valor (US$)" },
+    });
+    expect(matchFormat(header, [mine])?.columns.amount).toBe(3);
+  });
+
   it("unknown_header_matches_nothing", () => {
     expect(matchFormat(["foo", "bar"], [])).toBeNull();
   });

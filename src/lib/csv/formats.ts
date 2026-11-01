@@ -86,9 +86,16 @@ export function matchFormat(header: string[], saved: CsvFormat[]): CsvFormat | n
   const found = [...saved, ...BUILTIN_FORMATS].find((f) => f.signature === sig);
   if (!found) return null;
   const at = header.map(normalizeName);
+  const raw = header.map((h) => h.replace(/^\uFEFF/, "").trim());
   const columns = { ...found.columns };
   for (const [role, name] of Object.entries(found.columnNames)) {
-    const i = at.indexOf(normalizeName(name as string));
+    // The exact name first; then the normalized one, but only when it is
+    // unambiguous ("Valor (R$)" and "Valor (US$)" both normalize to
+    // "valor") — otherwise the stored index stands.
+    const exact = raw.indexOf((name as string).trim());
+    const norm = normalizeName(name as string);
+    const loose = at.filter((n) => n === norm).length === 1 ? at.indexOf(norm) : -1;
+    const i = exact >= 0 ? exact : loose;
     if (i >= 0) (columns as Record<string, number>)[role] = i;
   }
   return { ...found, columns };

@@ -2,7 +2,7 @@ import { readFileBytes } from "$lib/api/files";
 import { t } from "$lib/i18n/locale.svelte";
 import { withSyntheticFitids } from "$lib/csv/fitid";
 import { type CsvFormat, guessColumns, matchFormat } from "$lib/csv/formats";
-import { parseCsv, type SkippedRow } from "$lib/csv/parse";
+import { CsvMappingError, parseCsv, type SkippedRow } from "$lib/csv/parse";
 import { CsvEmptyError, type CsvTable, readCsv } from "$lib/csv/read";
 import { decodeOfxFile } from "$lib/ofx/normalize";
 import { parseOfx } from "$lib/ofx/parse";
@@ -13,7 +13,16 @@ import type { ParsedStatement } from "./types";
  *  know yet — the mapping screen turns the second into the first. */
 export type LoadResult =
   | { kind: "parsed"; file: File; parsed: ParsedStatement & { skipped?: SkippedRow[] }; formatId?: string }
-  | { kind: "needs_mapping"; file: File; table: CsvTable; guess: Partial<CsvFormat["columns"]> };
+  | {
+      kind: "needs_mapping";
+      file: File;
+      table: CsvTable;
+      guess: Partial<CsvFormat["columns"]>;
+      /** The format that matched the header but read no row: the mapping
+       *  starts from it, and `failed` names the column that broke. */
+      seed?: CsvFormat;
+      failed?: "date" | "amount";
+    };
 
 /** Neither `.ofx` nor `.csv`. */
 export class UnsupportedFileError extends Error {
@@ -44,7 +53,13 @@ export async function loadStatement(file: File, saved: CsvFormat[]): Promise<Loa
   }
   const format = matchFormat(table.header, saved);
   if (!format) return { kind: "needs_mapping", file, table, guess: guessColumns(table.header) };
-  const parsed = parseCsv(table, format);
+  let parsed: ReturnType<typeof parseCsv>;
+  try {
+    parsed = parseCsv(table, format);
+  } catch (e) {
+    if (!(e instanceof CsvMappingError)) throw e;
+    return { kind: "needs_mapping", file, table, guess: guessColumns(table.header), seed: format, failed: e.column };
+  }
   return {
     kind: "parsed",
     file,

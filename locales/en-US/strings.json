@@ -446,7 +446,8 @@
       "err_amount_or_split": "Use Amount or Inflow/Outflow, not both.",
       "err_repeated": "Another column already has this role.",
       "err_no_dates": "This column has no dates in this format.",
-      "err_no_amounts": "This column has no amounts."
+      "err_no_amounts": "This column has no amounts.",
+      "seed_failed": "The “{name}” format couldn't read any row of this file — the bank may have changed its layout. Check the columns and save again."
     }
   },
   "tx_notes": {

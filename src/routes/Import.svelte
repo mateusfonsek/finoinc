@@ -489,8 +489,10 @@
         {busy}
         onsave={saveMapping}
         oncancel={() => {
-          mapping = null;
+          // A full reset: a later drop must not inherit this file's watched-folder
+          // hash, and anything queued meanwhile is served now.
           error = null;
+          reset();
         }}
       />
     </div>
@@ -682,6 +684,7 @@
           <AccountPicker
             {accounts}
             kind={askAccount.kind}
+            bank={p.account.bank === "unknown" ? null : p.account.bank}
             initial={askAccount.remembered}
             suggestedName={p.account.displayName}
             {busy}

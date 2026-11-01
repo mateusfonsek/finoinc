@@ -43,3 +43,15 @@ export async function resolveAccount(
   }
   return { ask: { kind: a.type, remembered: null } };
 }
+
+/** The picker's "New account" choice. */
+export const NEW_ACCOUNT = -1;
+
+/** What the account picker starts on: the remembered account, else one of
+ *  the statement's own bank and type, else "New account" — never just any
+ *  account of the same type, which one click would then make permanent. */
+export function defaultPick(accounts: Account[], kind: string, bank: string | null, initial: number | null): number {
+  if (initial !== null && accounts.some((a) => a.id === initial)) return initial;
+  const same = bank ? accounts.find((a) => a.kind === kind && a.bank === bank) : undefined;
+  return same?.id ?? NEW_ACCOUNT;
+}

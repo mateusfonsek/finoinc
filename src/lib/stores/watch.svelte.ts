@@ -50,6 +50,9 @@ export function createWatchStore() {
    *  from a snapshot taken at the start; without this, its final assignment
    *  would revive a discovery the user resolved mid-scan. */
   const resolvedDuringScan = new Set<string>();
+  /** Content hash → the saved formats it was checked against, for CSVs no
+   *  format reads. Such a file is looked at again only when formats change. */
+  const unknownCsv = new Map<string, string>();
 
   async function refresh(opts: { force?: boolean } = {}) {
     if (!settingsLoaded) await loadEnabled();
@@ -64,14 +67,21 @@ export function createWatchStore() {
     try {
       const files = await scanWatchedFolders();
       const saved = files.length > 0 ? await listCsvFormats() : [];
+      const formatsKey = saved.map((x) => `${x.id}:${x.signature}`).sort().join("|");
       const next: Discovery[] = [];
       for (const f of files) {
+        // Already known not to match any format — and the formats are the same.
+        if (unknownCsv.get(f.content_hash) === formatsKey) {
+          skip(f.content_hash);
+          continue;
+        }
         try {
           const loaded = await loadStatementFromPath(f.path, saved);
           // A CSV no format knows (most CSVs in a Downloads folder are not
           // statements): left pending and unannounced, so saving a format
           // for it later brings it in on the next scan.
           if (loaded.kind === "needs_mapping") {
+            unknownCsv.set(f.content_hash, formatsKey);
             skip(f.content_hash);
             continue;
           }

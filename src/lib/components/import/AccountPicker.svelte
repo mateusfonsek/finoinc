@@ -3,7 +3,7 @@
   import Icon from "$lib/components/ui/Icon.svelte";
   import { locale } from "$lib/i18n/locale.svelte";
   import type { Account } from "$lib/bindings";
-  import type { AccountChoice } from "$lib/import/account";
+  import { defaultPick, NEW_ACCOUNT, type AccountChoice } from "$lib/import/account";
 
   const t = locale.t;
 
@@ -12,6 +12,8 @@
     accounts: Account[];
     /** The statement's account type; matching accounts are listed first. */
     kind: string;
+    /** The statement's bank, when the format names one. */
+    bank: string | null;
     /** Pre-selected account, when the user is changing a remembered one. */
     initial: number | null;
     /** Name suggested for a new account (the format's name). */
@@ -21,7 +23,7 @@
     oncancel?: () => void;
   };
 
-  let { accounts, kind, initial, suggestedName, busy = false, onconfirm, oncancel }: Props = $props();
+  let { accounts, kind, bank, initial, suggestedName, busy = false, onconfirm, oncancel }: Props = $props();
 
   // Accounts of the statement's own type come first: a card bill usually goes
   // into a card account. The rest stay reachable — the user knows best.
@@ -30,9 +32,9 @@
     ...accounts.filter((a) => a.kind !== kind),
   ]);
 
-  const NEW = -1;
+  const NEW = NEW_ACCOUNT;
   // svelte-ignore state_referenced_locally — props seed the initial pick only.
-  let picked = $state<number>(initial ?? (accounts.find((a) => a.kind === kind)?.id ?? NEW));
+  let picked = $state<number>(defaultPick(accounts, kind, bank, initial));
   // svelte-ignore state_referenced_locally
   let newName = $state(suggestedName);
 

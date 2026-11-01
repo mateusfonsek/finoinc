@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Account } from "$lib/bindings";
 import type { ParsedStatement } from "$lib/statement/types";
-import { resolveAccount } from "./account";
+import { defaultPick, NEW_ACCOUNT, resolveAccount } from "./account";
 
 const acc = (id: number, kind = "checking"): Account =>
   ({ id, name: `a${id}`, bank: null, ofx_acctid: null, kind, created_at: "" }) as Account;
@@ -44,5 +44,25 @@ describe("resolveAccount", () => {
     const d = deps({ getFormatAccount: vi.fn(async () => 77) });
     const r = await resolveAccount(stmt(null), "inter", d);
     expect(r).toEqual({ ask: { kind: "checking", remembered: null } });
+  });
+});
+
+describe("defaultPick", () => {
+  const nubankCard = { ...acc(5, "credit_card"), bank: "nubank" } as Account;
+  const interCard = { ...acc(6, "credit_card"), bank: "inter" } as Account;
+
+  it("remembered_account_wins", () => {
+    expect(defaultPick([nubankCard, interCard], "credit_card", "nubank", 6)).toBe(6);
+  });
+
+  it("same_bank_and_kind_is_preselected", () => {
+    expect(defaultPick([interCard, nubankCard], "credit_card", "nubank", null)).toBe(5);
+  });
+
+  // A first CSV from a new bank must not land in another bank's account on
+  // one click — and be remembered there.
+  it("no_matching_bank_defaults_to_new_account", () => {
+    expect(defaultPick([interCard], "credit_card", "nubank", null)).toBe(NEW_ACCOUNT);
+    expect(defaultPick([interCard], "credit_card", null, null)).toBe(NEW_ACCOUNT);
   });
 });

@@ -103,6 +103,22 @@ describe("watch store", () => {
     expect(api.markFile).not.toHaveBeenCalled();
   });
 
+  // Re-reading every non-statement CSV in Downloads on each window focus is
+  // wasted work; it only needs another look once the saved formats change.
+  it("unknown_csv_not_reread_until_formats_change", async () => {
+    api.scanWatchedFolders.mockResolvedValue([discovered("h11", "planilha.csv")]);
+    loadStatementFromPath.mockResolvedValue({ kind: "needs_mapping", file: new File([""], "planilha.csv"), table: {}, guess: {} });
+
+    const store = createWatchStore();
+    await store.refresh({ force: true });
+    await store.refresh({ force: true });
+    expect(loadStatementFromPath).toHaveBeenCalledTimes(1);
+
+    listCsvFormats.mockResolvedValueOnce([{ id: "novo", signature: "a|b" }] as never);
+    await store.refresh({ force: true });
+    expect(loadStatementFromPath).toHaveBeenCalledTimes(2);
+  });
+
   it("known_csv_becomes_discovery", async () => {
     const mine = [{ id: "inter" }];
     listCsvFormats.mockResolvedValueOnce(mine as never);

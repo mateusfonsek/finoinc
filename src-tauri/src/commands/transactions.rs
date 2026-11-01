@@ -235,7 +235,12 @@ pub fn probable_duplicates(
     let batch: std::collections::HashSet<&str> =
         keys.iter().map(|k| k.ofx_fitid.as_str()).collect();
     let mut stmt = conn.prepare(
-        "SELECT ofx_fitid FROM transactions WHERE account_id = ?1 AND date = ?2 AND amount = ?3",
+        // Amounts are compared in cents: an OFX keeps the bank's `-50`, a CSV
+        // row arrives as `-50.00`.
+        "SELECT ofx_fitid FROM transactions
+         WHERE account_id = ?1 AND date = ?2
+           AND CAST(ROUND(CAST(amount AS REAL) * 100) AS INTEGER)
+             = CAST(ROUND(CAST(?3 AS REAL) * 100) AS INTEGER)",
     )?;
     let mut out = Vec::new();
     for k in keys {
@@ -376,6 +381,19 @@ mod tests {
         .unwrap();
         let ids: Vec<_> = found.iter().map(|k| k.ofx_fitid.as_str()).collect();
         assert_eq!(ids, ["csv:1#1", "csv:2#1"]);
+    }
+
+    /// OFX keeps `TRNAMT` as the bank printed it (`-50`), a CSV always has
+    /// cents (`-50.00`): the same purchase must still match.
+    #[test]
+    fn probable_matches_amount_scale_difference() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn, "a", Some("A"));
+        insert_tx(&conn, acc, Some("OFX-1"), "2026-10-01", "-50");
+        let found =
+            super::probable_duplicates(&conn, acc, &[key("csv:1#1", "2026-10-01", "-50.00")])
+                .unwrap();
+        assert_eq!(found.len(), 1);
     }
 
     #[test]

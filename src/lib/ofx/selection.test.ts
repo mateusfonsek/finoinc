@@ -27,4 +27,18 @@ describe("planImport", () => {
     expect([...plan.selected].sort()).toEqual(["O", "R"]);
     expect(plan.reversals.size).toBe(0);
   });
+
+  it("probable_duplicates_start_unselected", () => {
+    const probable = new Set(["O|2026-03-13|-9.90"]);
+    const plan = planImport([other], new Set(), PHASES, probable);
+    expect(plan.selected.has("O")).toBe(false);
+    expect([...plan.probable]).toEqual(["O"]);
+  });
+
+  it("exact_duplicate_not_reported_as_probable", () => {
+    const key = "O|2026-03-13|-9.90";
+    const plan = planImport([other], new Set([key]), PHASES, new Set([key]));
+    expect(plan.probable.size).toBe(0);
+    expect(plan.selected.size).toBe(0);
+  });
 });

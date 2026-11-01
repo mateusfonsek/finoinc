@@ -510,6 +510,14 @@ async readFileBytes(path: string) : Promise<Result<number[], string>> {
 async takePendingOfx() : Promise<string[]> {
     return await TAURI_INVOKE("take_pending_ofx");
 },
+async probableDuplicateKeys(accountId: number, keys: TxKey[]) : Promise<Result<TxKey[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("probable_duplicate_keys", { accountId, keys }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async listCsvFormats() : Promise<Result<CsvFormatRow[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("list_csv_formats") };

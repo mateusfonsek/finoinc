@@ -64,6 +64,7 @@ pub fn run() {
         commands::backup::db_path,
         commands::backup::read_file_bytes,
         commands::openfile::take_pending_ofx,
+        commands::transactions::probable_duplicate_keys,
         commands::csv_formats::list_csv_formats,
         commands::csv_formats::save_csv_format,
         commands::csv_formats::delete_csv_format,

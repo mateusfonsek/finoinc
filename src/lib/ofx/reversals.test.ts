@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { detectReversalPairs } from "./reversals";
-import type { ParsedTransaction } from "./types";
+import type { ParsedTransaction } from "$lib/statement/types";
 import type { ReversalPhase } from "./reversals";
 
 /** The pt-BR phases, spelled out: these tests exercise the algorithms, and the

@@ -6,8 +6,9 @@ import {
   WATCH_ENABLED_KEY,
   type FileStatus,
 } from "$lib/api/watch";
-import { OfxReadError } from "$lib/ofx/errors";
-import { loadOfxFromPath } from "$lib/ofx/load";
+import { StatementReadError } from "$lib/statement/errors";
+import { listCsvFormats } from "$lib/api/csvFormats";
+import { loadStatementFromPath } from "$lib/statement/load";
 
 /** A validated discovery: only what parsed as OFX gets here. */
 export type Discovery = {
@@ -49,6 +50,9 @@ export function createWatchStore() {
    *  from a snapshot taken at the start; without this, its final assignment
    *  would revive a discovery the user resolved mid-scan. */
   const resolvedDuringScan = new Set<string>();
+  /** Content hash → the saved formats it was checked against, for CSVs no
+   *  format reads. Such a file is looked at again only when formats change. */
+  const unknownCsv = new Map<string, string>();
 
   async function refresh(opts: { force?: boolean } = {}) {
     if (!settingsLoaded) await loadEnabled();
@@ -62,10 +66,26 @@ export function createWatchStore() {
     resolvedDuringScan.clear();
     try {
       const files = await scanWatchedFolders();
+      const saved = files.length > 0 ? await listCsvFormats() : [];
+      const formatsKey = saved.map((x) => `${x.id}:${x.signature}`).sort().join("|");
       const next: Discovery[] = [];
       for (const f of files) {
+        // Already known not to match any format — and the formats are the same.
+        if (unknownCsv.get(f.content_hash) === formatsKey) {
+          skip(f.content_hash);
+          continue;
+        }
         try {
-          const { parsed } = await loadOfxFromPath(f.path);
+          const loaded = await loadStatementFromPath(f.path, saved);
+          // A CSV no format knows (most CSVs in a Downloads folder are not
+          // statements): left pending and unannounced, so saving a format
+          // for it later brings it in on the next scan.
+          if (loaded.kind === "needs_mapping") {
+            unknownCsv.set(f.content_hash, formatsKey);
+            skip(f.content_hash);
+            continue;
+          }
+          const { parsed } = loaded;
           next.push({
             hash: f.content_hash,
             path: f.path,
@@ -127,10 +147,10 @@ export function createWatchStore() {
    *
    *  Read failed → transient (iCloud stub evicted after the scan, file moved,
    *  permissions): stays `pending` and returns on the next scan.
-   *  Parse failed → the content is not OFX and never will be: `invalid`, which
+   *  Parse failed → the content is not a statement and never will be: `invalid`, which
    *  is permanent, and the user never sees an error that is ours. */
   async function noteLoadFailure(hash: string, e: unknown) {
-    if (e instanceof OfxReadError) skip(hash);
+    if (e instanceof StatementReadError) skip(hash);
     else await resolve(hash, "invalid");
   }
 

@@ -2,10 +2,10 @@ import { Ofx } from "ofx-data-extractor";
 import { t } from "$lib/i18n/locale.svelte";
 import type {
   ParsedAccount,
-  ParsedOfx,
-  ParsedSummary,
+  ParsedStatement,
   ParsedTransaction,
-} from "./types";
+} from "$lib/statement/types";
+import { computeSummary } from "$lib/statement/summary";
 
 /**
  * Parse raw OFX text into our normalized shape. Throws on malformed input.
@@ -18,7 +18,7 @@ import type {
  *   - `.getBankTransferList()`        — checking-account transactions
  *   - `.getCreditCardTransferList()`  — credit-card transactions
  */
-export function parseOfx(content: string): ParsedOfx {
+export function parseOfx(content: string): ParsedStatement {
   const ofx = new Ofx(escapeTextLeaves(content));
   const structure = ofx.getContent();
 
@@ -173,30 +173,6 @@ function capitalize(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-function computeSummary(txs: ParsedTransaction[]): ParsedSummary {
-  let totalIn = 0;
-  let totalOut = 0;
-  let earliest: string | null = null;
-  let latest: string | null = null;
-  for (const t of txs) {
-    const n = Number(t.amount);
-    if (Number.isFinite(n)) {
-      if (n >= 0) totalIn += n;
-      else totalOut += -n;
-    }
-    if (t.date) {
-      if (earliest === null || t.date < earliest) earliest = t.date;
-      if (latest === null || t.date > latest) latest = t.date;
-    }
-  }
-  return {
-    totalIn: totalIn.toFixed(2),
-    totalOut: totalOut.toFixed(2),
-    net: (totalIn - totalOut).toFixed(2),
-    earliest,
-    latest,
-  };
-}
 
 /** Free-text fields the bank fills in, one per line in SGML. */
 const TEXT_LEAF = /^(\s*)<(MEMO|NAME)>(.*?)(?:<\/\2>)?\s*$/gm;

@@ -1,4 +1,4 @@
-import type { ParsedTransaction } from "./types";
+import type { ParsedTransaction } from "$lib/statement/types";
 
 /**
  * A transaction's role within a pair. Four values because the UI labels

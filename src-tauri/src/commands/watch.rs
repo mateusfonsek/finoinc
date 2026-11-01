@@ -237,15 +237,18 @@ pub struct ScanOutcome {
     pub icloud_pending: usize,
 }
 
-fn is_ofx(name: &str) -> bool {
-    name.to_ascii_lowercase().ends_with(".ofx")
+/// What a watched folder picks up. A `.csv` that turns out not to be a
+/// statement is the frontend's to ignore: only it knows the saved formats.
+fn is_statement(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    lower.ends_with(".ofx") || lower.ends_with(".csv")
 }
 
 /// iCloud placeholder: an undownloaded `Nubank.ofx` appears on disk as
-/// `.Nubank.ofx.icloud`. Returns the real name when it is an `.ofx` stub.
+/// `.Nubank.ofx.icloud`. Returns the real name when it is a statement stub.
 fn icloud_stub_target(name: &str) -> Option<String> {
     let inner = name.strip_prefix('.')?.strip_suffix(".icloud")?;
-    if is_ofx(inner) {
+    if is_statement(inner) {
         Some(inner.to_string())
     } else {
         None
@@ -285,7 +288,7 @@ pub fn scan_dir(dir: &Path, now: SystemTime) -> ScanOutcome {
             continue;
         }
 
-        if !is_ofx(&name) {
+        if !is_statement(&name) {
             continue;
         }
 
@@ -778,6 +781,25 @@ mod tests {
 
         let outcome = scan_dir(&dir, later());
         assert_eq!(outcome.icloud_pending, 0);
+    }
+
+    #[test]
+    fn scan_lists_csv_files() {
+        let dir = tmpdir("scan-csv");
+        write_old(&dir, "Nubank_2026-10.csv", "date,title,amount");
+        write_old(&dir, "EXTRATO.CSV", "Data;Valor");
+
+        let outcome = scan_dir(&dir, later());
+        assert_eq!(outcome.candidates.len(), 2);
+    }
+
+    #[test]
+    fn icloud_stub_for_csv_counts() {
+        let dir = tmpdir("scan-icloud-csv");
+        write_old(&dir, ".Nubank_2026-10.csv.icloud", "stub");
+
+        let outcome = scan_dir(&dir, later());
+        assert_eq!(outcome.icloud_pending, 1);
     }
 
     #[test]

@@ -3,7 +3,7 @@
   import { txKeyString } from "$lib/api/transactions";
   import { locale } from "$lib/i18n/locale.svelte";
   import Icon from "$lib/components/ui/Icon.svelte";
-  import type { ParsedTransaction } from "$lib/ofx/types";
+  import type { ParsedTransaction } from "$lib/statement/types";
   import type { ReversalInfo, ReversalRole } from "$lib/ofx/reversals";
 
   const tr = locale.t;
@@ -13,6 +13,8 @@
     /** Composite `fitid|date|amount` keys already present in the DB. */
     duplicateKeys: Set<string>;
     reversalMap?: Map<string, ReversalInfo>;
+    /** FITIDs that probably repeat a row stored under another id (CSV only). */
+    probable?: Set<string>;
     selected: Set<string>;
     ontoggle: (fitid: string) => void;
     ontoggleAll: (checked: boolean) => void;
@@ -22,6 +24,7 @@
     transactions,
     duplicateKeys,
     reversalMap = new Map(),
+    probable = new Set(),
     selected,
     ontoggle,
     ontoggleAll,
@@ -68,6 +71,7 @@
         {@const isDup = !!(t.fitid && duplicateKeys.has(txKeyString({ ofx_fitid: t.fitid, date: t.date, amount: t.amount })))}
         {@const isSel = !!(t.fitid && selected.has(t.fitid))}
         {@const rev = t.fitid ? reversalMap.get(t.fitid) : undefined}
+        {@const isProbable = !!(t.fitid && probable.has(t.fitid))}
         <!-- A reversal gets a yellow bar on the leading edge; a duplicate fades.
              Two distinct states, tellable apart without relying on colour
              alone. -->
@@ -102,6 +106,14 @@
                   {reversalLabel(rev.role)}
                 </span>
               {/if}
+              {#if isProbable}
+                <span
+                  class="text-cap2 font-semibold text-fg-muted px-1.5 py-px rounded-full bg-surface-2 border border-border whitespace-nowrap"
+                  title={tr("import.probable_duplicate_title")}
+                >
+                  {tr("import.probable_duplicate")}
+                </span>
+              {/if}
               {#if isDup}
                 <span class="text-cap2 font-semibold text-fg-subtle px-1.5 py-px rounded-full bg-surface-2">
                   {tr("import.duplicate")}
@@ -119,6 +131,21 @@
       {/each}
     </tbody>
   </table>
+
+  {#if probable.size > 0}
+    <div
+      class="px-4 py-2.5 border-t border-border-subtle flex items-start gap-2 text-foot text-fg-muted leading-relaxed"
+    >
+      <span class="mt-px shrink-0 text-fg-subtle">
+        <Icon name="info" size={13} stroke={2} />
+      </span>
+      <span>
+        {probable.size === 1
+          ? tr("import.probable_legend_one", { n: probable.size })
+          : tr("import.probable_legend_many", { n: probable.size })}
+      </span>
+    </div>
+  {/if}
 
   {#if reversalMap.size > 0}
     <div

@@ -510,6 +510,54 @@ async readFileBytes(path: string) : Promise<Result<number[], string>> {
 async takePendingOfx() : Promise<string[]> {
     return await TAURI_INVOKE("take_pending_ofx");
 },
+async probableDuplicateKeys(accountId: number, keys: TxKey[]) : Promise<Result<TxKey[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("probable_duplicate_keys", { accountId, keys }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listCsvFormats() : Promise<Result<CsvFormatRow[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_csv_formats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async saveCsvFormat(format: NewCsvFormat) : Promise<Result<CsvFormatRow, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("save_csv_format", { format }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteCsvFormat(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_csv_format", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getFormatAccount(formatId: string) : Promise<Result<number | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_format_account", { formatId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setFormatAccount(formatId: string, accountId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_format_account", { formatId, accountId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async updateInstallKind() : Promise<UpdateInstallKind> {
     return await TAURI_INVOKE("update_install_kind");
 },
@@ -741,6 +789,7 @@ args: string; ok: boolean; error: string | null }
 export type Category = { id: number; name: string; color_token: string | null; kind: string; is_investment: boolean; created_at: string }
 export type CategorySpend = { category_id: number | null; name: string; color_token: string | null; total: string; percent: number }
 export type CategoryWithCount = { id: number; name: string; color_token: string | null; kind: string; created_at: string; transaction_count: number }
+export type CsvFormatRow = { id: string; name: string; bank: string | null; kind: string; signature: string; spec: string; created_at: string }
 export type DiscoveredFile = { id: number; content_hash: string; path: string; file_name: string; size: number; status: string; seen_at: string }
 /**
  * What the background thread tells the interface, in order.
@@ -843,6 +892,7 @@ export type NewAccount = { name: string; bank: string | null; ofx_acctid: string
  */
 kind?: string }
 export type NewCategory = { name: string; color_token: string | null; kind: string }
+export type NewCsvFormat = { id: string; name: string; bank: string | null; kind: string; signature: string; spec: string }
 export type NewRule = { patterns: string[]; category_id: number; priority: number; due_day: number | null; 
 /**
  * Which month this bill's payment lands in, relative to the due date.

@@ -1,4 +1,4 @@
-export interface ParsedOfx {
+export interface ParsedStatement {
   account: ParsedAccount;
   transactions: ParsedTransaction[];
   summary: ParsedSummary;

@@ -47,6 +47,17 @@ export async function checkExistingTxKeys(
   return new Set(existing.map(txKeyString));
 }
 
+/** Keys that probably repeat a row stored under another id (an account
+ *  imported by OFX before and by CSV now). Same key format as
+ *  `checkExistingTxKeys`. */
+export async function probableDuplicateKeys(
+  accountId: number,
+  keys: TxKey[],
+): Promise<Set<string>> {
+  const found = unwrap(await commands.probableDuplicateKeys(accountId, keys));
+  return new Set(found.map(txKeyString));
+}
+
 export async function updateTransactionCategory(
   transactionId: number,
   categoryId: number | null,

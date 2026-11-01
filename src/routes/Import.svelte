@@ -15,15 +15,23 @@
   import DropZone from "$lib/components/import/DropZone.svelte";
   import ImportPreview from "$lib/components/import/ImportPreview.svelte";
   import { formatMoney } from "$lib/format/money";
-  import { createOrGetAccount } from "$lib/api/accounts";
-  import { checkExistingTxKeys, insertTransactions } from "$lib/api/transactions";
+  import { createOrGetAccount, listAccounts } from "$lib/api/accounts";
+  import { checkExistingTxKeys, insertTransactions, probableDuplicateKeys } from "$lib/api/transactions";
   import { listCategories } from "$lib/api/categories";
   import { createRule, deleteRuleWithCleanup, updateRule } from "$lib/api/rules";
-  import type { ParsedOfx } from "$lib/ofx/types";
+  import type { ParsedStatement } from "$lib/statement/types";
   import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
-  import { loadOfxFromPath } from "$lib/ofx/load";
+  import { loadStatement, loadStatementFromPath, type LoadResult } from "$lib/statement/load";
+  import { getFormatAccount, listCsvFormats, saveCsvFormat, setFormatAccount } from "$lib/api/csvFormats";
+  import { draftToFormat, type MappingDraft } from "$lib/csv/mapping";
+  import type { CsvTable } from "$lib/csv/read";
+  import type { CsvFormat } from "$lib/csv/formats";
+  import CsvMapping from "$lib/components/import/CsvMapping.svelte";
+  import { resolveAccount, type AccountChoice } from "$lib/import/account";
+  import AccountPicker from "$lib/components/import/AccountPicker.svelte";
+  import type { SkippedRow } from "$lib/csv/parse";
   import type { ReversalInfo } from "$lib/ofx/reversals";
   import { planImport } from "$lib/ofx/selection";
   import type {
@@ -34,7 +42,12 @@
     Rule,
   } from "$lib/bindings";
 
-  type PendingImport = { file: File; parsed: ParsedOfx };
+  type PendingImport = {
+    file: File;
+    parsed: ParsedStatement & { skipped?: SkippedRow[] };
+    /** The CSV format it was read with; absent for OFX. */
+    formatId?: string;
+  };
 
   let pending = $state<PendingImport | null>(null);
   let account = $state<Account | null>(null);
@@ -42,6 +55,13 @@
   let duplicateKeys = $state<Set<string>>(new Set());
   let selected = $state<Set<string>>(new Set());
   let reversalMap = $state<Map<string, ReversalInfo>>(new Map());
+  /** FITIDs of CSV rows that probably repeat one stored under another id. */
+  let probable = $state<Set<string>>(new Set());
+  /** Set while a CSV waits for the user to say which account it is for. */
+  let askAccount = $state<{ kind: string; remembered: number | null } | null>(null);
+  let accounts = $state<Account[]>([]);
+  /** A CSV whose layout no format knows, waiting on the mapping screen. */
+  let mapping = $state<{ file: File; table: CsvTable; seed?: CsvFormat } | null>(null);
   let busy = $state(false);
   let busyMsg = $state("");
   let error = $state<string | null>(null);
@@ -63,7 +83,7 @@
 
   // The toast never interrupts someone already reviewing a statement.
   $effect(() => {
-    watch.suppressToast = pending !== null;
+    watch.suppressToast = pending !== null || mapping !== null;
     return () => (watch.suppressToast = false);
   });
 
@@ -78,7 +98,7 @@
    *  review — that one is finished or cancelled first, then `reset` calls in.
    *  A finished import's result screen gives way right away. */
   function serveStashed() {
-    if (busy || (pending && !importResult)) return;
+    if (busy || mapping || (pending && !importResult)) return;
     if (importResult) return reset();
     const stash = takeStashed();
     if (!stash) return;
@@ -86,9 +106,8 @@
       error = stash.error;
       return;
     }
-    pending = { file: stash.file, parsed: stash.parsed };
     watchHash = stash.watchHash;
-    void prepareImport(stash.parsed);
+    void accept(stash);
   }
 
   // "Review" in the toast only asks; this screen opens. That covers both a
@@ -101,23 +120,26 @@
     if (req) void openDiscovery(req);
   });
 
-  async function prepareImport(parsed: ParsedOfx) {
+  async function prepareImport(parsed: ParsedStatement) {
     busy = true;
     busyMsg = t("import.preparing");
     try {
-      account = await createOrGetAccount({
-        name: parsed.account.displayName,
-        bank: parsed.account.bank === "unknown" ? null : parsed.account.bank,
-        ofx_acctid: parsed.account.ofxAcctid,
-        kind: parsed.account.type,
+      const r = await resolveAccount(parsed, pending?.formatId, {
+        createOrGetAccount,
+        getFormatAccount,
+        listAccounts,
       });
-      const candidates = parsed.transactions
-        .filter((t): t is typeof t & { fitid: string } => !!t.fitid)
-        .map((t) => ({ ofx_fitid: t.fitid, date: t.date, amount: t.amount }));
-      duplicateKeys = await checkExistingTxKeys(account.id, candidates);
-      const plan = planImport(parsed.transactions, duplicateKeys, locale.reversals);
-      reversalMap = plan.reversals;
-      selected = plan.selected;
+      if ("ask" in r) {
+        accounts = await listAccounts();
+        askAccount = r.ask;
+        // The rows show while the user picks; duplicates are only known once
+        // there is an account to compare against.
+        const plan = planImport(parsed.transactions, new Set(), locale.reversals);
+        reversalMap = plan.reversals;
+        selected = plan.selected;
+        return;
+      }
+      await useAccount(r.account, parsed);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -126,9 +148,102 @@
     }
   }
 
-  function onparsed(detail: PendingImport) {
-    pending = detail;
-    void prepareImport(detail.parsed);
+  async function useAccount(chosen: Account, parsed: ParsedStatement) {
+    account = chosen;
+    askAccount = null;
+    const candidates = parsed.transactions
+      .filter((t): t is typeof t & { fitid: string } => !!t.fitid)
+      .map((t) => ({ ofx_fitid: t.fitid, date: t.date, amount: t.amount }));
+    duplicateKeys = await checkExistingTxKeys(chosen.id, candidates);
+    // Only a CSV can repeat a row under another id: an OFX carries the bank's.
+    const probableKeys = pending?.formatId
+      ? await probableDuplicateKeys(chosen.id, candidates)
+      : new Set<string>();
+    const plan = planImport(parsed.transactions, duplicateKeys, locale.reversals, probableKeys);
+    reversalMap = plan.reversals;
+    selected = plan.selected;
+    probable = plan.probable;
+  }
+
+  /** The account a CSV goes into, remembered for its format from now on. */
+  async function chooseAccount(choice: AccountChoice) {
+    if (!pending?.formatId) return;
+    const parsed = pending.parsed;
+    const formatId = pending.formatId;
+    busy = true;
+    busyMsg = t("import.preparing");
+    error = null;
+    try {
+      let chosen: Account | undefined;
+      if ("accountId" in choice) {
+        chosen = accounts.find((a) => a.id === choice.accountId);
+      } else {
+        // Account names are unique: typing an existing one means that account.
+        const name = choice.newName;
+        chosen =
+          accounts.find((a) => a.name.toLocaleLowerCase() === name.toLocaleLowerCase()) ??
+          (await createOrGetAccount({
+            name,
+            bank: parsed.account.bank === "unknown" ? null : parsed.account.bank,
+            ofx_acctid: null,
+            kind: parsed.account.type,
+          }));
+      }
+      if (!chosen) return;
+      await setFormatAccount(formatId, chosen.id);
+      await useAccount(chosen, parsed);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      busy = false;
+      busyMsg = "";
+    }
+  }
+
+  async function changeAccount() {
+    if (!pending) return;
+    accounts = await listAccounts();
+    askAccount = { kind: pending.parsed.account.type, remembered: account?.id ?? null };
+  }
+
+  /** A loaded statement enters the preview. */
+  async function accept(result: LoadResult): Promise<void> {
+    if (result.kind === "needs_mapping") {
+      error = null;
+      mapping = { file: result.file, table: result.table, seed: result.seed };
+      return;
+    }
+    pending = { file: result.file, parsed: result.parsed, formatId: result.formatId };
+    await prepareImport(result.parsed);
+  }
+
+  /** The mapping becomes a saved format, and the file is read again with it —
+   *  the same path any later CSV in this layout takes. */
+  async function saveMapping(draft: MappingDraft) {
+    if (!mapping) return;
+    const { file, table, seed } = mapping;
+    busy = true;
+    error = null;
+    try {
+      const saved = await saveCsvFormat(draftToFormat(draft, table));
+      // Replacing a format that stopped working keeps the account it imported into.
+      if (seed && seed.id !== saved.id) {
+        const remembered = await getFormatAccount(seed.id);
+        if (remembered !== null) await setFormatAccount(saved.id, remembered);
+      }
+      const result = await loadStatement(file, await listCsvFormats());
+      mapping = null;
+      busy = false;
+      await accept(result);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  function onloaded(result: LoadResult) {
+    void accept(result);
   }
   function onerror(msg: string) {
     error = msg;
@@ -298,6 +413,9 @@
   function reset() {
     pending = null;
     account = null;
+    askAccount = null;
+    mapping = null;
+    probable = new Set();
     selected = new Set();
     duplicateKeys = new Set();
     reversalMap = new Map();
@@ -330,11 +448,10 @@
       // moved, deleted, or an iCloud placeholder evicted after the scan) the
       // error landed with `pending` already null — the screen fell back to an
       // empty dropzone with no explanation.
-      const loaded = await loadOfxFromPath(next.path);
+      const loaded = await loadStatementFromPath(next.path, await listCsvFormats());
       reset();
-      pending = { file: loaded.file, parsed: loaded.parsed };
       watchHash = next.hash;
-      await prepareImport(loaded.parsed);
+      await accept(loaded);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
       // Takes the file out of the queue so it cannot block `discoveries[0]`;
@@ -360,14 +477,33 @@
     {/if}
   {/snippet}
 
-  {#if !pending}
+  {#if mapping}
+    <div class="flex flex-col gap-3 pt-2">
+      {#if error}
+        <ErrorNote message={error} />
+      {/if}
+      <CsvMapping
+        table={mapping.table}
+        fileName={mapping.file.name}
+        seed={mapping.seed}
+        {busy}
+        onsave={saveMapping}
+        oncancel={() => {
+          // A full reset: a later drop must not inherit this file's watched-folder
+          // hash, and anything queued meanwhile is served now.
+          error = null;
+          reset();
+        }}
+      />
+    </div>
+  {:else if !pending}
     <!-- A target has the size of a target: stretched across the full page it
          stops looking like an object and becomes an empty band. -->
     <div class="w-full max-w-xl mx-auto flex flex-col gap-4 pt-4">
       {#if error}
         <ErrorNote message={error} />
       {/if}
-      <DropZone {onparsed} {onerror} />
+      <DropZone {onloaded} {onerror} />
     </div>
   {:else if importResult}
     <!-- ============ After the import ============ -->
@@ -544,6 +680,18 @@
     {@const p = pending.parsed}
     <div class="grid grid-cols-[1fr_280px] gap-4 items-start">
       <div class="flex flex-col gap-3">
+        {#if askAccount}
+          <AccountPicker
+            {accounts}
+            kind={askAccount.kind}
+            bank={p.account.bank === "unknown" ? null : p.account.bank}
+            initial={askAccount.remembered}
+            suggestedName={p.account.displayName}
+            {busy}
+            onconfirm={chooseAccount}
+            oncancel={account ? () => (askAccount = null) : undefined}
+          />
+        {/if}
         <div class="card p-3.5 flex items-center gap-2.5 flex-wrap">
           <span
             class="w-8 h-8 shrink-0 grid place-items-center rounded-[var(--radius-md)] bg-accent-soft text-accent"
@@ -551,7 +699,9 @@
             <Icon name={p.account.type === "credit_card" ? "creditCard" : "landmark"} size={15} />
           </span>
           <div class="flex flex-col min-w-0">
-            <span class="text-callout font-medium text-fg truncate">{p.account.displayName}</span>
+            <span class="text-callout font-medium text-fg truncate">
+              {pending.formatId && account ? account.name : p.account.displayName}
+            </span>
             <span class="text-cap text-fg-subtle truncate">
               {p.account.bank === "unknown" ? t("import.bank_unknown") : p.account.bank}
               ·
@@ -564,6 +714,9 @@
               </span>
             </span>
           </div>
+          {#if pending.formatId && account && !askAccount}
+            <Button variant="ghost" size="sm" onclick={changeAccount}>{t("import.account_change")}</Button>
+          {/if}
           <div class="ml-auto text-sub text-fg-subtle tabular text-right">
             {t("import.tx_count", { n: p.transactions.length })}
             <div class="text-cap text-fg-subtle">
@@ -572,9 +725,30 @@
           </div>
         </div>
 
+        {#if p.skipped && p.skipped.length > 0}
+          <details class="card px-3.5 py-2.5 text-sub text-fg-muted">
+            <summary class="cursor-pointer select-none">
+              {p.skipped.length === 1
+                ? t("import.rows_ignored_one", { n: p.skipped.length })
+                : t("import.rows_ignored_many", { n: p.skipped.length })}
+            </summary>
+            <ul class="mt-2 flex flex-col gap-0.5 tabular">
+              {#each p.skipped as row (row.line)}
+                <li>
+                  {t("import.rows_ignored_line", {
+                    line: row.line,
+                    reason: t("import.rows_ignored_reason_" + row.reason),
+                  })}
+                </li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
+
         <ImportPreview
           transactions={p.transactions}
           {duplicateKeys}
+          {probable}
           {reversalMap}
           {selected}
           ontoggle={toggle}
@@ -604,6 +778,12 @@
           <span class="text-fg-muted">{t("import.sum_duplicates")}</span>
           <span class="tabular text-fg-subtle">{duplicateKeys.size}</span>
         </div>
+        {#if probable.size > 0}
+          <div class="flex justify-between" title={t("import.probable_duplicate_title")}>
+            <span class="text-fg-muted">{t("import.sum_probable")}</span>
+            <span class="tabular text-fg-subtle">{probable.size}</span>
+          </div>
+        {/if}
         {#if reversalMap.size > 0}
           <div class="flex justify-between" title={t("import.neutralized_pairs_title")}>
             <span class="text-fg-muted">{t("import.neutralized_pairs")}</span>
@@ -622,8 +802,10 @@
              border-t border-border-subtle"
     >
       <Button variant="ghost" onclick={reset}>{t("common.cancel")}</Button>
-      <Button onclick={confirmImport} disabled={busy || selected.size === 0}>
-        {#if busy}
+      <Button onclick={confirmImport} disabled={busy || selected.size === 0 || !account || !!askAccount}>
+        {#if !account || askAccount}
+          {t("import.account_pick_first")}
+        {:else if busy}
           <Spinner size={12} />
           {busyMsg || t("import.importing")}
         {:else}

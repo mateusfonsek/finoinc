@@ -3,6 +3,7 @@ pub mod app_settings;
 pub mod backup;
 pub mod bills;
 pub mod categories;
+pub mod csv_formats;
 pub mod enrich_job;
 pub mod enrichment;
 pub mod freshness;

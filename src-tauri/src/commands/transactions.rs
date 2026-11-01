@@ -209,10 +209,9 @@ pub fn check_existing_tx_keys(
     let mut existing: Vec<TxKey> = Vec::new();
     for k in keys {
         let found: bool = stmt
-            .query_row(
-                params![account_id, k.ofx_fitid, k.date, k.amount],
-                |_| Ok(true),
-            )
+            .query_row(params![account_id, k.ofx_fitid, k.date, k.amount], |_| {
+                Ok(true)
+            })
             .unwrap_or(false);
         if found {
             existing.push(k);
@@ -220,6 +219,55 @@ pub fn check_existing_tx_keys(
     }
 
     Ok(existing)
+}
+
+/// Keys from a CSV that probably repeat a transaction already stored under a
+/// different id — typically an account imported by OFX before and by CSV now,
+/// where the ids can never match. A row stored by this same batch (its fitid
+/// is among `keys`) does not count: that is an exact duplicate, and two
+/// different coffees of the same price on the same day must not shadow each
+/// other.
+pub fn probable_duplicates(
+    conn: &Connection,
+    account_id: i64,
+    keys: &[TxKey],
+) -> AppResult<Vec<TxKey>> {
+    let batch: std::collections::HashSet<&str> =
+        keys.iter().map(|k| k.ofx_fitid.as_str()).collect();
+    let mut stmt = conn.prepare(
+        // Amounts are compared in cents: an OFX keeps the bank's `-50`, a CSV
+        // row arrives as `-50.00`.
+        "SELECT ofx_fitid FROM transactions
+         WHERE account_id = ?1 AND date = ?2
+           AND CAST(ROUND(CAST(amount AS REAL) * 100) AS INTEGER)
+             = CAST(ROUND(CAST(?3 AS REAL) * 100) AS INTEGER)",
+    )?;
+    let mut out = Vec::new();
+    for k in keys {
+        let fitids = stmt
+            .query_map(params![account_id, k.date, k.amount], |r| {
+                r.get::<_, Option<String>>(0)
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        if fitids
+            .iter()
+            .any(|f| f.as_deref().is_none_or(|f| !batch.contains(f)))
+        {
+            out.push(k.clone());
+        }
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn probable_duplicate_keys(
+    db: State<'_, Db>,
+    account_id: i64,
+    keys: Vec<TxKey>,
+) -> AppResult<Vec<TxKey>> {
+    let conn = db.conn.lock().expect("db mutex poisoned");
+    probable_duplicates(&conn, account_id, &keys)
 }
 
 pub fn set_category(
@@ -290,6 +338,104 @@ mod tests {
         )
         .unwrap();
         conn.last_insert_rowid()
+    }
+
+    fn key(fitid: &str, date: &str, amount: &str) -> crate::domain::transaction::TxKey {
+        crate::domain::transaction::TxKey {
+            ofx_fitid: fitid.into(),
+            date: date.into(),
+            amount: amount.into(),
+        }
+    }
+
+    fn insert_tx(
+        conn: &Connection,
+        account_id: i64,
+        fitid: Option<&str>,
+        date: &str,
+        amount: &str,
+    ) {
+        conn.execute(
+            "INSERT INTO transactions (account_id, date, amount, description, ofx_fitid)
+             VALUES (?1, ?2, ?3, 'X', ?4)",
+            params![account_id, date, amount, fitid],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn probable_duplicate_matches_date_amount_other_fitid() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn, "a", Some("A"));
+        insert_tx(&conn, acc, Some("OFX-1"), "2026-10-01", "-10.00");
+        insert_tx(&conn, acc, None, "2026-10-02", "-20.00");
+        let found = super::probable_duplicates(
+            &conn,
+            acc,
+            &[
+                key("csv:1#1", "2026-10-01", "-10.00"),
+                key("csv:2#1", "2026-10-02", "-20.00"),
+                key("csv:3#1", "2026-10-03", "-30.00"),
+            ],
+        )
+        .unwrap();
+        let ids: Vec<_> = found.iter().map(|k| k.ofx_fitid.as_str()).collect();
+        assert_eq!(ids, ["csv:1#1", "csv:2#1"]);
+    }
+
+    /// OFX keeps `TRNAMT` as the bank printed it (`-50`), a CSV always has
+    /// cents (`-50.00`): the same purchase must still match.
+    #[test]
+    fn probable_matches_amount_scale_difference() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn, "a", Some("A"));
+        insert_tx(&conn, acc, Some("OFX-1"), "2026-10-01", "-50");
+        let found =
+            super::probable_duplicates(&conn, acc, &[key("csv:1#1", "2026-10-01", "-50.00")])
+                .unwrap();
+        assert_eq!(found.len(), 1);
+    }
+
+    #[test]
+    fn same_fitid_is_not_probable() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn, "a", Some("A"));
+        insert_tx(&conn, acc, Some("csv:1#1"), "2026-10-01", "-10.00");
+        let found =
+            super::probable_duplicates(&conn, acc, &[key("csv:1#1", "2026-10-01", "-10.00")])
+                .unwrap();
+        assert!(found.is_empty());
+    }
+
+    /// Re-importing an overlapping CSV: a coffee already stored from this same
+    /// file layout must not make a second, different coffee of the same price
+    /// on the same day look like a duplicate of it.
+    #[test]
+    fn rows_from_same_batch_not_probable() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn, "a", Some("A"));
+        insert_tx(&conn, acc, Some("csv:cafe-a#1"), "2026-10-01", "-5.00");
+        let found = super::probable_duplicates(
+            &conn,
+            acc,
+            &[
+                key("csv:cafe-a#1", "2026-10-01", "-5.00"),
+                key("csv:cafe-b#1", "2026-10-01", "-5.00"),
+            ],
+        )
+        .unwrap();
+        assert!(found.is_empty());
+    }
+
+    #[test]
+    fn other_account_ignored() {
+        let conn = fresh_conn();
+        let a = insert_account(&conn, "a", Some("A"));
+        let b = insert_account(&conn, "b", Some("B"));
+        insert_tx(&conn, b, Some("OFX-1"), "2026-10-01", "-10.00");
+        let found = super::probable_duplicates(&conn, a, &[key("csv:1#1", "2026-10-01", "-10.00")])
+            .unwrap();
+        assert!(found.is_empty());
     }
 
     fn raw_insert_batch(
@@ -473,7 +619,9 @@ mod tests {
             )
             .unwrap();
         let hits: Vec<String> = stmt
-            .query_map(params!["2026-04-%", 2i64], |r| r.get::<_, Option<String>>(0))
+            .query_map(params!["2026-04-%", 2i64], |r| {
+                r.get::<_, Option<String>>(0)
+            })
             .unwrap()
             .filter_map(|r| r.ok().flatten())
             .collect();

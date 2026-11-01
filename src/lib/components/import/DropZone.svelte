@@ -3,11 +3,10 @@
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import Icon from "$lib/components/ui/Icon.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
-  import { decodeOfxFile } from "$lib/ofx/normalize";
-  import { parseOfx } from "$lib/ofx/parse";
   import { readFileBytes } from "$lib/api/files";
+  import { listCsvFormats } from "$lib/api/csvFormats";
+  import { isStatementName, loadStatement, type LoadResult } from "$lib/statement/load";
   import { locale } from "$lib/i18n/locale.svelte";
-  import type { ParsedOfx } from "$lib/ofx/types";
   import { push } from "svelte-spa-router";
   import { watch } from "$lib/stores/watch.svelte";
   import { getAppSetting, setAppSetting, WATCH_HINT_DISMISSED_KEY } from "$lib/api/watch";
@@ -15,11 +14,11 @@
   const t = locale.t;
 
   type Props = {
-    onparsed?: (result: { file: File; parsed: ParsedOfx }) => void;
+    onloaded?: (result: LoadResult) => void;
     onerror?: (message: string) => void;
   };
 
-  let { onparsed, onerror }: Props = $props();
+  let { onloaded, onerror }: Props = $props();
 
   let active = $state(false);
   let busy = $state(false);
@@ -52,7 +51,7 @@
   async function handlePath(path: string) {
     try {
       const bytes = await readFileBytes(path);
-      const name = path.split(/[\\/]/).pop() || "extrato.ofx";
+      const name = path.split(/[\\/]/).pop() || "extrato";
       await handleFile(new File([bytes as BlobPart], name));
     } catch (e) {
       onerror?.(e instanceof Error ? e.message : String(e));
@@ -70,8 +69,8 @@
           active = false;
         } else if (p.type === "drop") {
           active = false;
-          const ofx = p.paths.find((path) => path.toLowerCase().endsWith(".ofx"));
-          if (ofx) void handlePath(ofx);
+          const statement = p.paths.find(isStatementName);
+          if (statement) void handlePath(statement);
           else if (p.paths.length > 0) onerror?.(t("import.drop_ofx_error"));
         }
       })
@@ -82,9 +81,7 @@
   async function handleFile(file: File) {
     busy = true;
     try {
-      const content = await decodeOfxFile(file);
-      const parsed = parseOfx(content);
-      onparsed?.({ file, parsed });
+      onloaded?.(await loadStatement(file, await listCsvFormats()));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       onerror?.(msg);
@@ -150,7 +147,8 @@
   </h3>
   <p class="text-sub text-fg-muted max-w-sm leading-relaxed">
     {t("import.dropzone_desc_1")}
-    <strong class="text-fg font-semibold">.ofx</strong>
+    <strong class="text-fg font-semibold">.ofx</strong> {t("import.dropzone_or")}
+    <strong class="text-fg font-semibold">.csv</strong>
     {t("import.dropzone_desc_2")}
   </p>
 
@@ -164,7 +162,7 @@
   <input
     bind:this={fileInput}
     type="file"
-    accept=".ofx,.OFX,application/x-ofx,text/plain"
+    accept=".ofx,.OFX,.csv,.CSV,application/x-ofx,text/csv,text/plain"
     onchange={onFilePicked}
     class="hidden"
   />

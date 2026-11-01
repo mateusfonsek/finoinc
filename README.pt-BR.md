@@ -38,7 +38,7 @@ Sem nuvem. Sem conta. Sem telemetria. Um arquivo SQLite que é seu.
 
 <br>
 
-Exporte o extrato `.ofx` que seu banco já oferece, solte no app, e o Finoinc faz o resto:
+Exporte o extrato `.ofx` ou `.csv` que seu banco já oferece, solte no app, e o Finoinc faz o resto:
 descarta o que você já tem, identifica estornos, aplica suas regras e monta o mês num painel
 que responde *pra onde foi o dinheiro* sem você escrever uma fórmula de planilha.
 
@@ -115,8 +115,13 @@ brew install --cask mateusfonsek/tap/finoinc
 
 ### Importe o extrato e revise antes de salvar qualquer coisa
 
-Arraste o `.ofx`, abra com o Finoinc pelo gerenciador de arquivos, ou aponte uma pasta e deixe o app achar
+Arraste o `.ofx` ou o `.csv`, abra com o Finoinc pelo gerenciador de arquivos, ou aponte uma pasta e deixe o app achar
 os extratos novos sozinho. Nada é gravado até você mandar.
+
+O CSV do Nubank (conta ou cartão) é reconhecido direto. Para qualquer outro banco, o Finoinc
+mostra as colunas do arquivo uma vez e pergunta qual é a data, a descrição e o valor; o
+mapeamento fica salvo e o próximo CSV com esse layout vai direto para a revisão. Como o CSV
+não diz de qual conta ele é, a primeira importação pergunta, e o Finoinc lembra.
 
 Reimportar um extrato que se sobrepõe é seguro e esperado: toda linha que você já tem é
 marcada como **duplicada** e fica desmarcada, então só o que é realmente novo vem
@@ -295,7 +300,7 @@ dado, em vez de uma biblioteca de ~1.500.
 ```
 ┌─ Svelte 5 (webview) ────────────────────┐
 │  routes/ · components/ · stores         │
-│  lib/ofx/ — parse, normalização, dedupe │  o OFX é lido no
+│  lib/ofx/ · lib/csv/ — parse, dedupe    │  o extrato é lido no
 │  lib/api/ — wrappers tipados            │  frontend; só as linhas
 └───────────────┬─────────────────────────┘  chegam no Rust
                 │  tauri-specta: tipos do Rust gerados em TypeScript,

@@ -37,6 +37,10 @@
   import { update } from "$lib/stores/update.svelte";
   import { releaseUrl } from "$lib/update/state";
   import type { EnrichmentStatus, WatchedFolder } from "$lib/bindings";
+  import { deleteCsvFormat, getFormatAccount, listCsvFormats } from "$lib/api/csvFormats";
+  import { listAccounts } from "$lib/api/accounts";
+  import { BUILTIN_FORMATS } from "$lib/csv/formats";
+  import { formatListItems, type FormatListItem } from "$lib/csv/formatList";
 
   const t = locale.t;
   const GITHUB_URL = "https://github.com/MateusFonseK/finoinc";
@@ -128,6 +132,7 @@
   }
 
   onMount(async () => {
+    void loadCsvFormats().catch(() => {});
     try {
       path = await dbPath();
       void healthCheck().then((h) => (version = h.version)).catch(() => {});
@@ -282,6 +287,30 @@
       await loadFolders();
     } catch (e) {
       error = folderError(e, "watch.error_remove");
+    }
+  }
+
+  let csvFormats = $state<FormatListItem[]>([]);
+  let csvError = $state<string | null>(null);
+
+  async function loadCsvFormats() {
+    const [saved, accounts] = await Promise.all([listCsvFormats(), listAccounts()]);
+    const ids = [...BUILTIN_FORMATS, ...saved].map((f) => f.id);
+    const remembered = Object.fromEntries(
+      await Promise.all(ids.map(async (id) => [id, await getFormatAccount(id)] as const)),
+    );
+    csvFormats = formatListItems(saved, accounts, remembered);
+  }
+
+  // No confirmation: a format is redone in one pass of the mapping screen
+  // the next time its CSV comes in, and nothing imported depends on it.
+  async function dropCsvFormat(id: string) {
+    csvError = null;
+    try {
+      await deleteCsvFormat(id);
+      await loadCsvFormats();
+    } catch (e) {
+      csvError = e instanceof Error ? e.message : String(e);
     }
   }
 
@@ -682,6 +711,43 @@
           {t("watch.folder_menu_scan")}
         </Button>
       </div>
+    {/if}
+  </Card>
+
+  <!-- ── CSV formats ────────────────────────────────────────────────────── -->
+  <Card title={t("settings.csv_formats_title")}>
+    <p class="text-sub text-fg-muted leading-relaxed">{t("settings.csv_formats_desc")}</p>
+    <div class="flex flex-col">
+      {#each csvFormats as f (f.id)}
+        <div class="flex items-center gap-2.5 py-2 border-t border-border-subtle first:border-t-0">
+          <Icon name="fileText" size={13} class="text-fg-subtle shrink-0" />
+          <div class="flex flex-col min-w-0 flex-1">
+            <span class="text-callout text-fg truncate">{f.name}</span>
+            <span class="text-cap text-fg-subtle truncate">
+              {f.accountName
+                ? t("settings.csv_format_account", { account: f.accountName })
+                : t("settings.csv_format_no_account")}
+            </span>
+          </div>
+          {#if f.builtin}
+            <span class="chip text-fg-subtle shrink-0">{t("settings.csv_format_builtin")}</span>
+          {:else}
+            <button
+              type="button"
+              onclick={() => dropCsvFormat(f.id)}
+              title={t("settings.csv_format_delete")}
+              aria-label={t("settings.csv_format_delete")}
+              class="press w-6 h-6 grid place-items-center rounded-[var(--radius-sm)] text-fg-muted
+                     hover:bg-neg/12 hover:text-neg transition-colors duration-[var(--dur-fast)]"
+            >
+              <Icon name="x" size={12} stroke={2.2} />
+            </button>
+          {/if}
+        </div>
+      {/each}
+    </div>
+    {#if csvError}
+      <ErrorNote message={csvError} />
     {/if}
   </Card>
 

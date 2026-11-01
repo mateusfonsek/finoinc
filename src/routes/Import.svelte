@@ -15,8 +15,8 @@
   import DropZone from "$lib/components/import/DropZone.svelte";
   import ImportPreview from "$lib/components/import/ImportPreview.svelte";
   import { formatMoney } from "$lib/format/money";
-  import { createOrGetAccount } from "$lib/api/accounts";
-  import { checkExistingTxKeys, insertTransactions } from "$lib/api/transactions";
+  import { createOrGetAccount, listAccounts } from "$lib/api/accounts";
+  import { checkExistingTxKeys, insertTransactions, probableDuplicateKeys } from "$lib/api/transactions";
   import { listCategories } from "$lib/api/categories";
   import { createRule, deleteRuleWithCleanup, updateRule } from "$lib/api/rules";
   import type { ParsedStatement } from "$lib/statement/types";
@@ -24,7 +24,9 @@
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
   import { loadStatementFromPath, type LoadResult } from "$lib/statement/load";
-  import { listCsvFormats } from "$lib/api/csvFormats";
+  import { getFormatAccount, listCsvFormats, setFormatAccount } from "$lib/api/csvFormats";
+  import { resolveAccount, type AccountChoice } from "$lib/import/account";
+  import AccountPicker from "$lib/components/import/AccountPicker.svelte";
   import type { SkippedRow } from "$lib/csv/parse";
   import type { ReversalInfo } from "$lib/ofx/reversals";
   import { planImport } from "$lib/ofx/selection";
@@ -49,6 +51,11 @@
   let duplicateKeys = $state<Set<string>>(new Set());
   let selected = $state<Set<string>>(new Set());
   let reversalMap = $state<Map<string, ReversalInfo>>(new Map());
+  /** FITIDs of CSV rows that probably repeat one stored under another id. */
+  let probable = $state<Set<string>>(new Set());
+  /** Set while a CSV waits for the user to say which account it is for. */
+  let askAccount = $state<{ kind: string; remembered: number | null } | null>(null);
+  let accounts = $state<Account[]>([]);
   let busy = $state(false);
   let busyMsg = $state("");
   let error = $state<string | null>(null);
@@ -111,25 +118,86 @@
     busy = true;
     busyMsg = t("import.preparing");
     try {
-      account = await createOrGetAccount({
-        name: parsed.account.displayName,
-        bank: parsed.account.bank === "unknown" ? null : parsed.account.bank,
-        ofx_acctid: parsed.account.ofxAcctid,
-        kind: parsed.account.type,
+      const r = await resolveAccount(parsed, pending?.formatId, {
+        createOrGetAccount,
+        getFormatAccount,
+        listAccounts,
       });
-      const candidates = parsed.transactions
-        .filter((t): t is typeof t & { fitid: string } => !!t.fitid)
-        .map((t) => ({ ofx_fitid: t.fitid, date: t.date, amount: t.amount }));
-      duplicateKeys = await checkExistingTxKeys(account.id, candidates);
-      const plan = planImport(parsed.transactions, duplicateKeys, locale.reversals);
-      reversalMap = plan.reversals;
-      selected = plan.selected;
+      if ("ask" in r) {
+        accounts = await listAccounts();
+        askAccount = r.ask;
+        // The rows show while the user picks; duplicates are only known once
+        // there is an account to compare against.
+        const plan = planImport(parsed.transactions, new Set(), locale.reversals);
+        reversalMap = plan.reversals;
+        selected = plan.selected;
+        return;
+      }
+      await useAccount(r.account, parsed);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
       busy = false;
       busyMsg = "";
     }
+  }
+
+  async function useAccount(chosen: Account, parsed: ParsedStatement) {
+    account = chosen;
+    askAccount = null;
+    const candidates = parsed.transactions
+      .filter((t): t is typeof t & { fitid: string } => !!t.fitid)
+      .map((t) => ({ ofx_fitid: t.fitid, date: t.date, amount: t.amount }));
+    duplicateKeys = await checkExistingTxKeys(chosen.id, candidates);
+    // Only a CSV can repeat a row under another id: an OFX carries the bank's.
+    const probableKeys = pending?.formatId
+      ? await probableDuplicateKeys(chosen.id, candidates)
+      : new Set<string>();
+    const plan = planImport(parsed.transactions, duplicateKeys, locale.reversals, probableKeys);
+    reversalMap = plan.reversals;
+    selected = plan.selected;
+    probable = plan.probable;
+  }
+
+  /** The account a CSV goes into, remembered for its format from now on. */
+  async function chooseAccount(choice: AccountChoice) {
+    if (!pending?.formatId) return;
+    const parsed = pending.parsed;
+    const formatId = pending.formatId;
+    busy = true;
+    busyMsg = t("import.preparing");
+    error = null;
+    try {
+      let chosen: Account | undefined;
+      if ("accountId" in choice) {
+        chosen = accounts.find((a) => a.id === choice.accountId);
+      } else {
+        // Account names are unique: typing an existing one means that account.
+        const name = choice.newName;
+        chosen =
+          accounts.find((a) => a.name.toLocaleLowerCase() === name.toLocaleLowerCase()) ??
+          (await createOrGetAccount({
+            name,
+            bank: parsed.account.bank === "unknown" ? null : parsed.account.bank,
+            ofx_acctid: null,
+            kind: parsed.account.type,
+          }));
+      }
+      if (!chosen) return;
+      await setFormatAccount(formatId, chosen.id);
+      await useAccount(chosen, parsed);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      busy = false;
+      busyMsg = "";
+    }
+  }
+
+  async function changeAccount() {
+    if (!pending) return;
+    accounts = await listAccounts();
+    askAccount = { kind: pending.parsed.account.type, remembered: account?.id ?? null };
   }
 
   /** A loaded statement enters the preview. */
@@ -313,6 +381,8 @@
   function reset() {
     pending = null;
     account = null;
+    askAccount = null;
+    probable = new Set();
     selected = new Set();
     duplicateKeys = new Set();
     reversalMap = new Map();
@@ -558,6 +628,17 @@
     {@const p = pending.parsed}
     <div class="grid grid-cols-[1fr_280px] gap-4 items-start">
       <div class="flex flex-col gap-3">
+        {#if askAccount}
+          <AccountPicker
+            {accounts}
+            kind={askAccount.kind}
+            initial={askAccount.remembered}
+            suggestedName={p.account.displayName}
+            {busy}
+            onconfirm={chooseAccount}
+            oncancel={account ? () => (askAccount = null) : undefined}
+          />
+        {/if}
         <div class="card p-3.5 flex items-center gap-2.5 flex-wrap">
           <span
             class="w-8 h-8 shrink-0 grid place-items-center rounded-[var(--radius-md)] bg-accent-soft text-accent"
@@ -565,7 +646,9 @@
             <Icon name={p.account.type === "credit_card" ? "creditCard" : "landmark"} size={15} />
           </span>
           <div class="flex flex-col min-w-0">
-            <span class="text-callout font-medium text-fg truncate">{p.account.displayName}</span>
+            <span class="text-callout font-medium text-fg truncate">
+              {pending.formatId && account ? account.name : p.account.displayName}
+            </span>
             <span class="text-cap text-fg-subtle truncate">
               {p.account.bank === "unknown" ? t("import.bank_unknown") : p.account.bank}
               ·
@@ -578,6 +661,9 @@
               </span>
             </span>
           </div>
+          {#if pending.formatId && account && !askAccount}
+            <Button variant="ghost" size="sm" onclick={changeAccount}>{t("import.account_change")}</Button>
+          {/if}
           <div class="ml-auto text-sub text-fg-subtle tabular text-right">
             {t("import.tx_count", { n: p.transactions.length })}
             <div class="text-cap text-fg-subtle">
@@ -586,9 +672,30 @@
           </div>
         </div>
 
+        {#if p.skipped && p.skipped.length > 0}
+          <details class="card px-3.5 py-2.5 text-sub text-fg-muted">
+            <summary class="cursor-pointer select-none">
+              {p.skipped.length === 1
+                ? t("import.rows_ignored_one", { n: p.skipped.length })
+                : t("import.rows_ignored_many", { n: p.skipped.length })}
+            </summary>
+            <ul class="mt-2 flex flex-col gap-0.5 tabular">
+              {#each p.skipped as row (row.line)}
+                <li>
+                  {t("import.rows_ignored_line", {
+                    line: row.line,
+                    reason: t("import.rows_ignored_reason_" + row.reason),
+                  })}
+                </li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
+
         <ImportPreview
           transactions={p.transactions}
           {duplicateKeys}
+          {probable}
           {reversalMap}
           {selected}
           ontoggle={toggle}
@@ -618,6 +725,12 @@
           <span class="text-fg-muted">{t("import.sum_duplicates")}</span>
           <span class="tabular text-fg-subtle">{duplicateKeys.size}</span>
         </div>
+        {#if probable.size > 0}
+          <div class="flex justify-between" title={t("import.probable_duplicate_title")}>
+            <span class="text-fg-muted">{t("import.sum_probable")}</span>
+            <span class="tabular text-fg-subtle">{probable.size}</span>
+          </div>
+        {/if}
         {#if reversalMap.size > 0}
           <div class="flex justify-between" title={t("import.neutralized_pairs_title")}>
             <span class="text-fg-muted">{t("import.neutralized_pairs")}</span>
@@ -636,8 +749,10 @@
              border-t border-border-subtle"
     >
       <Button variant="ghost" onclick={reset}>{t("common.cancel")}</Button>
-      <Button onclick={confirmImport} disabled={busy || selected.size === 0}>
-        {#if busy}
+      <Button onclick={confirmImport} disabled={busy || selected.size === 0 || !account || !!askAccount}>
+        {#if !account || askAccount}
+          {t("import.account_pick_first")}
+        {:else if busy}
           <Spinner size={12} />
           {busyMsg || t("import.importing")}
         {:else}

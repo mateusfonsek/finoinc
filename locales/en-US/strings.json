@@ -613,7 +613,13 @@
     "freshness_title": "Data freshness notice",
     "freshness_desc": "Shows on the dashboard how far your data goes and how many days are missing since the newest imported transaction.",
     "freshness_on": "On",
-    "freshness_off": "Off"
+    "freshness_off": "Off",
+    "csv_formats_title": "CSV formats",
+    "csv_formats_desc": "How Finoinc reads each bank's CSV. Yours appear here after the first mapping; deleting one makes Finoinc ask for the columns again on the next file.",
+    "csv_format_account": "Imports into {account}",
+    "csv_format_no_account": "Asks for the account on the next import",
+    "csv_format_builtin": "Built in",
+    "csv_format_delete": "Delete format"
   },
   "watch": {
     "section_title": "Automatic import",

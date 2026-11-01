@@ -38,7 +38,7 @@ No cloud. No account. No telemetry. One SQLite file you own.
 
 <br>
 
-Export the `.ofx` statement your bank already offers, drop it in, and Finoinc does the
+Export the `.ofx` or `.csv` statement your bank already offers, drop it in, and Finoinc does the
 rest: it deduplicates what you already have, spots reversals, applies your rules, and lays
 the month out on a dashboard that answers *where did the money go* without you building a
 single spreadsheet formula.
@@ -116,8 +116,13 @@ Turn on **Check automatically** to have it ask once a day — it is off until yo
 
 ### Import a statement, review before anything is saved
 
-Drag the `.ofx` in, open it with Finoinc from your file manager, or point the app at a folder and
+Drag the `.ofx` or `.csv` in, open it with Finoinc from your file manager, or point the app at a folder and
 let it find new statements on its own. Nothing is written until you say so.
+
+A CSV from Nubank (account or card) is recognized as is. For any other bank, Finoinc shows
+the file's columns once and asks which is the date, the description and the amount; the
+mapping is saved and the next CSV in that layout goes straight to the review. A CSV doesn't
+say which account it belongs to, so the first import asks, and Finoinc remembers.
 
 Re-importing an overlapping statement is safe and expected: every row you already have is
 flagged **duplicate** and left unchecked, so only genuinely new transactions are selected.
@@ -295,7 +300,7 @@ logo image weighs more: 55 hand-picked icons embedded as data rather than a libr
 ```
 ┌─ Svelte 5 (webview) ────────────────────┐
 │  routes/ · components/ · stores         │
-│  lib/ofx/ — parse, normalize, dedupe    │  OFX is parsed in the
+│  lib/ofx/ · lib/csv/ — parse, dedupe    │  statements are parsed in the
 │  lib/api/ — typed wrappers              │  frontend; only rows
 └───────────────┬─────────────────────────┘  reach Rust
                 │  tauri-specta: Rust types generated into TypeScript,

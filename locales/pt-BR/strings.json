@@ -613,7 +613,13 @@
     "freshness_title": "Aviso de frescor dos dados",
     "freshness_desc": "Mostra no painel até quando seus dados vão e quantos dias faltam desde o último lançamento importado.",
     "freshness_on": "Ativado",
-    "freshness_off": "Desativado"
+    "freshness_off": "Desativado",
+    "csv_formats_title": "Formatos de CSV",
+    "csv_formats_desc": "Como o Finoinc lê o CSV de cada banco. Os seus aparecem aqui depois do primeiro mapeamento; apagar um faz o Finoinc perguntar as colunas de novo no próximo arquivo.",
+    "csv_format_account": "Importa em {account}",
+    "csv_format_no_account": "Pergunta a conta na próxima importação",
+    "csv_format_builtin": "Incluído",
+    "csv_format_delete": "Apagar formato"
   },
   "watch": {
     "section_title": "Importação automática",

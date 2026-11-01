@@ -3,7 +3,7 @@
   import { txKeyString } from "$lib/api/transactions";
   import { locale } from "$lib/i18n/locale.svelte";
   import Icon from "$lib/components/ui/Icon.svelte";
-  import type { ParsedTransaction } from "$lib/ofx/types";
+  import type { ParsedTransaction } from "$lib/statement/types";
   import type { ReversalInfo, ReversalRole } from "$lib/ofx/reversals";
 
   const tr = locale.t;

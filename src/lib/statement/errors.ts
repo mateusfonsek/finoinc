@@ -1,5 +1,5 @@
-/** Failure to *read the bytes* of an `.ofx` from disk — distinct from "the
- *  bytes are not valid OFX".
+/** Failure to *read the bytes* of a statement (`.ofx`/`.csv`) from disk — distinct from "the
+ *  bytes are not a valid statement".
  *
  *  The distinction matters because the two have opposite consequences in a
  *  watched folder: invalid content is permanent (the file is marked `invalid`
@@ -11,12 +11,12 @@
  *  Lives in its own module (not `load.ts`) so tests mocking `$lib/ofx/load`
  *  still compare against the real class.
  */
-export class OfxReadError extends Error {
+export class StatementReadError extends Error {
   readonly path: string;
 
   constructor(path: string, cause: unknown) {
     super(cause instanceof Error ? cause.message : String(cause));
-    this.name = "OfxReadError";
+    this.name = "StatementReadError";
     this.path = path;
   }
 }

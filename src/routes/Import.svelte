@@ -19,7 +19,7 @@
   import { checkExistingTxKeys, insertTransactions } from "$lib/api/transactions";
   import { listCategories } from "$lib/api/categories";
   import { createRule, deleteRuleWithCleanup, updateRule } from "$lib/api/rules";
-  import type { ParsedOfx } from "$lib/ofx/types";
+  import type { ParsedStatement } from "$lib/statement/types";
   import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
@@ -34,7 +34,7 @@
     Rule,
   } from "$lib/bindings";
 
-  type PendingImport = { file: File; parsed: ParsedOfx };
+  type PendingImport = { file: File; parsed: ParsedStatement };
 
   let pending = $state<PendingImport | null>(null);
   let account = $state<Account | null>(null);
@@ -101,7 +101,7 @@
     if (req) void openDiscovery(req);
   });
 
-  async function prepareImport(parsed: ParsedOfx) {
+  async function prepareImport(parsed: ParsedStatement) {
     busy = true;
     busyMsg = t("import.preparing");
     try {

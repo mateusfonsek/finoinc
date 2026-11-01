@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { planImport } from "./selection";
 import type { ReversalPhase } from "./reversals";
-import type { ParsedTransaction } from "./types";
+import type { ParsedTransaction } from "$lib/statement/types";
 
 const PHASES: ReversalPhase[] = [
   { strategy: "exact_remainder", prefix: "Estorno - ", window_days: 7,

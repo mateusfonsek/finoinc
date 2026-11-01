@@ -16,7 +16,7 @@ vi.mock("$lib/api/watch", () => ({
 const loadOfxFromPath = vi.hoisted(() => vi.fn());
 vi.mock("$lib/ofx/load", () => ({ loadOfxFromPath }));
 
-import { OfxReadError } from "$lib/ofx/errors";
+import { StatementReadError } from "$lib/statement/errors";
 import { createWatchStore } from "./watch.svelte";
 
 function discovered(hash: string, name: string) {
@@ -92,7 +92,7 @@ describe("watch store", () => {
     // the key is the content hash.
     api.scanWatchedFolders.mockResolvedValue([discovered("h6", "nubank.ofx")]);
     loadOfxFromPath.mockRejectedValue(
-      new OfxReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
+      new StatementReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
     );
 
     const store = createWatchStore();
@@ -105,7 +105,7 @@ describe("watch store", () => {
   it("a file that could not be read comes back on the next scan", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h7", "nubank.ofx")]);
     loadOfxFromPath.mockRejectedValueOnce(
-      new OfxReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
+      new StatementReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
     );
 
     const store = createWatchStore();

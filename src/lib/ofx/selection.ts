@@ -1,6 +1,6 @@
 import { txKeyString } from "$lib/api/transactions";
 import { detectReversalPairs, type ReversalInfo, type ReversalPhase } from "./reversals";
-import type { ParsedTransaction } from "./types";
+import type { ParsedTransaction } from "$lib/statement/types";
 
 /** What Import pre-selects: everything except rows already in the database
  *  and reversal pairs that cancel out inside this statement. */

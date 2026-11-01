@@ -1,10 +1,10 @@
 import { push } from "svelte-spa-router";
 import { loadOfxFromPath } from "./load";
-import type { ParsedOfx } from "./types";
+import type { ParsedStatement } from "$lib/statement/types";
 
 /** What Import reads on mount. `watchHash` only exists when the file came from
  *  a watched folder — it is what allows marking it imported at the end. */
-export type PendingImport = { file: File; parsed: ParsedOfx; watchHash?: string };
+export type PendingImport = { file: File; parsed: ParsedStatement; watchHash?: string };
 
 /** A statement opened from Finder, or why it could not be read. */
 export type Stashed = PendingImport | { error: string };

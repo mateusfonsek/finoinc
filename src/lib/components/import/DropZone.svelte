@@ -7,7 +7,7 @@
   import { parseOfx } from "$lib/ofx/parse";
   import { readFileBytes } from "$lib/api/files";
   import { locale } from "$lib/i18n/locale.svelte";
-  import type { ParsedOfx } from "$lib/ofx/types";
+  import type { ParsedStatement } from "$lib/statement/types";
   import { push } from "svelte-spa-router";
   import { watch } from "$lib/stores/watch.svelte";
   import { getAppSetting, setAppSetting, WATCH_HINT_DISMISSED_KEY } from "$lib/api/watch";
@@ -15,7 +15,7 @@
   const t = locale.t;
 
   type Props = {
-    onparsed?: (result: { file: File; parsed: ParsedOfx }) => void;
+    onparsed?: (result: { file: File; parsed: ParsedStatement }) => void;
     onerror?: (message: string) => void;
   };
 

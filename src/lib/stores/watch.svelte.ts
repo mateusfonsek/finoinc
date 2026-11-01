@@ -6,7 +6,7 @@ import {
   WATCH_ENABLED_KEY,
   type FileStatus,
 } from "$lib/api/watch";
-import { OfxReadError } from "$lib/ofx/errors";
+import { StatementReadError } from "$lib/statement/errors";
 import { loadOfxFromPath } from "$lib/ofx/load";
 
 /** A validated discovery: only what parsed as OFX gets here. */
@@ -130,7 +130,7 @@ export function createWatchStore() {
    *  Parse failed → the content is not OFX and never will be: `invalid`, which
    *  is permanent, and the user never sees an error that is ours. */
   async function noteLoadFailure(hash: string, e: unknown) {
-    if (e instanceof OfxReadError) skip(hash);
+    if (e instanceof StatementReadError) skip(hash);
     else await resolve(hash, "invalid");
   }
 

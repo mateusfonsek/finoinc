@@ -2,10 +2,10 @@ import { Ofx } from "ofx-data-extractor";
 import { t } from "$lib/i18n/locale.svelte";
 import type {
   ParsedAccount,
-  ParsedOfx,
+  ParsedStatement,
   ParsedSummary,
   ParsedTransaction,
-} from "./types";
+} from "$lib/statement/types";
 
 /**
  * Parse raw OFX text into our normalized shape. Throws on malformed input.
@@ -18,7 +18,7 @@ import type {
  *   - `.getBankTransferList()`        — checking-account transactions
  *   - `.getCreditCardTransferList()`  — credit-card transactions
  */
-export function parseOfx(content: string): ParsedOfx {
+export function parseOfx(content: string): ParsedStatement {
   const ofx = new Ofx(escapeTextLeaves(content));
   const structure = ofx.getContent();
 

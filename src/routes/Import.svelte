@@ -23,7 +23,9 @@
   import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
-  import { loadOfxFromPath } from "$lib/ofx/load";
+  import { loadStatementFromPath, type LoadResult } from "$lib/statement/load";
+  import { listCsvFormats } from "$lib/api/csvFormats";
+  import type { SkippedRow } from "$lib/csv/parse";
   import type { ReversalInfo } from "$lib/ofx/reversals";
   import { planImport } from "$lib/ofx/selection";
   import type {
@@ -34,7 +36,12 @@
     Rule,
   } from "$lib/bindings";
 
-  type PendingImport = { file: File; parsed: ParsedStatement };
+  type PendingImport = {
+    file: File;
+    parsed: ParsedStatement & { skipped?: SkippedRow[] };
+    /** The CSV format it was read with; absent for OFX. */
+    formatId?: string;
+  };
 
   let pending = $state<PendingImport | null>(null);
   let account = $state<Account | null>(null);
@@ -86,9 +93,8 @@
       error = stash.error;
       return;
     }
-    pending = { file: stash.file, parsed: stash.parsed };
     watchHash = stash.watchHash;
-    void prepareImport(stash.parsed);
+    void accept(stash);
   }
 
   // "Review" in the toast only asks; this screen opens. That covers both a
@@ -126,9 +132,18 @@
     }
   }
 
-  function onparsed(detail: PendingImport) {
-    pending = detail;
-    void prepareImport(detail.parsed);
+  /** A loaded statement enters the preview. */
+  async function accept(result: LoadResult): Promise<void> {
+    if (result.kind === "needs_mapping") {
+      error = t("import.csv_unknown");
+      return;
+    }
+    pending = { file: result.file, parsed: result.parsed, formatId: result.formatId };
+    await prepareImport(result.parsed);
+  }
+
+  function onloaded(result: LoadResult) {
+    void accept(result);
   }
   function onerror(msg: string) {
     error = msg;
@@ -330,11 +345,10 @@
       // moved, deleted, or an iCloud placeholder evicted after the scan) the
       // error landed with `pending` already null — the screen fell back to an
       // empty dropzone with no explanation.
-      const loaded = await loadOfxFromPath(next.path);
+      const loaded = await loadStatementFromPath(next.path, await listCsvFormats());
       reset();
-      pending = { file: loaded.file, parsed: loaded.parsed };
       watchHash = next.hash;
-      await prepareImport(loaded.parsed);
+      await accept(loaded);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
       // Takes the file out of the queue so it cannot block `discoveries[0]`;
@@ -367,7 +381,7 @@
       {#if error}
         <ErrorNote message={error} />
       {/if}
-      <DropZone {onparsed} {onerror} />
+      <DropZone {onloaded} {onerror} />
     </div>
   {:else if importResult}
     <!-- ============ After the import ============ -->

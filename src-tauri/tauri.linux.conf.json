@@ -23,6 +23,14 @@
         "description": "OFX bank statement",
         "role": "Viewer",
         "mimeType": "application/x-ofx"
+      },
+      {
+        "ext": ["csv"],
+        "name": "CSV Statement",
+        "description": "Bank statement in CSV",
+        "role": "Viewer",
+        "rank": "Alternate",
+        "mimeType": "text/csv"
       }
     ],
     "linux": {

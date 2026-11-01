@@ -13,8 +13,10 @@ vi.mock("$lib/api/watch", () => ({
   WATCH_HINT_DISMISSED_KEY: "watch_hint_dismissed",
 }));
 
-const loadOfxFromPath = vi.hoisted(() => vi.fn());
-vi.mock("$lib/ofx/load", () => ({ loadOfxFromPath }));
+const loadStatementFromPath = vi.hoisted(() => vi.fn());
+vi.mock("$lib/statement/load", () => ({ loadStatementFromPath }));
+const listCsvFormats = vi.hoisted(() => vi.fn(async () => []));
+vi.mock("$lib/api/csvFormats", () => ({ listCsvFormats }));
 
 import { StatementReadError } from "$lib/statement/errors";
 import { createWatchStore } from "./watch.svelte";
@@ -33,6 +35,7 @@ function discovered(hash: string, name: string) {
 
 function parsed(txCount: number) {
   return {
+    kind: "parsed",
     file: new File([""], "x.ofx"),
     parsed: {
       transactions: Array.from({ length: txCount }, () => ({})),
@@ -60,7 +63,7 @@ describe("watch store", () => {
 
   it("exposes discoveries that parse, with their count and date range", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h1", "extrato.ofx")]);
-    loadOfxFromPath.mockResolvedValue(parsed(87));
+    loadStatementFromPath.mockResolvedValue(parsed(87));
 
     const store = createWatchStore();
     await store.refresh();
@@ -77,7 +80,7 @@ describe("watch store", () => {
 
   it("a file that does not parse is marked invalid and never exposed", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h2", "lixo.ofx")]);
-    loadOfxFromPath.mockRejectedValue(new Error("not ofx"));
+    loadStatementFromPath.mockRejectedValue(new Error("not ofx"));
 
     const store = createWatchStore();
     await store.refresh();
@@ -86,12 +89,39 @@ describe("watch store", () => {
     expect(api.markFile).toHaveBeenCalledWith("h2", "invalid");
   });
 
+  // A Downloads folder is full of CSVs that are not statements. One whose
+  // layout no format knows stays out of sight without being buried: once the
+  // user saves a format for it, the next scan picks it up.
+  it("unknown_csv_is_skipped_not_invalid", async () => {
+    api.scanWatchedFolders.mockResolvedValue([discovered("h9", "planilha.csv")]);
+    loadStatementFromPath.mockResolvedValue({ kind: "needs_mapping", file: new File([""], "planilha.csv"), table: {}, guess: {} });
+
+    const store = createWatchStore();
+    await store.refresh();
+
+    expect(store.pendingCount).toBe(0);
+    expect(api.markFile).not.toHaveBeenCalled();
+  });
+
+  it("known_csv_becomes_discovery", async () => {
+    const mine = [{ id: "inter" }];
+    listCsvFormats.mockResolvedValueOnce(mine as never);
+    api.scanWatchedFolders.mockResolvedValue([discovered("h10", "nubank.csv")]);
+    loadStatementFromPath.mockResolvedValue(parsed(4));
+
+    const store = createWatchStore();
+    await store.refresh();
+
+    expect(loadStatementFromPath).toHaveBeenCalledWith("/tmp/nubank.csv", mine);
+    expect(store.discoveries[0]).toMatchObject({ hash: "h10", txCount: 4 });
+  });
+
   it("a read failure does not mark invalid — the file stays pending", async () => {
     // An iCloud stub evicted back to a placeholder, a moved file, permission
     // denied: `invalid` is permanent and would bury the statement forever, since
     // the key is the content hash.
     api.scanWatchedFolders.mockResolvedValue([discovered("h6", "nubank.ofx")]);
-    loadOfxFromPath.mockRejectedValue(
+    loadStatementFromPath.mockRejectedValue(
       new StatementReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
     );
 
@@ -104,7 +134,7 @@ describe("watch store", () => {
 
   it("a file that could not be read comes back on the next scan", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h7", "nubank.ofx")]);
-    loadOfxFromPath.mockRejectedValueOnce(
+    loadStatementFromPath.mockRejectedValueOnce(
       new StatementReadError("/tmp/nubank.ofx", new Error("No such file or directory")),
     );
 
@@ -113,7 +143,7 @@ describe("watch store", () => {
     expect(store.pendingCount).toBe(0);
 
     // iCloud finished downloading: the same discovery now reads and parses.
-    loadOfxFromPath.mockResolvedValue(parsed(12));
+    loadStatementFromPath.mockResolvedValue(parsed(12));
     await store.refresh({ force: true });
 
     expect(store.pendingCount).toBe(1);
@@ -142,7 +172,7 @@ describe("watch store", () => {
 
   it("resolve removes the discovery from the list", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h3", "a.ofx")]);
-    loadOfxFromPath.mockResolvedValue(parsed(10));
+    loadStatementFromPath.mockResolvedValue(parsed(10));
 
     const store = createWatchStore();
     await store.refresh();
@@ -214,7 +244,7 @@ describe("watch store", () => {
 
   it("disabling clears the discovery list", async () => {
     api.scanWatchedFolders.mockResolvedValue([discovered("h4", "a.ofx")]);
-    loadOfxFromPath.mockResolvedValue(parsed(5));
+    loadStatementFromPath.mockResolvedValue(parsed(5));
     const store = createWatchStore();
 
     await store.refresh();
@@ -250,7 +280,7 @@ describe("watch store", () => {
       releaseScan = resolve;
     });
     api.scanWatchedFolders.mockReturnValue(scanPromise);
-    loadOfxFromPath.mockResolvedValue(parsed(3));
+    loadStatementFromPath.mockResolvedValue(parsed(3));
 
     const store = createWatchStore();
     const refreshPromise = store.refresh();

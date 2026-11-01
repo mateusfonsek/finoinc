@@ -16,6 +16,14 @@
   },
   "bundle": {
     "targets": ["nsis"],
+    "fileAssociations": [
+      {
+        "ext": ["ofx"],
+        "name": "OFX Statement",
+        "description": "OFX bank statement",
+        "role": "Viewer"
+      }
+    ],
     "windows": { "nsis": { "installMode": "currentUser" } }
   }
 }

@@ -7,7 +7,8 @@ import {
   type FileStatus,
 } from "$lib/api/watch";
 import { StatementReadError } from "$lib/statement/errors";
-import { loadOfxFromPath } from "$lib/ofx/load";
+import { listCsvFormats } from "$lib/api/csvFormats";
+import { loadStatementFromPath } from "$lib/statement/load";
 
 /** A validated discovery: only what parsed as OFX gets here. */
 export type Discovery = {
@@ -62,10 +63,19 @@ export function createWatchStore() {
     resolvedDuringScan.clear();
     try {
       const files = await scanWatchedFolders();
+      const saved = files.length > 0 ? await listCsvFormats() : [];
       const next: Discovery[] = [];
       for (const f of files) {
         try {
-          const { parsed } = await loadOfxFromPath(f.path);
+          const loaded = await loadStatementFromPath(f.path, saved);
+          // A CSV no format knows (most CSVs in a Downloads folder are not
+          // statements): left pending and unannounced, so saving a format
+          // for it later brings it in on the next scan.
+          if (loaded.kind === "needs_mapping") {
+            skip(f.content_hash);
+            continue;
+          }
+          const { parsed } = loaded;
           next.push({
             hash: f.content_hash,
             path: f.path,
@@ -127,7 +137,7 @@ export function createWatchStore() {
    *
    *  Read failed → transient (iCloud stub evicted after the scan, file moved,
    *  permissions): stays `pending` and returns on the next scan.
-   *  Parse failed → the content is not OFX and never will be: `invalid`, which
+   *  Parse failed → the content is not a statement and never will be: `invalid`, which
    *  is permanent, and the user never sees an error that is ours. */
   async function noteLoadFailure(hash: string, e: unknown) {
     if (e instanceof StatementReadError) skip(hash);

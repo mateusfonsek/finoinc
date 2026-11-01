@@ -8,7 +8,7 @@
  *  read, permission denied. Treating the second as the first would bury the
  *  statement forever, since the key is the content hash.
  *
- *  Lives in its own module (not `load.ts`) so tests mocking `$lib/ofx/load`
+ *  Lives in its own module (not `load.ts`) so tests mocking `$lib/statement/load`
  *  still compare against the real class.
  */
 export class StatementReadError extends Error {

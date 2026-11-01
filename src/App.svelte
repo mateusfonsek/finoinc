@@ -7,7 +7,7 @@
   import AboutDialog from "$lib/components/shell/AboutDialog.svelte";
   import ActivityCenter from "$lib/components/shell/ActivityCenter.svelte";
   import LanguageGate from "$lib/components/shell/LanguageGate.svelte";
-  import { openOfxPath } from "$lib/ofx/open";
+  import { openStatementPath } from "$lib/ofx/open";
   import { takePendingOfx } from "$lib/api/files";
   import { locale, LOCALE_CHOSEN_KEY } from "$lib/i18n/locale.svelte";
   import { getAppSetting } from "$lib/api/watch";
@@ -67,7 +67,7 @@
   // them to the Import screen through the same stash it already reads.
   async function handleOpenedOfx() {
     const paths = await takePendingOfx();
-    for (const path of paths) await openOfxPath(path);
+    for (const path of paths) await openStatementPath(path);
   }
 
   const SHORTCUTS: Record<string, () => void> = {

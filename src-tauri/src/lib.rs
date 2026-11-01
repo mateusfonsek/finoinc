@@ -116,7 +116,7 @@ pub fn run() {
     // none of this: Launch Services keeps one instance and sends `Opened`.
     #[cfg(not(target_os = "macos"))]
     let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-        commands::openfile::queue_and_announce(app, commands::openfile::ofx_paths(argv));
+        commands::openfile::queue_and_announce(app, commands::openfile::statement_paths(argv));
         if let Some(window) = app.get_webview_window("main") {
             let _ = window.unminimize();
             let _ = window.show();
@@ -155,7 +155,7 @@ pub fn run() {
             #[cfg(not(target_os = "macos"))]
             commands::openfile::queue_and_announce(
                 app.handle(),
-                commands::openfile::ofx_paths_os(std::env::args_os()),
+                commands::openfile::statement_paths_os(std::env::args_os()),
             );
 
             // Native menu, localized from the active pack. The literals below are
@@ -251,7 +251,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, _event| {
-            // An .ofx opened via Finder. May arrive during cold start, before
+            // A statement opened via Finder. May arrive during cold start, before
             // the frontend exists, so it is queued and announced. The event
             // exists only on Apple platforms.
             #[cfg(target_os = "macos")]

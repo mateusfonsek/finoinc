@@ -326,8 +326,8 @@
     "account_up_to": "até {date}"
   },
   "import": {
-    "drop_ofx_error": "Solte um arquivo .ofx.",
-    "dropzone_title": "Arraste seu extrato OFX",
+    "drop_ofx_error": "Solte um arquivo .ofx ou .csv.",
+    "dropzone_title": "Arraste seu extrato (OFX ou CSV)",
     "dropzone_desc_1": "Exporte o extrato mensal do seu banco (Itaú, Nubank, Bradesco, etc.) no formato",
     "dropzone_desc_2": "e solte aqui — ou clique pra escolher um arquivo.",
     "reading": "Lendo arquivo…",
@@ -397,7 +397,11 @@
     "account_card": "cartão",
     "account_last4": "final {v}",
     "account_branch": "ag {v}",
-    "account_number": "cc {v}"
+    "account_number": "cc {v}",
+    "unsupported_file": "O Finoinc lê extratos .ofx e .csv.",
+    "csv_empty": "Este CSV não tem lançamentos.",
+    "dropzone_or": "ou",
+    "csv_unknown": "Ainda não sei ler este CSV."
   },
   "tx_notes": {
     "detail": "Detalhe",

@@ -326,8 +326,8 @@
     "account_up_to": "through {date}"
   },
   "import": {
-    "drop_ofx_error": "Drop an .ofx file.",
-    "dropzone_title": "Drag your OFX statement here",
+    "drop_ofx_error": "Drop an .ofx or .csv file.",
+    "dropzone_title": "Drag your statement here (OFX or CSV)",
     "dropzone_desc_1": "Export your bank's monthly statement (Chase, Bank of America, Wells Fargo, etc.) in the",
     "dropzone_desc_2": "format and drop it here — or click to choose a file.",
     "reading": "Reading file…",
@@ -397,7 +397,11 @@
     "account_card": "card",
     "account_last4": "ending {v}",
     "account_branch": "branch {v}",
-    "account_number": "acct {v}"
+    "account_number": "acct {v}",
+    "unsupported_file": "Finoinc reads .ofx and .csv statements.",
+    "csv_empty": "This CSV has no transactions.",
+    "dropzone_or": "or",
+    "csv_unknown": "Finoinc can't read this CSV yet."
   },
   "tx_notes": {
     "detail": "Detail",

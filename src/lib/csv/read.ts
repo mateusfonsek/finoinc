@@ -4,8 +4,8 @@ export type CsvTable = { header: string[]; rows: string[][]; preamble: number };
 
 /** The file has no data rows — empty, or a header alone. */
 export class CsvEmptyError extends Error {
-  constructor() {
-    super("CSV has no rows");
+  constructor(message = "CSV has no rows") {
+    super(message);
     this.name = "CsvEmptyError";
   }
 }

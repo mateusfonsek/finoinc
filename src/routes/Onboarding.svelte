@@ -6,8 +6,8 @@
   import ErrorNote from "$lib/components/ui/ErrorNote.svelte";
   import Icon from "$lib/components/ui/Icon.svelte";
   import logoUrl from "$lib/assets/logo.png";
-  import type { ParsedStatement } from "$lib/statement/types";
-  import { push } from "svelte-spa-router";
+  import type { LoadResult } from "$lib/statement/load";
+  import { stash } from "$lib/ofx/open";
   import { onMount } from "svelte";
   import { dbPath } from "$lib/api/backup";
 
@@ -22,11 +22,9 @@
     );
   });
 
-  function onparsed(detail: { file: File; parsed: ParsedStatement }) {
-    // Hand off to /import via window. Svelte stores would be cleaner;
-    // acceptable for MVP, refactor in fase 5.
-    (window as unknown as { __finoincPending?: typeof detail }).__finoincPending = detail;
-    push("/import");
+  // Same queue as Open With: Import takes it on mount.
+  function onloaded(result: LoadResult) {
+    stash(result);
   }
 
   function onerror(msg: string) {
@@ -55,7 +53,7 @@
     </p>
   </header>
 
-  <DropZone {onparsed} {onerror} />
+  <DropZone {onloaded} {onerror} />
 
   {#if error}
     <ErrorNote message={t("onboarding.read_error", { msg: error })} />

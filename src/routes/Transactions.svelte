@@ -20,6 +20,7 @@
     updateTransactionNotes,
   } from "$lib/api/transactions";
   import type { Category, Transaction } from "$lib/bindings";
+  import { latestOnly } from "$lib/latest";
 
   let transactions = $state<Transaction[]>([]);
   let categories = $state<Category[]>([]);
@@ -29,15 +30,23 @@
 
   let searchInputRef = $state<HTMLInputElement | null>(null);
 
+  // Filters change faster than the backend answers (one query per keystroke):
+  // only the newest reply may replace the list.
+  const latest = latestOnly();
+
   async function refresh() {
     try {
-      transactions = await listTransactions({
-        account_id: null,
-        month: filters.month,
-        category_id: filters.categoryId,
-        q: filters.q === "" ? null : filters.q,
-        limit: null,
-      });
+      const reply = await latest(() =>
+        listTransactions({
+          account_id: null,
+          month: filters.month,
+          category_id: filters.categoryId,
+          q: filters.q === "" ? null : filters.q,
+          limit: null,
+        }),
+      );
+      if (!reply.current) return;
+      transactions = reply.value;
       if (selectedTx) {
         const fresh = transactions.find((t) => t.id === selectedTx?.id);
         selectedTx = fresh ?? null;
@@ -94,10 +103,20 @@
     await refresh();
   }
 
-  async function onQueryChange(v: string) {
+  /** Typing shows at once; the query waits for a pause in it, so a word is
+   *  one round trip and one table update, not one per letter. Clearing the
+   *  field answers at once. */
+  const SEARCH_PAUSE_MS = 200;
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function onQueryChange(v: string) {
     filters.q = v;
-    await refresh();
+    clearTimeout(searchTimer);
+    if (v === "") void refresh();
+    else searchTimer = setTimeout(() => void refresh(), SEARCH_PAUSE_MS);
   }
+
+  onMount(() => () => clearTimeout(searchTimer));
 
   function onRowClick(t: Transaction) {
     selectedTx = t;

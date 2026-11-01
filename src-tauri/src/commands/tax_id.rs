@@ -37,7 +37,7 @@ impl TaxIdResolution {
 /// Does not check the enabled flag — callers decide. `resolve_tax_id` is a
 /// direct user action; the import path gates before reaching here.
 pub fn resolve_tax_id_with_conn(
-    conn: &rusqlite::Connection,
+    conn: &std::sync::Mutex<rusqlite::Connection>,
     tax_id: &str,
     pack: &LocalePack,
 ) -> AppResult<TaxIdResolution> {
@@ -61,9 +61,10 @@ pub fn resolve_tax_id(
     locale: State<'_, LocaleState>,
     tax_id: String,
 ) -> AppResult<TaxIdResolution> {
-    let conn = db.conn.lock().expect("db mutex poisoned");
+    // The database is locked only around its own queries, never across the
+    // provider's network call.
     let pack = locale.pack.lock().expect("locale mutex poisoned");
-    resolve_tax_id_with_conn(&conn, &tax_id, &pack)
+    resolve_tax_id_with_conn(&db.conn, &tax_id, &pack)
 }
 
 #[cfg(test)]
@@ -139,7 +140,7 @@ mod tests {
         let conn = fresh_conn();
         let mut p = pack();
         p.manifest.tax_id.provider = String::new();
-        let r = resolve_tax_id_with_conn(&conn, "33.967.103/0001-84", &p).unwrap();
+        let r = resolve_tax_id_with_conn(&std::sync::Mutex::new(conn), "33.967.103/0001-84", &p).unwrap();
         assert_eq!(r.tax_id, "33.967.103/0001-84");
         assert!(r.legal_name.is_none());
         assert!(r.suggested_category_id.is_none());

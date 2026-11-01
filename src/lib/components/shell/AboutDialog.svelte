@@ -81,7 +81,7 @@
       aria-modal="true"
       aria-label={t("sidebar.about_title")}
       transition:dialog
-      class="card pointer-events-auto relative w-[min(400px,100%)] max-h-full overflow-y-auto
+      class="card pointer-events-auto relative w-[min(400px,100%)] max-h-[calc(100vh_-_3rem)] overflow-y-auto
              rounded-[var(--radius-2xl)] shadow-[var(--shadow-dialog)]"
     >
       <button

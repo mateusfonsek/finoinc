@@ -145,7 +145,7 @@
     aria-label={t("rule_apply.title")}
     transition:dialog
     class="card pointer-events-auto relative flex flex-col
-           w-[min(720px,100%)] max-h-[min(78vh,100%)]
+           w-[min(720px,100%)] max-h-[min(78vh,calc(100vh_-_3rem))]
            rounded-[var(--radius-2xl)] shadow-[var(--shadow-dialog)]"
   >
     <header class="px-6 pt-5 pb-4 border-b border-border-subtle shrink-0">

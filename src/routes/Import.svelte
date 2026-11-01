@@ -23,8 +23,11 @@
   import { takeStashed, STASHED_EVENT } from "$lib/ofx/open";
   import { activity } from "$lib/stores/activity.svelte";
   import { watch, type Discovery } from "$lib/stores/watch.svelte";
-  import { loadStatementFromPath, type LoadResult } from "$lib/statement/load";
-  import { getFormatAccount, listCsvFormats, setFormatAccount } from "$lib/api/csvFormats";
+  import { loadStatement, loadStatementFromPath, type LoadResult } from "$lib/statement/load";
+  import { getFormatAccount, listCsvFormats, saveCsvFormat, setFormatAccount } from "$lib/api/csvFormats";
+  import { draftToFormat, type MappingDraft } from "$lib/csv/mapping";
+  import type { CsvTable } from "$lib/csv/read";
+  import CsvMapping from "$lib/components/import/CsvMapping.svelte";
   import { resolveAccount, type AccountChoice } from "$lib/import/account";
   import AccountPicker from "$lib/components/import/AccountPicker.svelte";
   import type { SkippedRow } from "$lib/csv/parse";
@@ -56,6 +59,8 @@
   /** Set while a CSV waits for the user to say which account it is for. */
   let askAccount = $state<{ kind: string; remembered: number | null } | null>(null);
   let accounts = $state<Account[]>([]);
+  /** A CSV whose layout no format knows, waiting on the mapping screen. */
+  let mapping = $state<{ file: File; table: CsvTable } | null>(null);
   let busy = $state(false);
   let busyMsg = $state("");
   let error = $state<string | null>(null);
@@ -77,7 +82,7 @@
 
   // The toast never interrupts someone already reviewing a statement.
   $effect(() => {
-    watch.suppressToast = pending !== null;
+    watch.suppressToast = pending !== null || mapping !== null;
     return () => (watch.suppressToast = false);
   });
 
@@ -92,7 +97,7 @@
    *  review — that one is finished or cancelled first, then `reset` calls in.
    *  A finished import's result screen gives way right away. */
   function serveStashed() {
-    if (busy || (pending && !importResult)) return;
+    if (busy || mapping || (pending && !importResult)) return;
     if (importResult) return reset();
     const stash = takeStashed();
     if (!stash) return;
@@ -203,11 +208,32 @@
   /** A loaded statement enters the preview. */
   async function accept(result: LoadResult): Promise<void> {
     if (result.kind === "needs_mapping") {
-      error = t("import.csv_unknown");
+      error = null;
+      mapping = { file: result.file, table: result.table };
       return;
     }
     pending = { file: result.file, parsed: result.parsed, formatId: result.formatId };
     await prepareImport(result.parsed);
+  }
+
+  /** The mapping becomes a saved format, and the file is read again with it —
+   *  the same path any later CSV in this layout takes. */
+  async function saveMapping(draft: MappingDraft) {
+    if (!mapping) return;
+    const { file, table } = mapping;
+    busy = true;
+    error = null;
+    try {
+      await saveCsvFormat(draftToFormat(draft, table));
+      const result = await loadStatement(file, await listCsvFormats());
+      mapping = null;
+      busy = false;
+      await accept(result);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      busy = false;
+    }
   }
 
   function onloaded(result: LoadResult) {
@@ -382,6 +408,7 @@
     pending = null;
     account = null;
     askAccount = null;
+    mapping = null;
     probable = new Set();
     selected = new Set();
     duplicateKeys = new Set();
@@ -444,7 +471,23 @@
     {/if}
   {/snippet}
 
-  {#if !pending}
+  {#if mapping}
+    <div class="flex flex-col gap-3 pt-2">
+      {#if error}
+        <ErrorNote message={error} />
+      {/if}
+      <CsvMapping
+        table={mapping.table}
+        fileName={mapping.file.name}
+        {busy}
+        onsave={saveMapping}
+        oncancel={() => {
+          mapping = null;
+          error = null;
+        }}
+      />
+    </div>
+  {:else if !pending}
     <!-- A target has the size of a target: stretched across the full page it
          stops looking like an object and becomes an empty band. -->
     <div class="w-full max-w-xl mx-auto flex flex-col gap-4 pt-4">

@@ -166,6 +166,22 @@ async listRulesWithCount() : Promise<Result<RuleWithCount[], string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async rulesForTransaction(transactionId: number) : Promise<Result<TransactionRules, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("rules_for_transaction", { transactionId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async applyRuleToTransaction(ruleId: number, transactionId: number) : Promise<Result<boolean, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("apply_rule_to_transaction", { ruleId, transactionId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async createRule(input: NewRule) : Promise<Result<Rule, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("create_rule", { input }) };
@@ -997,6 +1013,16 @@ export type Transaction = { id: number; account_id: number; date: string;
  */
 amount: string; description: string; category_id: number | null; notes: string | null; ofx_fitid: string | null; imported_at: string }
 export type TransactionFilters = { account_id: number | null; month: string | null; category_id: number | null; q: string | null; limit: number | null }
+/**
+ * The rules a transaction's detail panel shows: the one that set its
+ * category, if any, and the others whose snippet matches its description —
+ * what the user must see before creating yet another rule for it.
+ */
+export type TransactionRules = { applied: RuleWithCount | null; 
+/**
+ * Highest priority first; never includes `applied`.
+ */
+matching: RuleWithCount[] }
 /**
  * Breakdown of internal transfers (kind='transfer' AND is_investment=0)
  * — card bill payments, self-transfers, etc. Gives the Dashboard a way to be

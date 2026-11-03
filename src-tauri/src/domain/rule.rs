@@ -44,6 +44,16 @@ pub struct RuleWithCount {
     pub transaction_count: u32,
 }
 
+/// The rules a transaction's detail panel shows: the one that set its
+/// category, if any, and the others whose snippet matches its description —
+/// what the user must see before creating yet another rule for it.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct TransactionRules {
+    pub applied: Option<RuleWithCount>,
+    /// Highest priority first; never includes `applied`.
+    pub matching: Vec<RuleWithCount>,
+}
+
 /// A change applying the rules would cause. Material for the review screen —
 /// nothing is written until the user chooses.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]

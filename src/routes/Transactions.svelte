@@ -13,7 +13,7 @@
   import TxNotesPanel from "$lib/components/transactions/TxNotesPanel.svelte";
   import { filters } from "$lib/stores/filters.svelte";
   import { listCategories, createCategory } from "$lib/api/categories";
-  import { createRule, applyRulesToUncategorized } from "$lib/api/rules";
+  import { createRule, applyRulesToUncategorized, applyRuleToTransaction } from "$lib/api/rules";
   import {
     listTransactions,
     updateTransactionCategory,
@@ -130,13 +130,18 @@
       t.id === transactionId ? { ...t, notes } : t,
     );
   }
-  async function onCreateRule(data: { pattern: string; categoryId: number }) {
-    await createRule({
+  /** A rule created from a transaction's panel. Besides filling the other
+   *  uncategorized rows, it takes over the transaction it was made from — even
+   *  one another rule categorized, which is the point of overriding it. */
+  async function onCreateRule(data: { pattern: string; categoryId: number; priority: number }) {
+    const txId = selectedTx?.id;
+    const rule = await createRule({
       patterns: [data.pattern],
       category_id: data.categoryId,
-      priority: 5,
+      priority: data.priority,
       due_day: null,
     });
+    if (txId !== undefined) await applyRuleToTransaction(rule.id, txId);
     await applyRulesToUncategorized(null);
     await refresh();
   }
@@ -185,5 +190,6 @@
     onClose={closePanel}
     onSave={onSaveNotes}
     {onCreateRule}
+    onRulesChanged={refresh}
   />
 {/if}

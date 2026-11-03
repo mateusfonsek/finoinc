@@ -27,6 +27,7 @@
     bind:this={ref}
     type="text"
     data-search-input
+    data-focus-ring="none"
     {value}
     placeholder={placeholder ?? t("search.placeholder")}
     oninput={(e) => onInput((e.currentTarget as HTMLInputElement).value)}

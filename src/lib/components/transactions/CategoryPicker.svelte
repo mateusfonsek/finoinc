@@ -3,6 +3,8 @@
   import Icon from "$lib/components/ui/Icon.svelte";
   import { locale } from "$lib/i18n/locale.svelte";
   import { popover } from "$lib/motion";
+  import { portal } from "$lib/actions/portal";
+  import { menuPosition } from "./menuPosition";
   import type { Category } from "$lib/bindings";
 
   const t = locale.t;
@@ -19,6 +21,7 @@
 
   let open = $state(false);
   let dropUp = $state(false);
+  let menuStyle = $state("");
   let query = $state("");
   let highlighted = $state(0);
   let triggerEl: HTMLButtonElement | undefined = $state();
@@ -49,15 +52,28 @@
     return out;
   }
 
+  const MENU_W = 240; // w-60
+
+  /** The menu lives in `<body>` (see `portal`): inside the table card, whose
+   *  `overflow-hidden` rounds its corners, a short table or the last rows cut
+   *  it off. Its place is worked out from the trigger instead. */
+  function place() {
+    if (!triggerEl) return;
+    const menuH = Math.min(options.length * 30, 240) + 48; // ul + input
+    const p = menuPosition(
+      triggerEl.getBoundingClientRect(),
+      { width: window.innerWidth, height: window.innerHeight },
+      { width: MENU_W, height: menuH },
+    );
+    dropUp = "bottom" in p;
+    menuStyle =
+      "bottom" in p
+        ? `position: fixed; bottom: ${p.bottom}px; left: ${p.left}px;`
+        : `position: fixed; top: ${p.top}px; left: ${p.left}px;`;
+  }
+
   async function openPicker() {
-    // Decide the direction before opening: if it does not fit below the trigger
-    // but fits above, open upward. Keeps the menu on screen on the last rows.
-    if (triggerEl) {
-      const rect = triggerEl.getBoundingClientRect();
-      const menuH = Math.min(options.length * 30, 240) + 48; // ul + input
-      const spaceBelow = window.innerHeight - rect.bottom;
-      dropUp = spaceBelow < menuH && rect.top > spaceBelow;
-    }
+    place();
     open = true;
     query = "";
     // Opens with the CURRENT category highlighted, not "remove category": the
@@ -122,8 +138,18 @@
         closePicker();
       }
     }
+    // Fixed to the viewport, so it follows the trigger when the page scrolls.
+    function follow() {
+      if (open) place();
+    }
     document.addEventListener("mousedown", clickOutside);
-    return () => document.removeEventListener("mousedown", clickOutside);
+    window.addEventListener("resize", follow);
+    window.addEventListener("scroll", follow, true);
+    return () => {
+      document.removeEventListener("mousedown", clickOutside);
+      window.removeEventListener("resize", follow);
+      window.removeEventListener("scroll", follow, true);
+    };
   });
 </script>
 
@@ -154,10 +180,10 @@
   {#if open}
     <div
       bind:this={menuEl}
+      use:portal
+      style={menuStyle}
       transition:popover={{ origin: dropUp ? "bottom left" : "top left" }}
-      class="material-pop absolute z-30 w-60 overflow-hidden {dropUp
-        ? 'bottom-full mb-1.5'
-        : 'top-full mt-1.5'}"
+      class="material-pop z-90 w-60 overflow-hidden"
     >
       <div class="border-b border-border-subtle p-1.5 flex items-center gap-1.5 px-2">
         <Icon name="search" size={12} stroke={2} class="text-fg-faint" />
@@ -165,6 +191,7 @@
           bind:this={inputEl}
           bind:value={query}
           {onkeydown}
+          data-focus-ring="none"
           placeholder={t("category_picker.search_or_create")}
           class="w-full bg-transparent border-0 outline-none text-callout py-1 placeholder:text-fg-faint"
         />

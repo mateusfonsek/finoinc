@@ -3,6 +3,7 @@
 
   const t = locale.t;
   import { onMount } from "svelte";
+  import { replace, router } from "svelte-spa-router";
   import { confirm } from "@tauri-apps/plugin-dialog";
   import { listen } from "@tauri-apps/api/event";
   import { MCP_DATA_CHANGED_EVENT } from "$lib/api/mcp";
@@ -49,6 +50,17 @@
   async function refresh() {
     rules = await listRulesWithCount();
   }
+
+  // `#/rules?edit=12` — from a transaction's panel — opens that rule's
+  // editor once the list is in. The parameter is dropped right after, so
+  // closing the panel and going back does not reopen it.
+  $effect(() => {
+    const id = Number(new URLSearchParams(router.querystring ?? "").get("edit"));
+    if (!id || loading) return;
+    const found = rules.find((r) => r.id === id);
+    if (found) editing = found;
+    void replace("/rules");
+  });
 
   onMount(async () => {
     try {

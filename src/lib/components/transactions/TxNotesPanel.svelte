@@ -4,8 +4,8 @@
   import { Button } from "$lib/components/ui/button";
   import { locale } from "$lib/i18n/locale.svelte";
   import { formatMoney } from "$lib/format/money";
-  import { rise, scrim, sheet } from "$lib/motion";
-  import { suggestPatternFor } from "$lib/api/suggestions";
+  import { scrim, sheet } from "$lib/motion";
+  import TxRuleSection from "./TxRuleSection.svelte";
   import type { Category, Transaction } from "$lib/bindings";
 
   const t = locale.t;
@@ -15,21 +15,18 @@
     categories: Category[];
     onClose: () => void;
     onSave: (transactionId: number, notes: string | null) => Promise<void>;
-    onCreateRule: (data: { pattern: string; categoryId: number }) => Promise<void>;
+    onCreateRule: (data: { pattern: string; categoryId: number; priority: number }) => Promise<void>;
+    onRulesChanged: () => Promise<void>;
   };
 
-  let { transaction, categories, onClose, onSave, onCreateRule }: Props = $props();
+  let { transaction, categories, onClose, onSave, onCreateRule, onRulesChanged }: Props = $props();
 
   let draft = $state("");
   let busy = $state(false);
   let textarea: HTMLTextAreaElement | undefined = $state();
 
-  // Expandable mini-form for creating a rule.
+  /** The rule mini-form is open: Esc closes it before the panel. */
   let ruleOpen = $state(false);
-  let rulePattern = $state("");
-  let ruleCategoryId = $state<number | null>(null);
-  let ruleBusy = $state(false);
-  let ruleError = $state<string | null>(null);
 
   let category = $derived(categories.find((c) => c.id === transaction.category_id));
 
@@ -40,35 +37,6 @@
       month: "long",
       year: "numeric",
     });
-  }
-
-  async function openRuleForm() {
-    ruleError = null;
-    ruleCategoryId = transaction.category_id ?? null;
-    rulePattern = await suggestPatternFor(transaction.description);
-    ruleOpen = true;
-  }
-
-  async function createRule() {
-    ruleError = null;
-    const pattern = rulePattern.trim();
-    if (!pattern) {
-      ruleError = t("rule_form.pattern_required");
-      return;
-    }
-    if (ruleCategoryId === null) {
-      ruleError = t("rule_form.category_required");
-      return;
-    }
-    ruleBusy = true;
-    try {
-      await onCreateRule({ pattern, categoryId: ruleCategoryId });
-      onClose();
-    } catch (e) {
-      ruleError = e instanceof Error ? e.message : String(e);
-    } finally {
-      ruleBusy = false;
-    }
   }
 
   $effect(() => {
@@ -192,56 +160,7 @@
 
     <div class="hairline"></div>
 
-    <div class="px-4 py-3">
-      {#if !ruleOpen}
-        <Button variant="outline" onclick={openRuleForm} class="w-full justify-center">
-          <Icon name="wandSparkles" size={13} />
-          {t("tx_notes.create_rule_cta")}
-        </Button>
-      {:else}
-        <div class="card-inset p-3 flex flex-col gap-2.5" in:rise>
-          <span class="section-title">{t("tx_notes.new_rule")}</span>
-          <label class="flex flex-col gap-1">
-            <span class="text-foot text-fg-subtle">{t("rule_form.pattern_label")}</span>
-            <input
-              bind:value={rulePattern}
-              class="field font-mono"
-              title={t("tx_notes.pattern_title")}
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-foot text-fg-subtle">{t("rule_form.category")}</span>
-            <select
-              value={ruleCategoryId === null ? "" : String(ruleCategoryId)}
-              onchange={(e) => {
-                const v = (e.currentTarget as HTMLSelectElement).value;
-                ruleCategoryId = v === "" ? null : Number(v);
-              }}
-              class="field"
-            >
-              <option value="">{t("rule_form.select_placeholder")}</option>
-              {#each categories as c}
-                <option value={String(c.id)}>{c.name}</option>
-              {/each}
-            </select>
-          </label>
-          {#if ruleError}
-            <div class="text-foot text-neg flex items-start gap-1.5">
-              <Icon name="circleAlert" size={12} stroke={2} class="mt-px" />
-              <span>{ruleError}</span>
-            </div>
-          {/if}
-          <div class="flex justify-end gap-2">
-            <Button variant="ghost" onclick={() => (ruleOpen = false)} disabled={ruleBusy}>
-              {t("common.cancel")}
-            </Button>
-            <Button onclick={createRule} disabled={ruleBusy}>
-              {ruleBusy ? t("tx_notes.creating") : t("tx_notes.create_apply")}
-            </Button>
-          </div>
-        </div>
-      {/if}
-    </div>
+    <TxRuleSection {transaction} {categories} {onCreateRule} {onRulesChanged} bind:formOpen={ruleOpen} />
 
     <div class="hairline"></div>
 

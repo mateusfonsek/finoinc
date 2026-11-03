@@ -7,6 +7,7 @@ import type {
   RuleMatches,
   RulePreviewRow,
   RuleWithCount,
+  TransactionRules,
   UpdateRule,
 } from "../bindings";
 
@@ -72,4 +73,16 @@ export async function applyRuleChoices(choices: RuleChoice[]): Promise<number> {
 
 export async function calendarEvents(month: string): Promise<CalendarEvent[]> {
   return unwrap(await commands.calendarEvents(month));
+}
+
+/** The rule that categorized a transaction and the others whose snippet
+ *  matches it — for the transaction panel. */
+export async function rulesForTransaction(transactionId: number): Promise<TransactionRules> {
+  return unwrap(await commands.rulesForTransaction(transactionId));
+}
+
+/** Applies a rule to one transaction whatever its category, when it matches.
+ *  `true` when the transaction changed. */
+export async function applyRuleToTransaction(ruleId: number, transactionId: number): Promise<boolean> {
+  return unwrap(await commands.applyRuleToTransaction(ruleId, transactionId));
 }

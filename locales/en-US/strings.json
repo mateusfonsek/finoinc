@@ -745,5 +745,22 @@
     "on": "On",
     "off": "Off",
     "auto_error": "Couldn't save this setting. Try again."
+  },
+  "tx_rule": {
+    "title": "Rule",
+    "applied": "Categorized by this rule",
+    "matching": "Rules that match this description",
+    "also_matching": "Other rules that also match",
+    "edit": "Edit rule",
+    "edit_named": "Edit rule {rule}",
+    "priority": "priority {n}",
+    "priority_label": "Priority",
+    "reach_one": "{n} transaction",
+    "reach_many": "{n} transactions",
+    "create_another": "Another rule for this transaction…",
+    "override_hint": "This transaction is already categorized by “{rule}”. Use a more specific snippet: the new rule has a higher priority and takes it over.",
+    "duplicate": "The rule “{rule}” already has this snippet.",
+    "duplicate_edit": "Edit that rule",
+    "delete_confirm": "Delete the rule “{rule}”? The transactions it categorized lose their category, and the other rules are applied again."
   }
 }

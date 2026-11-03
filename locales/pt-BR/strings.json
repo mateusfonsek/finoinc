@@ -745,5 +745,22 @@
     "on": "Ativado",
     "off": "Desativado",
     "auto_error": "Não deu pra salvar essa opção. Tente de novo."
+  },
+  "tx_rule": {
+    "title": "Regra",
+    "applied": "Categorizada por esta regra",
+    "matching": "Regras que casam esta descrição",
+    "also_matching": "Outras regras que também casam",
+    "edit": "Editar regra",
+    "edit_named": "Editar a regra {rule}",
+    "priority": "prioridade {n}",
+    "priority_label": "Prioridade",
+    "reach_one": "{n} transação",
+    "reach_many": "{n} transações",
+    "create_another": "Outra regra para esta transação…",
+    "override_hint": "Esta transação já é categorizada por “{rule}”. Use um trecho mais específico: a nova regra tem prioridade maior e passa a valer para ela.",
+    "duplicate": "Já existe a regra “{rule}” com este trecho.",
+    "duplicate_edit": "Editar essa regra",
+    "delete_confirm": "Apagar a regra “{rule}”? As transações que ela categorizou ficam sem categoria, e as outras regras são aplicadas de novo."
   }
 }

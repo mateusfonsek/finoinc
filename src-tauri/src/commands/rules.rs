@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use crate::domain::rule::{
     CalendarEvent, NewRule, Rule, RuleChoice, RuleMatches, RulePreviewRow, RuleWithCount,
-    UpdateRule,
+    TransactionRules, UpdateRule,
 };
 use crate::domain::transaction::Transaction;
 use crate::error::{AppError, AppResult};
@@ -144,6 +144,110 @@ pub fn list_rules_with_count(db: State<'_, Db>) -> AppResult<Vec<RuleWithCount>>
     })?;
     rows.collect::<rusqlite::Result<Vec<_>>>()
         .map_err(AppError::from)
+}
+
+/// One rule with its reach, the same count `list_rules_with_count` shows.
+fn rule_with_count(conn: &rusqlite::Connection, id: i64) -> AppResult<Option<RuleWithCount>> {
+    conn.query_row(
+        "SELECT r.id, r.category_id, r.priority, r.due_day, r.display_name, r.created_at,
+                r.pay_lead_months,
+                (SELECT COUNT(*) FROM transactions t
+                  WHERE EXISTS (
+                      SELECT 1 FROM rule_patterns p
+                       WHERE p.rule_id = r.id
+                         AND LOWER(t.description) LIKE '%' || LOWER(p.pattern) || '%'
+                  ))
+         FROM rules r WHERE r.id = ?1",
+        params![id],
+        |row| {
+            Ok(RuleWithCount {
+                id,
+                patterns: patterns_of(conn, id)?,
+                category_id: row.get(1)?,
+                priority: row.get(2)?,
+                due_day: row.get(3)?,
+                display_name: row.get(4)?,
+                created_at: row.get(5)?,
+                pay_lead_months: row.get(6)?,
+                transaction_count: row.get::<_, i64>(7)? as u32,
+            })
+        },
+    )
+    .optional()
+    .map_err(AppError::from)
+}
+
+pub fn rules_for(conn: &rusqlite::Connection, transaction_id: i64) -> AppResult<TransactionRules> {
+    let applied_id: Option<i64> = conn
+        .query_row(
+            "SELECT categorized_by_rule FROM transactions WHERE id = ?1",
+            params![transaction_id],
+            |r| r.get(0),
+        )
+        .optional()?
+        .ok_or_else(|| AppError::Invalid(format!("transaction {transaction_id} not found")))?;
+
+    // Same matching as everywhere else: any snippet contained in the
+    // description, case-insensitive.
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT r.id FROM rules r
+           JOIN rule_patterns p ON p.rule_id = r.id
+           JOIN transactions t ON t.id = ?1
+          WHERE LOWER(t.description) LIKE '%' || LOWER(p.pattern) || '%'
+          ORDER BY r.priority DESC, r.created_at DESC, r.id DESC",
+    )?;
+    let ids = stmt
+        .query_map(params![transaction_id], |r| r.get::<_, i64>(0))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+
+    let applied = match applied_id {
+        Some(id) => rule_with_count(conn, id)?,
+        None => None,
+    };
+    let mut matching = Vec::new();
+    for id in ids {
+        if Some(id) == applied_id {
+            continue;
+        }
+        if let Some(r) = rule_with_count(conn, id)? {
+            matching.push(r);
+        }
+    }
+    Ok(TransactionRules { applied, matching })
+}
+
+/// Applies one rule to one transaction, whatever its current category, when
+/// any of the rule's snippets is in its description. `true` when it changed.
+/// The import backfill only fills uncategorized rows; this is for a rule the
+/// user just created on purpose to take this transaction over.
+pub fn apply_to_transaction(conn: &rusqlite::Connection, rule_id: i64, transaction_id: i64) -> AppResult<bool> {
+    let changed = conn.execute(
+        "UPDATE transactions
+            SET category_id = (SELECT category_id FROM rules WHERE id = ?1),
+                categorized_by_rule = ?1
+          WHERE id = ?2
+            AND EXISTS (
+                SELECT 1 FROM rule_patterns p
+                 WHERE p.rule_id = ?1
+                   AND LOWER(transactions.description) LIKE '%' || LOWER(p.pattern) || '%'
+            )",
+        params![rule_id, transaction_id],
+    )?;
+    Ok(changed == 1)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn apply_rule_to_transaction(db: State<'_, Db>, rule_id: i64, transaction_id: i64) -> AppResult<bool> {
+    let conn = db.conn.lock().expect("db mutex poisoned");
+    apply_to_transaction(&conn, rule_id, transaction_id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn rules_for_transaction(db: State<'_, Db>, transaction_id: i64) -> AppResult<TransactionRules> {
+    let conn = db.conn.lock().expect("db mutex poisoned");
+    rules_for(&conn, transaction_id)
 }
 
 pub fn create(conn: &mut rusqlite::Connection, input: NewRule) -> AppResult<Rule> {
@@ -806,6 +910,99 @@ mod tests {
             .unwrap();
         }
         id
+    }
+
+    // ── rules_for (the transaction panel) ──────────────────────────────────
+    // Descriptions use made-up words: the locale pack seeds real rules
+    // (transfers, card payments) that ordinary words would also match.
+
+    #[test]
+    fn rules_for_reports_the_rule_that_categorized() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let mercado = category_id(&conn, "Mercado");
+        let rule = insert_rule_multi(&conn, &["qzmercadinho", "qzextra"], mercado, 5);
+        let tx = insert_tx(&conn, acc, "QZMERCADINHO 123", Some(mercado));
+        conn.execute("UPDATE transactions SET categorized_by_rule = ?1 WHERE id = ?2", params![rule, tx]).unwrap();
+
+        let r = super::rules_for(&conn, tx).unwrap();
+        let applied = r.applied.expect("applied rule");
+        assert_eq!(applied.id, rule);
+        assert_eq!(applied.patterns, vec!["qzmercadinho".to_string(), "qzextra".to_string()]);
+        assert_eq!(applied.transaction_count, 1);
+        assert!(r.matching.is_empty(), "the applied rule is not repeated in `matching`");
+    }
+
+    /// Categorized by hand, or imported before the rule existed: the rules
+    /// whose snippet matches still show, highest priority first.
+    #[test]
+    fn rules_for_lists_matching_rules_without_an_applied_one() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let mercado = category_id(&conn, "Mercado");
+        let low = insert_rule(&conn, "QZACUCAR", mercado, 1);
+        let high = insert_rule(&conn, "qzpao", mercado, 9);
+        insert_rule(&conn, "QZUBER", mercado, 9);
+        let tx = insert_tx(&conn, acc, "QZPAO QZACUCAR", None);
+
+        let r = super::rules_for(&conn, tx).unwrap();
+        assert!(r.applied.is_none());
+        assert_eq!(r.matching.iter().map(|x| x.id).collect::<Vec<_>>(), vec![high, low]);
+    }
+
+    #[test]
+    fn rules_for_forgets_a_deleted_rule() {
+        let conn = fresh_conn();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        let acc = insert_account(&conn);
+        let mercado = category_id(&conn, "Mercado");
+        let rule = insert_rule(&conn, "QZPADARIA", mercado, 5);
+        let tx = insert_tx(&conn, acc, "QZPADARIA DO ZE", Some(mercado));
+        conn.execute("UPDATE transactions SET categorized_by_rule = ?1 WHERE id = ?2", params![rule, tx]).unwrap();
+        conn.execute("DELETE FROM rules WHERE id = ?1", params![rule]).unwrap();
+
+        let r = super::rules_for(&conn, tx).unwrap();
+        assert!(r.applied.is_none());
+        assert!(r.matching.is_empty());
+    }
+
+    /// A rule created from the panel to override the one that categorized
+    /// this transaction takes it over right away, with its own authorship.
+    #[test]
+    fn apply_to_transaction_overrides_and_records_the_rule() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let mercado = category_id(&conn, "Mercado");
+        let transporte = category_id(&conn, "Transporte");
+        let old = insert_rule(&conn, "QZPOSTO", mercado, 5);
+        let new = insert_rule(&conn, "QZPOSTO SHELL", transporte, 6);
+        let tx = insert_tx(&conn, acc, "QZPOSTO SHELL 12", Some(mercado));
+        conn.execute("UPDATE transactions SET categorized_by_rule = ?1 WHERE id = ?2", params![old, tx]).unwrap();
+
+        assert!(super::apply_to_transaction(&conn, new, tx).unwrap());
+        let (cat, by): (i64, i64) = conn
+            .query_row("SELECT category_id, categorized_by_rule FROM transactions WHERE id = ?1", params![tx], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap();
+        assert_eq!((cat, by), (transporte, new));
+    }
+
+    #[test]
+    fn apply_to_transaction_leaves_a_non_matching_transaction() {
+        let conn = fresh_conn();
+        let acc = insert_account(&conn);
+        let mercado = category_id(&conn, "Mercado");
+        let rule = insert_rule(&conn, "QZOUTRA", mercado, 5);
+        let tx = insert_tx(&conn, acc, "QZPOSTO 12", None);
+
+        assert!(!super::apply_to_transaction(&conn, rule, tx).unwrap());
+        let cat: Option<i64> = conn.query_row("SELECT category_id FROM transactions WHERE id = ?1", params![tx], |r| r.get(0)).unwrap();
+        assert_eq!(cat, None);
+    }
+
+    #[test]
+    fn rules_for_unknown_transaction_is_not_found() {
+        let conn = fresh_conn();
+        assert!(super::rules_for(&conn, 999).is_err());
     }
 
     /// `apply_rules_internal` became a delegate to `apply_rules_since(.., None)`

@@ -309,6 +309,12 @@ button,
   box-shadow: var(--focus-ring);
   border-color: var(--color-accent);
 }
+/* A field inside a control that rings itself (`focus-within:`, the search
+   capsule) keeps only that ring: a text input matches `:focus-visible` even on
+   a click, and two rings would show. Unlayered, like the rule it overrides. */
+[data-focus-ring="none"]:focus-visible {
+  box-shadow: none;
+}
 
 /* The ring is a `box-shadow`, so it paints with the element and can end up
    underneath a later sibling. `z-index` fixes that — but it only acts on a

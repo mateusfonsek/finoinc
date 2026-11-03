@@ -75,10 +75,50 @@
     return t(next === "asc" ? "tx_table.sort_asc" : "tx_table.sort_desc", { col: label });
   }
 
+  /** Rows glide to their new place on a sort — but `animate:flip` measures
+   *  and animates every row on every change, which on a few thousand rows
+   *  froze typing in the search for seconds (WebView2 on Windows most of
+   *  all). Past this many rows the table just updates. */
+  const FLIP_MAX_ROWS = 150;
+  let animateRows = $derived(sorted.length <= FLIP_MAX_ROWS);
+
+  function rowClass(t: Transaction): string {
+    return `row border-t border-border-subtle first:border-t-0 cursor-default ${
+      selectedId === t.id ? "bg-accent-soft hover:bg-accent-soft" : ""
+    }`;
+  }
+
   let flipParams = $derived(
     reducedMotion() ? { duration: 0 } : { duration: DUR.base, easing: SNAP },
   );
 </script>
+
+{#snippet cells(t: Transaction)}
+            <td class="px-4 py-2 text-sub text-fg-subtle tabular whitespace-nowrap" onclick={() => onRowClick?.(t)}>
+              {fmtDate(t.date)}
+            </td>
+            <td class="px-4 py-2 text-callout text-fg min-w-0" onclick={() => onRowClick?.(t)}>
+              <!-- Two lines and stop: a statement description can run 200
+                   characters, and an over-tall row breaks the scan of its
+                   neighbours. The `title` gives back the rest. -->
+              <span class="line-clamp-2 break-words" title={t.description}>{t.description}</span>
+            </td>
+            <td class="px-4 py-2">
+              <CategoryPicker
+                {categories}
+                currentId={t.category_id}
+                onselect={(catId) => onCategoryChange(t.id, catId)}
+                oncreate={onCategoryCreate}
+              />
+            </td>
+            <td
+              class="px-4 py-2 text-right text-callout tabular font-medium whitespace-nowrap
+                     {Number(t.amount) >= 0 ? 'text-pos' : 'text-fg'}"
+              onclick={() => onRowClick?.(t)}
+            >
+              {formatMoney(t.amount)}
+            </td>
+{/snippet}
 
 <div class="card overflow-hidden">
   {#if transactions.length === 0}
@@ -121,42 +161,21 @@
         </tr>
       </thead>
       <tbody>
-        {#each sorted as t (t.id)}
-          {@const selected = selectedId === t.id}
-          <!-- The whole row is the click target (except the category cell,
-               which has its own control) — a large target, as in macOS lists. -->
-          <tr
-            animate:flip={flipParams}
-            class="row border-t border-border-subtle first:border-t-0 cursor-default
-                   {selected ? 'bg-accent-soft hover:bg-accent-soft' : ''}"
-            aria-selected={selected}
-          >
-            <td class="px-4 py-2 text-sub text-fg-subtle tabular whitespace-nowrap" onclick={() => onRowClick?.(t)}>
-              {fmtDate(t.date)}
-            </td>
-            <td class="px-4 py-2 text-callout text-fg min-w-0" onclick={() => onRowClick?.(t)}>
-              <!-- Two lines and stop: a statement description can run 200
-                   characters, and an over-tall row breaks the scan of its
-                   neighbours. The `title` gives back the rest. -->
-              <span class="line-clamp-2 break-words" title={t.description}>{t.description}</span>
-            </td>
-            <td class="px-4 py-2">
-              <CategoryPicker
-                {categories}
-                currentId={t.category_id}
-                onselect={(catId) => onCategoryChange(t.id, catId)}
-                oncreate={onCategoryCreate}
-              />
-            </td>
-            <td
-              class="px-4 py-2 text-right text-callout tabular font-medium whitespace-nowrap
-                     {Number(t.amount) >= 0 ? 'text-pos' : 'text-fg'}"
-              onclick={() => onRowClick?.(t)}
-            >
-              {formatMoney(t.amount)}
-            </td>
-          </tr>
-        {/each}
+        {#if animateRows}
+          {#each sorted as t (t.id)}
+            <!-- The whole row is the click target (except the category cell,
+                 which has its own control) — a large target, as in macOS lists. -->
+            <tr animate:flip={flipParams} class={rowClass(t)} aria-selected={selectedId === t.id}>
+              {@render cells(t)}
+            </tr>
+          {/each}
+        {:else}
+          {#each sorted as t (t.id)}
+            <tr class={rowClass(t)} aria-selected={selectedId === t.id}>
+              {@render cells(t)}
+            </tr>
+          {/each}
+        {/if}
         </tbody>
       </table>
     </div>

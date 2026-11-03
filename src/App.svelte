@@ -95,8 +95,15 @@
 
     if (k === "f") {
       e.preventDefault();
-      const wasOnTransactions = window.location.hash === "#/transactions";
-      if (!wasOnTransactions) push("/transactions");
+      // The screen's own search when it has one (Transactions, Rules);
+      // otherwise the transactions search.
+      const here = document.querySelector<HTMLInputElement>("[data-search-input]");
+      if (here) {
+        here.focus();
+        here.select();
+        return;
+      }
+      push("/transactions");
       setTimeout(() => {
         const input = document.querySelector<HTMLInputElement>("[data-search-input]");
         input?.focus();

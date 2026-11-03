@@ -223,7 +223,10 @@
     "edit": "Edit",
     "delete": "Delete",
     "empty": "A rule says \"if the description contains X, use category Y\" — and it applies on its own to every import from then on. E.g.: \"uber\" → Transport.",
-    "empty_title": "No rules yet"
+    "empty_title": "No rules yet",
+    "search_empty_title": "No rules found",
+    "search_empty": "No rule has “{q}” in its snippet, name or category.",
+    "reach_open_label": "See the {n} transactions of rule {rule}"
   },
   "rule_form": {
     "form_new": "New rule",
@@ -543,7 +546,8 @@
     "applying": "Checking…",
     "apply": "Review and apply",
     "save_changes": "Save changes",
-    "delete_confirm": "Delete rule \"{pattern}\"?"
+    "delete_confirm": "Delete rule \"{pattern}\"?",
+    "search_placeholder": "Search rules…"
   },
   "calendar_page": {
     "inflows": "Inflows",

@@ -223,7 +223,10 @@
     "edit": "Editar",
     "delete": "Apagar",
     "empty": "Uma regra diz \"se a descrição contém X, use a categoria Y\" — e passa a valer sozinha em todo import. Ex.: \"uber\" → Transporte.",
-    "empty_title": "Nenhuma regra ainda"
+    "empty_title": "Nenhuma regra ainda",
+    "search_empty_title": "Nenhuma regra encontrada",
+    "search_empty": "Nenhuma regra tem “{q}” no trecho, no nome ou na categoria.",
+    "reach_open_label": "Ver as {n} transações da regra {rule}"
   },
   "rule_form": {
     "form_new": "Nova regra",
@@ -543,7 +546,8 @@
     "applying": "Verificando…",
     "apply": "Revisar e aplicar",
     "save_changes": "Salvar alterações",
-    "delete_confirm": "Apagar regra \"{pattern}\"?"
+    "delete_confirm": "Apagar regra \"{pattern}\"?",
+    "search_placeholder": "Buscar regra…"
   },
   "calendar_page": {
     "inflows": "Entradas",

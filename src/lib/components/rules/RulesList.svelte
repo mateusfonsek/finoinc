@@ -16,10 +16,15 @@
     categories: Category[];
     onEdit: (rule: RuleWithCount) => void;
     onDelete: (rule: RuleWithCount) => Promise<void>;
+    /** Opens the transactions the rule reaches (its count is the button). */
+    onViewMatches: (rule: RuleWithCount) => void;
     selectedId?: number | null;
+    /** The search that produced `rules`; an empty result then says so,
+     *  instead of "no rules yet". */
+    query?: string;
   };
 
-  let { rules, categories, onEdit, onDelete, selectedId = null }: Props = $props();
+  let { rules, categories, onEdit, onDelete, onViewMatches, selectedId = null, query = "" }: Props = $props();
 
   function categoryName(id: number): string {
     return categories.find((c) => c.id === id)?.name ?? "?";
@@ -85,6 +90,17 @@
     return t(sort.next(key) === "asc" ? "rules.sort_asc" : "rules.sort_desc", { col });
   }
 
+  /** Same limit as the transactions table: `animate:flip` measures every row
+   *  on every change, and the search changes the list on each keystroke. */
+  const FLIP_MAX_ROWS = 150;
+  let animateRows = $derived(sorted.length <= FLIP_MAX_ROWS);
+
+  function rowClass(r: RuleWithCount): string {
+    return `row group border-t border-border-subtle first:border-t-0 cursor-default ${
+      selectedId === r.id ? "bg-accent-soft hover:bg-accent-soft" : ""
+    }`;
+  }
+
   let flipParams = $derived(
     reducedMotion() ? { duration: 0 } : { duration: DUR.base, easing: SNAP },
   );
@@ -141,56 +157,7 @@
 
 <!-- The row shows the first snippet; the rest become a counter. Listing them
      all would grow the column without saying more. -->
-{#snippet extra(total: number)}
-  {#if total > 1}
-    <span
-      class="ml-1.5 text-cap2 text-fg-faint font-sans tabular"
-      title={t("rules.more_patterns_title", { n: total - 1 })}
-    >
-      {t("rules.more_patterns", { n: total - 1 })}
-    </span>
-  {/if}
-{/snippet}
-
-<div class="card overflow-hidden">
-  {#if rules.length === 0}
-    <EmptyState icon="wandSparkles" title={t("rules.empty_title")} description={t("rules.empty")} />
-  {:else}
-    <!-- When the window is too narrow for six columns, the table scrolls inside
-         the card — never the page, and never clipped by the `overflow-hidden`
-         that rounds the corners. -->
-    <div class="overflow-x-auto">
-      <table class="w-full table-fixed min-w-[660px]">
-        <thead>
-        <tr class="border-b border-border-subtle">
-          {#each COLUMNS as c (c.key)}
-            <th class="{c.width} p-0" aria-sort={sort.aria(c.key)}>
-              <SortHeader
-                label={t(c.labelKey)}
-                align={c.align}
-                dense={c.dense}
-                symbol={c.symbol}
-                active={sort.key === c.key}
-                dir={sort.dir}
-                hint={hint(c.key, t(c.labelKey))}
-                onclick={() => sort.toggle(c.key)}
-              />
-            </th>
-          {/each}
-          <th class="px-3 py-2 w-[44px]"><span class="sr-only">{t("common.actions")}</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each sorted as r (r.id)}
-          {@const selected = selectedId === r.id}
-          <!-- The whole row opens the edit panel, same gesture as the
-               transactions table. Only the actions column escapes the click. -->
-          <tr
-            animate:flip={flipParams}
-            class="row group border-t border-border-subtle first:border-t-0 cursor-default
-                   {selected ? 'bg-accent-soft hover:bg-accent-soft' : ''}"
-            aria-selected={selected}
-          >
+{#snippet cells(r: RuleWithCount)}
             <!-- `min-w-0` is what makes `truncate` work inside a table cell:
                  without it the box grows with the text and nothing ellipsizes.
                  The `title` gives back what the ellipsis hid. -->
@@ -223,13 +190,24 @@
             <!-- Zero is information, not absence: the rule exists and catches
                  nothing, so it is dimmed rather than turned into a dash. The
                  padding matches the header's (`dense`) to stay aligned. -->
-            <td
-              class="px-3 py-2 text-right text-sub tabular
-                     {r.transaction_count === 0 ? 'text-fg-faint' : 'text-fg-muted'}"
-              onclick={() => onEdit(r)}
-              title={r.transaction_count === 0 ? t("rules.reach_none") : t("rules.reach_title")}
-            >
-              {r.transaction_count}
+            <td class="px-3 py-1.5 text-right text-sub tabular">
+              <!-- The count is the way into the rule's transactions: the rest
+                   of the row edits, this cell shows what the rule catches. -->
+              {#if r.transaction_count === 0}
+                <span class="px-1.5 text-fg-faint" title={t("rules.reach_none")}>0</span>
+              {:else}
+                <button
+                  type="button"
+                  onclick={() => onViewMatches(r)}
+                  title={t("rules.reach_title")}
+                  aria-label={t("rules.reach_open_label", { n: r.transaction_count, rule: label(r) })}
+                  class="press inline-flex items-center gap-1 h-6 px-1.5 rounded-[var(--radius-sm)] text-fg-muted
+                         hover:bg-hover hover:text-accent transition-colors duration-[var(--dur-fast)]"
+                >
+                  {r.transaction_count}
+                  <Icon name="chevronRight" size={10} stroke={2.2} class="opacity-60" />
+                </button>
+              {/if}
             </td>
             <td
               class="px-3 py-2 text-right text-sub tabular text-fg-muted"
@@ -260,8 +238,65 @@
                 </button>
               </div>
             </td>
-          </tr>
-        {/each}
+{/snippet}
+
+{#snippet extra(total: number)}
+  {#if total > 1}
+    <span
+      class="ml-1.5 text-cap2 text-fg-faint font-sans tabular"
+      title={t("rules.more_patterns_title", { n: total - 1 })}
+    >
+      {t("rules.more_patterns", { n: total - 1 })}
+    </span>
+  {/if}
+{/snippet}
+
+<div class="card overflow-hidden">
+  {#if rules.length === 0 && query.trim() !== ""}
+    <EmptyState icon="search" title={t("rules.search_empty_title")} description={t("rules.search_empty", { q: query.trim() })} />
+  {:else if rules.length === 0}
+    <EmptyState icon="wandSparkles" title={t("rules.empty_title")} description={t("rules.empty")} />
+  {:else}
+    <!-- When the window is too narrow for six columns, the table scrolls inside
+         the card — never the page, and never clipped by the `overflow-hidden`
+         that rounds the corners. -->
+    <div class="overflow-x-auto">
+      <table class="w-full table-fixed min-w-[660px]">
+        <thead>
+        <tr class="border-b border-border-subtle">
+          {#each COLUMNS as c (c.key)}
+            <th class="{c.width} p-0" aria-sort={sort.aria(c.key)}>
+              <SortHeader
+                label={t(c.labelKey)}
+                align={c.align}
+                dense={c.dense}
+                symbol={c.symbol}
+                active={sort.key === c.key}
+                dir={sort.dir}
+                hint={hint(c.key, t(c.labelKey))}
+                onclick={() => sort.toggle(c.key)}
+              />
+            </th>
+          {/each}
+          <th class="px-3 py-2 w-[44px]"><span class="sr-only">{t("common.actions")}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {#if animateRows}
+          {#each sorted as r (r.id)}
+            <!-- The whole row opens the edit panel, same gesture as the
+                 transactions table. The count and the actions escape it. -->
+            <tr animate:flip={flipParams} class={rowClass(r)} aria-selected={selectedId === r.id}>
+              {@render cells(r)}
+            </tr>
+          {/each}
+        {:else}
+          {#each sorted as r (r.id)}
+            <tr class={rowClass(r)} aria-selected={selectedId === r.id}>
+              {@render cells(r)}
+            </tr>
+          {/each}
+        {/if}
         </tbody>
       </table>
     </div>

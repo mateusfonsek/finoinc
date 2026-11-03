@@ -16,6 +16,8 @@
   import RuleForm from "$lib/components/rules/RuleForm.svelte";
   import RulePanel from "$lib/components/rules/RulePanel.svelte";
   import RulesList from "$lib/components/rules/RulesList.svelte";
+  import SearchBox from "$lib/components/shell/SearchBox.svelte";
+  import { filterRules } from "$lib/rules/filter";
   import { listCategories } from "$lib/api/categories";
   import {
     listRulesWithCount,
@@ -39,6 +41,10 @@
   /** The rule whose transaction list is open. The edit panel stays mounted
    *  behind, so closing here returns to the rule being edited. */
   let matchesFor = $state<RuleWithCount | null>(null);
+  /** Filters on the client: the whole list is in memory, so each keystroke
+   *  answers in the same frame. */
+  let query = $state("");
+  let shown = $derived(filterRules(rules, categories, query));
 
   async function refresh() {
     rules = await listRulesWithCount();
@@ -157,6 +163,11 @@
      snippet, which is this screen's primary information. -->
 <Page title={t("nav.rules")} subtitle={t("rules_page.desc")} width="wide">
   {#snippet toolbar()}
+    <SearchBox
+      value={query}
+      onInput={(v) => (query = v)}
+      placeholder={t("rules_page.search_placeholder")}
+    />
     <Button variant="outline" onclick={onApply} disabled={applying || rules.length === 0}>
       <Icon name="rotateCw" size={12.5} class={applying ? "animate-spin" : ""} />
       {applying ? t("rules_page.applying") : t("rules_page.apply")}
@@ -181,9 +192,11 @@
     <RuleForm {categories} onSave={onCreate} />
 
     <RulesList
-      {rules}
+      rules={shown}
       {categories}
+      {query}
       onEdit={(r) => (editing = r)}
+      onViewMatches={(r) => (matchesFor = r)}
       {onDelete}
       selectedId={editing?.id ?? null}
     />
